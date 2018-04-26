@@ -63,10 +63,9 @@ class TerraUser(AbstractBaseUser, PermissionsMixin):
     EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = []
 
-    first_name = models.CharField(_('first name'), max_length=100, blank=True)
-    last_name = models.CharField(_('last name'), max_length=150, blank=True)
     uuid = models.UUIDField(_('unique identifier'), default=uuid.uuid4, editable=False, unique=True)
     email = models.EmailField(_('email address'), blank=True, unique=True)
+    properties = JSONField(default=dict, blank=True)
     is_staff = models.BooleanField(
         _('staff status'),
         default=False,
