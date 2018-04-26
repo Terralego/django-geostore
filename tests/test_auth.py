@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from rest_framework.test import APIClient, force_authenticate
 
-from terra.models import TerraUser
+from terracommon.terra.models import TerraUser
 
 
 class AuthenticationTestCase(TestCase):

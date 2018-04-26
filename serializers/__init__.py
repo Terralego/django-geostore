@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
 
-from terra.models import Layer, Feature, LayerRelation, FeatureRelation
+from terracommon.terra.models import Layer, Feature, LayerRelation, FeatureRelation
 
 
 class PropertiesSerializer(serializers.ModelSerializer):

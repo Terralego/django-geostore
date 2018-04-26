@@ -4,7 +4,7 @@ import uuid
 from django.db import transaction
 from django.core.management.base import BaseCommand
 
-from terra.models import Layer
+from terracommon.terra.models import Layer
 
 
 class Command(BaseCommand):
