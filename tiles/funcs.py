@@ -2,10 +2,6 @@ from django.db.models import Func
 from django.db.models import Aggregate
 from django.db.models.fields import BooleanField, BinaryField
 
-class ST_AsMVT(Aggregate):
-    function = 'ST_AsMVT'
-    output_field = BinaryField()
-    template = "%(function)s(subquery, %(expressions)s)"
 
 class ST_AsMvtGeom(Func):
     function = 'ST_AsMvtGeom'
