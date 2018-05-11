@@ -2,11 +2,9 @@ import json
 import uuid
 
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-
-from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.db import models
 from django.contrib.gis.geos.geometry import GEOSGeometry
-
+from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _

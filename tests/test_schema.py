@@ -1,9 +1,8 @@
-from django.urls import reverse
 from django.test import TestCase
-
+from django.urls import reverse
 from rest_framework.test import APIClient
 
-from terracommon.terra.models import Layer, Feature, TerraUser
+from terracommon.terra.models import Feature, Layer, TerraUser
 
 
 class SchemaValidationTestCase(TestCase):
