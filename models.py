@@ -43,18 +43,28 @@ class Layer(models.Model):
 class Feature(models.Model):
     geom = models.GeometryField()
     properties = JSONField()
-    layer = models.ForeignKey(Layer, on_delete=models.PROTECT, related_name='features')
+    layer = models.ForeignKey(Layer,
+                              on_delete=models.PROTECT,
+                              related_name='features')
 
 
 class LayerRelation(models.Model):
-    origin = models.ForeignKey(Layer, on_delete=models.PROTECT, related_name='relations_as_origin')
-    destination = models.ForeignKey(Layer, on_delete=models.PROTECT, related_name='relations_as_destination')
+    origin = models.ForeignKey(Layer,
+                               on_delete=models.PROTECT,
+                               related_name='relations_as_origin')
+    destination = models.ForeignKey(Layer,
+                                    on_delete=models.PROTECT,
+                                    related_name='relations_as_destination')
     schema = JSONField(default=dict, blank=True)
 
 
 class FeatureRelation(models.Model):
-    origin = models.ForeignKey(Feature, on_delete=models.PROTECT, related_name='relations_as_origin')
-    destination = models.ForeignKey(Feature, on_delete=models.PROTECT, related_name='relations_as_destination')
+    origin = models.ForeignKey(Feature,
+                               on_delete=models.PROTECT,
+                               related_name='relations_as_origin')
+    destination = models.ForeignKey(Feature,
+                                    on_delete=models.PROTECT,
+                                    related_name='relations_as_destination')
     properties = JSONField(default=dict, blank=True)
 
 
@@ -63,13 +73,17 @@ class TerraUser(AbstractBaseUser, PermissionsMixin):
     EMAIL_FIELD = 'email'
     REQUIRED_FIELDS = []
 
-    uuid = models.UUIDField(_('unique identifier'), default=uuid.uuid4, editable=False, unique=True)
+    uuid = models.UUIDField(_('unique identifier'),
+                            default=uuid.uuid4,
+                            editable=False,
+                            unique=True)
     email = models.EmailField(_('email address'), blank=True, unique=True)
     properties = JSONField(default=dict, blank=True)
     is_staff = models.BooleanField(
         _('staff status'),
         default=False,
-        help_text=_('Designates whether the user can log into this admin site.'),
+        help_text=_('Designates whether the user '
+                    'can log into this admin site.'),
     )
     is_active = models.BooleanField(
         _('active'),

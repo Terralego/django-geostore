@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets
 
 from .models import Layer, Feature, LayerRelation, FeatureRelation
-from .serializers import LayerSerializer, FeatureSerializer, LayerRelationSerializer, FeatureRelationSerializer
+from .serializers import LayerSerializer, FeatureSerializer, \
+                         LayerRelationSerializer, FeatureRelationSerializer
 
 
 class LayerViewSet(viewsets.ModelViewSet):

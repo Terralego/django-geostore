@@ -28,15 +28,15 @@ class SchemaValidationTestCase(TestCase):
 
     def test_feature_with_valid_properties_is_posted(self):
         """Feature with valid properties is successfully POSTed"""
-        response = self.client.post(reverse('feature-list', args=[self.layer.id, ]),
-                                    {
-                                            "geom": "POINT(0 0)",
-                                            "layer": self.layer.id,
-                                            "name": "valid tree",
-                                            "age": 10
-                                    },
-                                    format='json',
-                                    )
+        response = self.client.post(
+                        reverse('feature-list', args=[self.layer.id, ]),
+                        {
+                                "geom": "POINT(0 0)",
+                                "layer": self.layer.id,
+                                "name": "valid tree",
+                                "age": 10
+                        },
+                        format='json',)
 
         features = Feature.objects.all()
 
@@ -46,13 +46,13 @@ class SchemaValidationTestCase(TestCase):
 
     def test_feature_with_missing_property_type_is_not_posted(self):
         """Feature with missing property type is not successfully POSTed"""
-        response = self.client.post(reverse('feature-list', args=[self.layer.id, ]),
-                                    {
-                                        "geom": "POINT(0 0)",
-                                        "layer": self.layer.id,
-                                        "name": "invalid tree"
-                                    },
-                                    format='json'
-                                    )
+        response = self.client.post(
+                        reverse('feature-list', args=[self.layer.id, ]),
+                        {
+                            "geom": "POINT(0 0)",
+                            "layer": self.layer.id,
+                            "name": "invalid tree"
+                        },
+                        format='json')
 
         self.assertEqual(response.status_code, 400)
