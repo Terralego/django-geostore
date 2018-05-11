@@ -15,6 +15,7 @@ class LayerViewSet(viewsets.ModelViewSet):
         layer = self.get_object()
         return Response(layer.to_geojson())
 
+
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
     serializer_class = FeatureSerializer

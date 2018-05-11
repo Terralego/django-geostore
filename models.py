@@ -34,10 +34,10 @@ class Layer(models.Model):
 
     def to_geojson(self):
         return json.loads(serialize('geojson',
-                         self.features.all(),
-                         fields=('properties',),
-                         geometry_field='geom',
-                         properties_field='properties'))
+                          self.features.all(),
+                          fields=('properties',),
+                          geometry_field='geom',
+                          properties_field='properties'))
 
 
 class Feature(models.Model):

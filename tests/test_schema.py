@@ -1,9 +1,7 @@
-import json
-
 from django.urls import reverse
 from django.test import TestCase
 
-from rest_framework.test import APIClient, force_authenticate
+from rest_framework.test import APIClient
 
 from terracommon.terra.models import Layer, Feature, TerraUser
 
