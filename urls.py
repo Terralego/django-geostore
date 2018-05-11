@@ -5,6 +5,7 @@ from rest_framework import routers, permissions
 from rest_framework_jwt import views as auth_views
 
 from .views import LayerViewSet, FeatureViewSet, LayerRelationViewSet, FeatureRelationViewSet
+from .tiles.views import MVTView
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -24,6 +25,8 @@ urlpatterns = [
     # schemas
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=None), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=None), name='schema-redoc'),
+
+    path(r'tiles/<int:layer_pk>/<int:z>/<int:x>/<int:y>/', MVTView.as_view()),
     path('', include('terracommon.trrequests.urls'))
 ]
 
