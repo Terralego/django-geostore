@@ -2,10 +2,11 @@ import mercantile
 
 from django.views.generic import View
 
-from django.db.models import Count, Value
+from django.db.models import Count, Value, F
 from django.http import HttpResponse, HttpResponseNotFound
 
 from .funcs import ST_Transform, ST_MakeEnvelope, ST_AsMvtGeom
+
 from ..models import Layer, Feature
 
 class MVTView(View):
@@ -15,12 +16,13 @@ class MVTView(View):
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
         
         layer_query = Layer.objects.get(pk=self.layer_pk).features.annotate(
-                bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857)
+                bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
+                geom3857=ST_Transform('geom', 3857)
             ).filter(
-                bbox__intersects=ST_Transform('geom', 3857)
+                bbox__intersects=F('geom3857')
             ).annotate(
                 geometry=ST_AsMvtGeom(
-                    ST_Transform('geom', 3857),
+                    F('geom3857'),
                     'bbox',
                     4096,
                     256,
