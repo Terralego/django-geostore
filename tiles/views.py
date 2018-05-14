@@ -5,7 +5,7 @@ from django.views.generic import View
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.core.serializers import serialize
 from django.db.models import Count, Value
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 
 
@@ -61,12 +61,12 @@ class MVTView(View):
 
 class IntersectView(View):
     def post(self, request, layer_pk):
-        pass
-
-    def get(self, request, layer_pk):
         layer = get_object_or_404(Layer, pk=layer_pk)
 
-        geometry = GEOSGeometry(request.GET.get('geom', None))
+        try:
+            geometry = GEOSGeometry(request.POST.get('geom', None))
+        except TypeError:
+            return HttpResponseBadRequest(content='Provided geometry is nod valid')
 
         return HttpResponse(
                 serialize('geojson',
