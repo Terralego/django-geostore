@@ -5,7 +5,7 @@ from django.views.generic import View
 from django.db.models import Count, Value
 from django.http import HttpResponse, HttpResponseNotFound
 
-from .funcs import ST_Intersects, ST_Transform, ST_MakeEnvelope, ST_AsMvtGeom, ST_AsMVT
+from .funcs import ST_Transform, ST_MakeEnvelope, ST_AsMvtGeom
 from ..models import Layer, Feature
 
 class MVTView(View):
@@ -16,13 +16,8 @@ class MVTView(View):
         
         layer_query = Layer.objects.get(pk=self.layer_pk).features.annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857)
-            ).annotate(
-                intersect=ST_Intersects(
-                            ST_Transform('geom', 3857),
-                            'bbox'
-                        ),
             ).filter(
-                intersect=True
+                bbox__intersects=ST_Transform('geom', 3857)
             ).annotate(
                 geometry=ST_AsMvtGeom(
                     ST_Transform('geom', 3857),
@@ -40,6 +35,7 @@ class MVTView(View):
             FROM tilegeom
             '''
         )
+
         return mvt_query[0]
 
     def get(self, request, layer_pk, z, x, y):
