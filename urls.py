@@ -5,7 +5,7 @@ from rest_framework import routers, permissions
 from rest_framework_jwt import views as auth_views
 
 from .views import LayerViewSet, FeatureViewSet, LayerRelationViewSet, FeatureRelationViewSet
-from .tiles.views import MVTView
+from .tiles.views import MVTView, IntersectView
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -27,6 +27,7 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=None), name='schema-redoc'),
 
     path(r'layer/<int:layer_pk>/tiles/<int:z>/<int:x>/<int:y>/', MVTView.as_view()),
+    path(r'layer/<int:layer_pk>/intersects/', IntersectView.as_view()),
     path('', include('terracommon.trrequests.urls'))
 ]
 

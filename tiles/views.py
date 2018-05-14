@@ -2,10 +2,14 @@ import mercantile
 
 from django.views.generic import View
 
+from django.contrib.gis.geos.geometry import GEOSGeometry
+from django.core.serializers import serialize
 from django.db.models import Count, Value
 from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import get_object_or_404
 
-from .funcs import ST_Intersects, ST_Transform, ST_MakeEnvelope, ST_AsMvtGeom, ST_AsMVT
+
+from .funcs import ST_Intersects, ST_Transform, ST_MakeEnvelope, ST_AsMvtGeom
 from ..models import Layer, Feature
 
 class MVTView(View):
@@ -14,7 +18,7 @@ class MVTView(View):
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
         
-        layer_query = Layer.objects.get(pk=self.layer_pk).features.annotate(
+        layer_query = self.layer.features.annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857)
             ).annotate(
                 intersect=ST_Intersects(
@@ -36,14 +40,14 @@ class MVTView(View):
         mvt_query = Feature.objects.raw(
             f'''
             WITH tilegeom as ({layer_query.query})
-            SELECT {self.layer_pk} AS id, count(*) AS count, ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
+            SELECT {self.layer.pk} AS id, count(*) AS count, ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
             FROM tilegeom
             '''
         )
         return mvt_query[0]
 
     def get(self, request, layer_pk, z, x, y):
-        self.layer_pk = layer_pk
+        self.layer = get_object_or_404(Layer, pk=layer_pk)
         self.z = z
         self.x = x
         self.y = y
@@ -54,3 +58,21 @@ class MVTView(View):
         else:
             return HttpResponseNotFound()
 
+
+class IntersectView(View):
+    def post(self, request, layer_pk):
+        pass
+
+    def get(self, request, layer_pk):
+        layer = get_object_or_404(Layer, pk=layer_pk)
+
+        geometry = GEOSGeometry(request.GET.get('geom', None))
+
+        return HttpResponse(
+                serialize('geojson',
+                        layer.features.intersects(geometry),
+                        fields=('properties',),
+                        geometry_field='geom',
+                        properties_field='properties'),
+                content_type='application/vnd.geo+json'
+                )

@@ -1,5 +1,9 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth import models
+from django.db.models import Manager
+
+from .tiles.funcs import ST_Intersects, ST_Transform
+
 class TerraUserManager(BaseUserManager):
 
     def _create_user(self, email, password, **extra_fields):
@@ -19,3 +23,11 @@ class TerraUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         return self._create_user(email, password, **extra_fields)
+
+
+class FeatureManager(Manager):
+    
+    def intersects(self, geometry):
+        return self.filter(
+            geom__intersects=geometry
+        )
