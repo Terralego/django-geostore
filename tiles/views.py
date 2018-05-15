@@ -1,4 +1,5 @@
 import mercantile
+import json
 
 from django.views.generic import View
 
@@ -8,6 +9,8 @@ from django.db.models import Count, Value
 from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 from .funcs import ST_Intersects, ST_Transform, ST_MakeEnvelope, ST_AsMvtGeom
 from ..models import Layer, Feature
@@ -59,20 +62,19 @@ class MVTView(View):
             return HttpResponseNotFound()
 
 
-class IntersectView(View):
+class IntersectView(APIView):
     def post(self, request, layer_pk):
         layer = get_object_or_404(Layer, pk=layer_pk)
 
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))
         except TypeError:
-            return HttpResponseBadRequest(content='Provided geometry is nod valid')
+            return HttpResponseBadRequest(content='Provided geometry is not valid')
 
-        return HttpResponse(
-                serialize('geojson',
-                        layer.features.intersects(geometry),
-                        fields=('properties',),
-                        geometry_field='geom',
-                        properties_field='properties'),
-                content_type='application/vnd.geo+json'
-                )
+        return Response(json.loads(
+                    serialize('geojson',
+                              layer.features.intersects(geometry),
+                              fields=('properties',),
+                              geometry_field='geom',
+                              properties_field='properties'),
+                    ))
