@@ -41,7 +41,7 @@ class Layer(models.Model):
                 ]
                 Feature.objects.bulk_create(entries)
         else:
-            for row in list(reader)[:5]:
+            for row in reader:
                 Feature.objects.update_or_create(
                     defaults={
                         'geom': Point(),
