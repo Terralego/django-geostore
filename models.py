@@ -25,7 +25,7 @@ class Layer(models.Model):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
-        :param init: permit to speed up import if there is only new Feature's (no updates)
+        :param init: allow to speed up import if there is only new Feature's (no updates)
         :param chunk_size: only used if init=True, control the size of bulk_create
         """
         if init:
