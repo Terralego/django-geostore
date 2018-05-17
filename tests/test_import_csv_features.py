@@ -37,7 +37,7 @@ class ImportCSVFeaturesTestCase(TestCase):
 
     def test_init_options(self):
 
-        '''Create fake features to test features reinit'''
+        """Create fake features to test features reinit"""
         for i in range(2):
             self.layer.features.create(geom=Point(), properties={'SIREN': '', 'NIC': ''}, )
         self.assertEqual(self.layer.features.all().count(), 2)
@@ -52,7 +52,7 @@ class ImportCSVFeaturesTestCase(TestCase):
 
         self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'], init=True)
 
-        '''Init mode only create new items, it does not reset database'''
+        """Init mode only create new items, it does not reset database"""
         self.assertEqual(self.layer.features.all().count(), 6)
 
         feature = self.layer.features.get(properties__SIREN='813792686', properties__NIC='00012')
