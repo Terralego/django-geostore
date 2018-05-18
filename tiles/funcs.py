@@ -1,7 +1,5 @@
-from django.db.models import Func
-from django.db.models import Aggregate
-from django.db.models.fields import BooleanField
 from django.contrib.gis.db.models import GeometryField
+from django.db.models import Func
 
 
 class RawGeometryField(GeometryField):

@@ -4,9 +4,9 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
 from rest_framework_jwt import views as auth_views
 
+from .tiles.views import MVTView
 from .views import (FeatureRelationViewSet, FeatureViewSet,
                     LayerRelationViewSet, LayerViewSet)
-from .tiles.views import MVTView
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -37,7 +37,8 @@ urlpatterns = [
          schema_view.with_ui('redoc', cache_timeout=None),
          name='schema-redoc'),
 
-    path(r'layer/<int:layer_pk>/tiles/<int:z>/<int:x>/<int:y>/', MVTView.as_view()),
+    path(r'layer/<int:layer_pk>/tiles/<int:z>/<int:x>/<int:y>/',
+         MVTView.as_view()),
     path('', include('terracommon.trrequests.urls'))
 ]
 
