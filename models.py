@@ -11,7 +11,8 @@ from django.core.serializers import serialize
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .managers import TerraUserManager
+from .fields import DateFieldYearLess
+from .managers import FeatureManager, TerraUserManager
 
 
 class Layer(models.Model):
@@ -44,6 +45,12 @@ class Feature(models.Model):
     geom = models.GeometryField()
     properties = JSONField()
     layer = models.ForeignKey(Layer, on_delete=models.PROTECT, related_name='features')
+    from_date = DateFieldYearLess(help_text="Layer validity period start",
+                                  default='01-01')
+    to_date = DateFieldYearLess(help_text="Layer validity period end",
+                                default='12-31')
+
+    objects = FeatureManager()
 
 
 class LayerRelation(models.Model):

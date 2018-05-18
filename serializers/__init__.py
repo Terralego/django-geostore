@@ -31,7 +31,7 @@ class PropertiesSerializer(serializers.ModelSerializer):
 class LayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Layer
-        fields = ('id', 'name', 'schema')
+        fields = ('id', 'name', 'schema', )
 
 
 class FeatureSerializer(PropertiesSerializer):
@@ -39,7 +39,7 @@ class FeatureSerializer(PropertiesSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'geom', 'layer')
+        fields = ('id', 'geom', 'layer', 'from_date', 'to_date', )
 
 
 class LayerRelationSerializer(serializers.ModelSerializer):
