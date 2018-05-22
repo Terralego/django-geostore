@@ -1,16 +1,13 @@
-import json
-
-from django.urls import reverse
 from django.test import TestCase
-
-from rest_framework.test import APIClient, force_authenticate
+from django.urls import reverse
+from rest_framework.test import APIClient
 
 from terracommon.terra.models import TerraUser
 
 
 class AuthenticationTestCase(TestCase):
     USERNAME = 'foo@bar.com'
-    USER_PASSWORD='123456'
+    USER_PASSWORD = '123456'
 
     def setUp(self):
         self.client = APIClient()
@@ -23,8 +20,8 @@ class AuthenticationTestCase(TestCase):
         """Feature with valid properties is successfully POSTed"""
         response = self.client.post(reverse('token-obtain'),
                                     {
-                                        'email':self.USERNAME,
-                                        'password':self.USER_PASSWORD
+                                        'email': self.USERNAME,
+                                        'password': self.USER_PASSWORD
                                     },)
 
         self.assertEqual(response.status_code, 200)
@@ -38,7 +35,7 @@ class AuthenticationTestCase(TestCase):
                                     },)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(token,response.data.get('token'))
+        self.assertEqual(token, response.data.get('token'))
 
     def test_fail_authentication(self):
         response = self.client.post(reverse('token-obtain'),
@@ -49,4 +46,3 @@ class AuthenticationTestCase(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('non_field_errors', response.data)
-

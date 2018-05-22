@@ -1,8 +1,8 @@
 import logging
 
 from django.apps import apps
-from django.db import transaction
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 

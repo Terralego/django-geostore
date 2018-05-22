@@ -1,6 +1,7 @@
 
 from django.contrib.gis.serializers import geojson as basegeojson
 
+
 class Serializer(basegeojson.Serializer):
     def _init_options(self):
         super()._init_options()
