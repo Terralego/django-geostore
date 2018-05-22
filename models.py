@@ -52,6 +52,8 @@ class Feature(models.Model):
 
     objects = FeatureManager()
 
+    objects = FeatureManager()
+
 
 class LayerRelation(models.Model):
     origin = models.ForeignKey(Layer,

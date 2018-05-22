@@ -1,10 +1,16 @@
 import datetime
+import json
 
 import mercantile
+from django.contrib.gis.geos.geometry import GEOSGeometry
+from django.core.serializers import serialize
 from django.db.models import F
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                         HttpResponseNotFound)
 from django.shortcuts import get_object_or_404
 from django.views.generic import View
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from ..models import Feature, Layer
 from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
@@ -61,3 +67,22 @@ class MVTView(View):
                         )
         else:
             return HttpResponseNotFound()
+
+
+class IntersectView(APIView):
+    def post(self, request, layer_pk):
+        layer = get_object_or_404(Layer, pk=layer_pk)
+
+        try:
+            geometry = GEOSGeometry(request.POST.get('geom', None))
+        except TypeError:
+            return HttpResponseBadRequest(
+                        content='Provided geometry is not valid')
+
+        return Response(json.loads(
+                    serialize('geojson',
+                              layer.features.intersects(geometry),
+                              fields=('properties',),
+                              geometry_field='geom',
+                              properties_field='properties'),
+                    ))

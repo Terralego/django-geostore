@@ -4,7 +4,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
 from rest_framework_jwt import views as auth_views
 
-from .tiles.views import MVTView
+from .tiles.views import IntersectView, MVTView
 from .views import (FeatureRelationViewSet, FeatureViewSet,
                     LayerRelationViewSet, LayerViewSet)
 
@@ -36,7 +36,7 @@ urlpatterns = [
     path('redoc/',
          schema_view.with_ui('redoc', cache_timeout=None),
          name='schema-redoc'),
-
+    path(r'layer/<int:layer_pk>/intersects/', IntersectView.as_view()),
     path(r'layer/<int:layer_pk>/tiles/<int:z>/<int:x>/<int:y>/',
          MVTView.as_view()),
     path('', include('terracommon.trrequests.urls'))

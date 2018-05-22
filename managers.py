@@ -34,3 +34,8 @@ class FeatureManager(Manager):
              | Q(to_date__gte=compare_date)))
             | Q(from_date__lte=compare_date, to_date__gte=compare_date, )
         )
+
+    def intersects(self, geometry):
+        return self.filter(
+            geom__intersects=geometry
+        )
