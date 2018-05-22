@@ -1,5 +1,6 @@
 import argparse
 import uuid
+import json
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -36,7 +37,7 @@ class Command(BaseCommand):
 
         layer_name = options.get('layer') if \
             options.get('layer', None) else uuid.uuid4()
-        schema = options.get('schema').read()
+        schema = json.loads(options.get('schema').read())
         geojson_files = options.get('geojson')
         dryrun = options.get('dry_run')
 
