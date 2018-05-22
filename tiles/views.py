@@ -1,19 +1,19 @@
-import mercantile
 import json
 
-from django.views.generic import View
-
+import mercantile
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.core.serializers import serialize
-from django.db.models import Count, Value
-from django.http import HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
+from django.db.models import F
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                         HttpResponseNotFound)
 from django.shortcuts import get_object_or_404
-
-from rest_framework.views import APIView
+from django.views.generic import View
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .funcs import ST_Intersects, ST_Transform, ST_MakeEnvelope, ST_AsMvtGeom
-from ..models import Layer, Feature
+from ..models import Feature, Layer
+from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
+
 
 class MVTView(View):
     def get_tile(self):
@@ -22,17 +22,13 @@ class MVTView(View):
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
         
         layer_query = self.layer.features.annotate(
-                bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857)
-            ).annotate(
-                intersect=ST_Intersects(
-                            ST_Transform('geom', 3857),
-                            'bbox'
-                        ),
+                bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
+                geom3857=ST_Transform('geom', 3857)
             ).filter(
-                intersect=True
+                bbox__intersects=F('geom3857')
             ).annotate(
                 geometry=ST_AsMvtGeom(
-                    ST_Transform('geom', 3857),
+                    F('geom3857'),
                     'bbox',
                     4096,
                     256,
@@ -47,6 +43,7 @@ class MVTView(View):
             FROM tilegeom
             '''
         )
+
         return mvt_query[0]
 
     def get(self, request, layer_pk, z, x, y):

@@ -2,7 +2,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth import models
 from django.db.models import Manager
 
-from .tiles.funcs import ST_Intersects, ST_Transform
+from .tiles.funcs import ST_Transform
 
 class TerraUserManager(BaseUserManager):
 
