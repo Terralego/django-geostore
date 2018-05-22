@@ -39,7 +39,7 @@ class MVTView(View):
         mvt_query = Feature.objects.raw(
             f'''
             WITH tilegeom as ({layer_query.query})
-            SELECT {self.layer_pk} AS id, count(*) AS count,
+            SELECT {self.layer.pk} AS id, count(*) AS count,
                    ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
             FROM tilegeom
             '''
