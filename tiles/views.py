@@ -1,5 +1,5 @@
-import datetime
 import json
+from datetime import date
 
 import mercantile
 from django.contrib.gis.geos.geometry import GEOSGeometry
@@ -8,6 +8,7 @@ from django.db.models import F
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotFound)
 from django.shortcuts import get_object_or_404
+from django.utils.dateparse import parse_date
 from django.views.generic import View
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,6 +18,7 @@ from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
 
 
 class MVTView(View):
+
     def get_tile(self):
         bounds = mercantile.bounds(self.x, self.y, self.z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
@@ -56,8 +58,10 @@ class MVTView(View):
         self.x = x
         self.y = y
 
-        self.date_filter = self.request.GET.get('date', datetime.date.today())
         self.layer = get_object_or_404(Layer, pk=layer_pk)
+
+        self.date_filter = (parse_date(self.request.GET.get('date', ''))
+                            or date.today())
 
         qs = self.get_tile()
         if qs.count > 0:
@@ -72,6 +76,10 @@ class MVTView(View):
 class IntersectView(APIView):
     def post(self, request, layer_pk):
         layer = get_object_or_404(Layer, pk=layer_pk)
+        date_filter = (parse_date(self.request.GET.get('date', ''))
+                       or date.today())
+
+        features = layer.features.for_date(date_filter)
 
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))
@@ -81,7 +89,7 @@ class IntersectView(APIView):
 
         return Response(json.loads(
                     serialize('geojson',
-                              layer.features.intersects(geometry),
+                              features.intersects(geometry),
                               fields=('properties',),
                               geometry_field='geom',
                               properties_field='properties'),

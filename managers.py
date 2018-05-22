@@ -1,5 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
-from django.db.models import F, Manager, Q
+from django.db.models import F, Q, QuerySet
 
 
 class TerraUserManager(BaseUserManager):
@@ -23,7 +23,7 @@ class TerraUserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
-class FeatureManager(Manager):
+class FeatureQuerySet(QuerySet):
 
     def for_date(self, range_date):
         compare_date = range_date.replace(year=1970)

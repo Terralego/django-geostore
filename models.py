@@ -6,11 +6,12 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
+from django.db.models import Manager
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .fields import DateFieldYearLess
-from .managers import FeatureManager, TerraUserManager
+from .managers import FeatureQuerySet, TerraUserManager
 
 
 class Layer(models.Model):
@@ -50,9 +51,7 @@ class Feature(models.Model):
     to_date = DateFieldYearLess(help_text="Layer validity period end",
                                 default='12-31')
 
-    objects = FeatureManager()
-
-    objects = FeatureManager()
+    objects = Manager.from_queryset(FeatureQuerySet)()
 
 
 class LayerRelation(models.Model):
