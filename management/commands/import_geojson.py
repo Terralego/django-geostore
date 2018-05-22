@@ -1,6 +1,6 @@
 import argparse
-import uuid
 import json
+import uuid
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
