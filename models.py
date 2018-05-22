@@ -47,6 +47,7 @@ class Feature(models.Model):
 
     objects = FeatureManager()
 
+
 class LayerRelation(models.Model):
     origin = models.ForeignKey(Layer,
                                on_delete=models.PROTECT,

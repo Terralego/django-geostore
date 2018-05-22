@@ -24,7 +24,7 @@ class TerraUserManager(BaseUserManager):
 
 
 class FeatureManager(Manager):
-    
+
     def intersects(self, geometry):
         return self.filter(
             geom__intersects=geometry

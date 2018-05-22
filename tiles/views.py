@@ -20,7 +20,7 @@ class MVTView(View):
         bounds = mercantile.bounds(self.x, self.y, self.z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
-        
+
         layer_query = self.layer.features.annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
                 geom3857=ST_Transform('geom', 3857)
@@ -70,7 +70,8 @@ class IntersectView(APIView):
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))
         except TypeError:
-            return HttpResponseBadRequest(content='Provided geometry is not valid')
+            return HttpResponseBadRequest(
+                        content='Provided geometry is not valid')
 
         return Response(json.loads(
                     serialize('geojson',
