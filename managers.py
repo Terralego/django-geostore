@@ -1,5 +1,5 @@
-from django.db.models import Manager, F, Q
 from django.contrib.auth.base_user import BaseUserManager
+from django.db.models import F, Manager, Q
 
 
 class TerraUserManager(BaseUserManager):
@@ -29,6 +29,8 @@ class FeatureManager(Manager):
         compare_date = range_date.replace(year=1970)
 
         return self.filter(
-            ( Q(from_date__gte=F('to_date')) & (Q(from_date__lte=compare_date) | Q(to_date__gte=compare_date)))
-            | Q(from_date__lte=compare_date, to_date__gte=compare_date,)
+            (Q(from_date__gte=F('to_date'))
+             & (Q(from_date__lte=compare_date)
+             | Q(to_date__gte=compare_date)))
+            | Q(from_date__lte=compare_date, to_date__gte=compare_date, )
         )

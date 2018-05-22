@@ -1,9 +1,10 @@
 import datetime
+
 import mercantile
 from django.db.models import F
 from django.http import HttpResponse, HttpResponseNotFound
-from django.views.generic import View
 from django.shortcuts import get_object_or_404
+from django.views.generic import View
 
 from ..models import Feature, Layer
 from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
@@ -14,7 +15,7 @@ class MVTView(View):
         bounds = mercantile.bounds(self.x, self.y, self.z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
-        
+
         layer_query = self.layer.features.for_date(self.date_filter).annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
                 geom3857=ST_Transform('geom', 3857)
@@ -35,7 +36,8 @@ class MVTView(View):
         mvt_query = Feature.objects.raw(
             f'''
             WITH tilegeom as ({layer_raw_query})
-            SELECT %s AS id, count(*) AS count, ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
+            SELECT %s AS id, count(*) AS count,
+                   ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
             FROM tilegeom
             ''',
             args + (self.layer.pk, )
