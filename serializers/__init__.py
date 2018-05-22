@@ -3,7 +3,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from terracommon.terra.models import Layer, Feature, LayerRelation, \
-                                     FeatureRelation
+                                     FeatureRelation, TerraUser
+
+
+
+class TerraUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TerraUser
+        fields = ('id', 'is_superuser', 'email', 'properties', 'is_staff', 'is_active')
 
 
 class PropertiesSerializer(serializers.ModelSerializer):
