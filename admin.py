@@ -1,7 +1,6 @@
 from django.contrib.gis import admin
 
-from .models import Layer, Feature, FeatureRelation
-
+from .models import Feature, FeatureRelation, Layer
 
 admin.site.register(Layer)
 admin.site.register(Feature, admin.OSMGeoAdmin)

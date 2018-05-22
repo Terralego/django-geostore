@@ -35,11 +35,12 @@ class MVTView(View):
                     True
                 )
             )
-        
+
         mvt_query = Feature.objects.raw(
             f'''
             WITH tilegeom as ({layer_query.query})
-            SELECT {self.layer.pk} AS id, count(*) AS count, ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
+            SELECT {self.layer_pk} AS id, count(*) AS count,
+                   ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
             FROM tilegeom
             '''
         )
@@ -54,7 +55,10 @@ class MVTView(View):
 
         qs = self.get_tile()
         if qs.count > 0:
-            return HttpResponse(qs.mvt, content_type="application/vnd.mapbox-vector-tile")
+            return HttpResponse(
+                        qs.mvt,
+                        content_type="application/vnd.mapbox-vector-tile"
+                        )
         else:
             return HttpResponseNotFound()
 
