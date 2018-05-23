@@ -37,6 +37,14 @@ class Command(BaseCommand):
                             action="store",
                             required=True,
                             help='GeoJSON files to import')
+        parser.add_argument('-f', '--from',
+                            action="store",
+                            required=True,
+                            help="Layer beginning validity period")
+        parser.add_argument('-t', '--to',
+                            action="store",
+                            required=True,
+                            help="Layer ending validity period")
         parser.add_argument('--dry-run',
                             action="store_true",
                             help='Execute une dry-run mode')
