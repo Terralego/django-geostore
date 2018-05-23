@@ -53,13 +53,18 @@ class FeatureInLayerSerialize(serializers.ModelSerializer):
         model = Feature
         fields = ('id', 'geom', )
 
-
 class LayerSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Layer
+        fields = ('id', 'name', 'schema', 'group')
+
+class LayerWithFeaturesSerializer(serializers.ModelSerializer):
     features = FeatureInLayerSerialize(many=True)
 
     class Meta:
         model = Layer
-        fields = ('id', 'name', 'schema', 'features')
+        fields = ('id', 'name', 'schema', 'group', 'features')
 
 
 class LayerRelationSerializer(serializers.ModelSerializer):
