@@ -19,7 +19,7 @@ class Layer(models.Model):
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 
-    def from_geojson(self, geojson_data):
+    def from_geojson(self, geojson_data, from_date, to_date):
         """
         Import geojson raw data in a layer
         Args:
@@ -30,7 +30,9 @@ class Layer(models.Model):
             Feature.objects.create(
                 layer=self,
                 properties=feature.get('properties', {}),
-                geom=GEOSGeometry(json.dumps(feature.get('geometry')))
+                geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
+                from_date=from_date,
+                to_date=to_date
             )
 
     def to_geojson(self):

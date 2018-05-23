@@ -40,11 +40,16 @@ class Command(BaseCommand):
         parser.add_argument('-f', '--from',
                             action="store",
                             required=True,
-                            help="Layer beginning validity period")
+                            help="Layer beginning validity period. "
+                                 "Format: MM-DD")
         parser.add_argument('-t', '--to',
                             action="store",
                             required=True,
-                            help="Layer ending validity period")
+                            help="Layer ending validity period. "
+                                 "Format : MM-DD")
+        parser.add_argument('-gr', '--group',
+                            action="store",
+                            help="Group name of the created layer")
         parser.add_argument('--dry-run',
                             action="store_true",
                             help='Execute une dry-run mode')
@@ -56,6 +61,9 @@ class Command(BaseCommand):
             options.get('layer', None) else uuid.uuid4()
         geojson_files = options.get('geojson')
         dryrun = options.get('dry_run')
+        from_date = options.get('from')
+        to_date = options.get('to')
+        group = options.get('group')
 
         sp = transaction.savepoint()
 
@@ -66,16 +74,18 @@ class Command(BaseCommand):
                 schema = json.loads(options.get('schema').read())
             except AttributeError:
                 raise CommandError("Please provide a valid schema file")
-            layer = Layer.objects.create(name=layer_name, schema=schema)
+            layer = Layer.objects.create(name=layer_name,
+                                         schema=schema,
+                                         group=group)
 
-        self.import_datas(layer, geojson_files)
+        self.import_datas(layer, geojson_files, from_date, to_date)
 
         if dryrun:
             transaction.savepoint_rollback(sp)
         else:
             transaction.savepoint_commit(sp)
 
-    def import_datas(self, layer, geojson_files):
+    def import_datas(self, layer, geojson_files, from_date, to_date):
         for file_in in geojson_files:
             geojson = file_in.read()
-            layer.from_geojson(geojson)
+            layer.from_geojson(geojson, from_date, to_date)
