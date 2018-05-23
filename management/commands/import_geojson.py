@@ -2,7 +2,7 @@ import argparse
 import json
 import uuid
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from terracommon.terra.models import Layer
@@ -57,8 +57,7 @@ class Command(BaseCommand):
             try:
                 schema = json.loads(options.get('schema').read())
             except AttributeError:
-                raise argparse.ArgumentTypeError("Please provide a valid "
-                                                 "schema file")
+                raise CommandError("Please provide a valid schema file")
             layer = Layer.objects.create(name=layer_name, schema=schema)
 
         self.import_datas(layer, geojson_files)
