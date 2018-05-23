@@ -16,6 +16,7 @@ from .managers import FeatureQuerySet, TerraUserManager
 
 class Layer(models.Model):
     name = models.CharField(max_length=256)
+    group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 
     def from_geojson(self, geojson_data):
