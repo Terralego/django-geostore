@@ -1,5 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
-from django.db.models import Manager
+from django.db.models import F, Q, QuerySet
 
 
 class TerraUserManager(BaseUserManager):
@@ -23,7 +23,17 @@ class TerraUserManager(BaseUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
-class FeatureManager(Manager):
+class FeatureQuerySet(QuerySet):
+
+    def for_date(self, range_date):
+        compare_date = range_date.replace(year=1970)
+
+        return self.filter(
+            (Q(from_date__gte=F('to_date'))
+             & (Q(from_date__lte=compare_date)
+             | Q(to_date__gte=compare_date)))
+            | Q(from_date__lte=compare_date, to_date__gte=compare_date, )
+        )
 
     def intersects(self, geometry):
         return self.filter(
