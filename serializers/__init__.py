@@ -44,7 +44,7 @@ class FeatureSerializer(PropertiesSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'geom', 'layer')
+        fields = ('id', 'geom', 'layer', 'from_date', 'to_date', )
 
 
 class FeatureInLayerSerialize(serializers.ModelSerializer):
