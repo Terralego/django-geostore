@@ -21,16 +21,21 @@ class Layer(models.Model):
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 
-    def from_csv_dictreader(self, reader, pk_properties, init=False, chunk_size=1000):
+    def from_csv_dictreader(self, reader, pk_properties, init=False,
+                            chunk_size=1000):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
-        :param init: allow to speed up import if there is only new Feature's (no updates)
-        :param chunk_size: only used if init=True, control the size of bulk_create
+        :param init: allow to speed up import if there is only new Feature's
+                    (no updates)
+        :param chunk_size: only used if init=True, control the size of
+                           bulk_create
         """
         if init:
             rl = list(reader)
-            for chunk in [rl[i:i+chunk_size] for i in range(0, len(rl), chunk_size)]:
+            chunks = [rl[i:i+chunk_size]
+                      for i in range(0, len(rl), chunk_size)]
+            for chunk in chunks:
                 entries = [
                     Feature(
                         geom=Point(),
@@ -49,7 +54,8 @@ class Layer(models.Model):
                         'layer': self,
                     },
                     layer=self,
-                    **{f'properties__{p}': row.get(p, '') for p in pk_properties}
+                    **{f'properties__{p}': row.get(p, '')
+                        for p in pk_properties}
                 )
 
     def from_geojson(self, geojson_data, from_date, to_date):
