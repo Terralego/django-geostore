@@ -14,16 +14,17 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         exclusive_group = parser.add_mutually_exclusive_group()
         exclusive_group.add_argument('-pk', '--layer-pk',
-                            type=int,
-                            action="store",
-                            help=("PK of the layer where to insert the"
-                                  "features.\n"
-                                  "A new layer is created if not present"))
+                                     type=int,
+                                     action="store",
+                                     help=("PK of the layer where to insert"
+                                           "the features.\n"
+                                           "A new layer is created if not "
+                                           "present."))
         exclusive_group.add_argument('-l', '--layer',
-                            action="store",
-                            help=("Name of created layer "
-                                  "containing GeoJSON datas."
-                                  "If not provided an uuid4 is set."))
+                                     action="store",
+                                     help=("Name of created layer "
+                                           "containing GeoJSON datas."
+                                           "If not provided an uuid4 is set."))
         parser.add_argument('-s', '--schema',
                             type=argparse.FileType('r'),
                             action="store",
@@ -56,7 +57,8 @@ class Command(BaseCommand):
             try:
                 schema = json.loads(options.get('schema').read())
             except AttributeError:
-                raise argparse.ArgumentTypeError('Please provide a valid schema file')
+                raise argparse.ArgumentTypeError("Please provide a valid "
+                                                 "schema file")
             layer = Layer.objects.create(name=layer_name, schema=schema)
 
         self.import_datas(layer, geojson_files)
