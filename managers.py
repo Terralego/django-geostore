@@ -1,4 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
+from django.db.models import Manager
 
 
 class TerraUserManager(BaseUserManager):
@@ -20,3 +21,11 @@ class TerraUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         return self._create_user(email, password, **extra_fields)
+
+
+class FeatureManager(Manager):
+
+    def intersects(self, geometry):
+        return self.filter(
+            geom__intersects=geometry
+        )

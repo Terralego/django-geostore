@@ -1,7 +1,15 @@
+import json
+
 import mercantile
+from django.contrib.gis.geos.geometry import GEOSGeometry
+from django.core.serializers import serialize
 from django.db.models import F
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import (HttpResponse, HttpResponseBadRequest,
+                         HttpResponseNotFound)
+from django.shortcuts import get_object_or_404
 from django.views.generic import View
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from ..models import Feature, Layer
 from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
@@ -13,7 +21,7 @@ class MVTView(View):
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
 
-        layer_query = Layer.objects.get(pk=self.layer_pk).features.annotate(
+        layer_query = self.layer.features.annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
                 geom3857=ST_Transform('geom', 3857)
             ).filter(
@@ -31,7 +39,7 @@ class MVTView(View):
         mvt_query = Feature.objects.raw(
             f'''
             WITH tilegeom as ({layer_query.query})
-            SELECT {self.layer_pk} AS id, count(*) AS count,
+            SELECT {self.layer.pk} AS id, count(*) AS count,
                    ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
             FROM tilegeom
             '''
@@ -40,7 +48,7 @@ class MVTView(View):
         return mvt_query[0]
 
     def get(self, request, layer_pk, z, x, y):
-        self.layer_pk = layer_pk
+        self.layer = get_object_or_404(Layer, pk=layer_pk)
         self.z = z
         self.x = x
         self.y = y
@@ -53,3 +61,22 @@ class MVTView(View):
                         )
         else:
             return HttpResponseNotFound()
+
+
+class IntersectView(APIView):
+    def post(self, request, layer_pk):
+        layer = get_object_or_404(Layer, pk=layer_pk)
+
+        try:
+            geometry = GEOSGeometry(request.POST.get('geom', None))
+        except TypeError:
+            return HttpResponseBadRequest(
+                        content='Provided geometry is not valid')
+
+        return Response(json.loads(
+                    serialize('geojson',
+                              layer.features.intersects(geometry),
+                              fields=('properties',),
+                              geometry_field='geom',
+                              properties_field='properties'),
+                    ))

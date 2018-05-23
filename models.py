@@ -9,7 +9,7 @@ from django.core.serializers import serialize
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .managers import TerraUserManager
+from .managers import FeatureManager, TerraUserManager
 
 
 class Layer(models.Model):
@@ -44,6 +44,8 @@ class Feature(models.Model):
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
                               related_name='features')
+
+    objects = FeatureManager()
 
 
 class LayerRelation(models.Model):
