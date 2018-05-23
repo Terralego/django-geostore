@@ -6,11 +6,11 @@ from terracommon.terra.models import Layer, Feature, LayerRelation, \
                                      FeatureRelation, TerraUser
 
 
-
 class TerraUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = TerraUser
-        fields = ('id', 'is_superuser', 'email', 'properties', 'is_staff', 'is_active')
+        fields = ('id', 'is_superuser', 'email', 'properties', 'is_staff',
+                  'is_active')
 
 
 class PropertiesSerializer(serializers.ModelSerializer):
