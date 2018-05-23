@@ -39,18 +39,27 @@ class PropertiesSerializer(serializers.ModelSerializer):
         return fields
 
 
-class LayerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Layer
-        fields = ('id', 'name', 'schema')
-
-
 class FeatureSerializer(PropertiesSerializer):
     schema_model = Layer
 
     class Meta:
         model = Feature
         fields = ('id', 'geom', 'layer')
+
+
+class FeatureInLayerSerialize(serializers.ModelSerializer):
+
+    class Meta:
+        model = Feature
+        fields = ('id', 'geom', )
+
+
+class LayerSerializer(serializers.ModelSerializer):
+    features = FeatureInLayerSerialize(many=True)
+
+    class Meta:
+        model = Layer
+        fields = ('id', 'name', 'schema', 'features')
 
 
 class LayerRelationSerializer(serializers.ModelSerializer):
