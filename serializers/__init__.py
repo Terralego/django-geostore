@@ -47,7 +47,7 @@ class FeatureSerializer(PropertiesSerializer):
         fields = ('id', 'geom', 'layer', 'from_date', 'to_date', )
 
 
-class FeatureInLayerSerialize(serializers.ModelSerializer):
+class FeatureInLayerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
@@ -62,7 +62,13 @@ class LayerSerializer(serializers.ModelSerializer):
 
 
 class LayerWithFeaturesSerializer(serializers.ModelSerializer):
-    features = FeatureInLayerSerialize(many=True)
+    features = FeatureInLayerSerializer(many=True)
+
+    def to_representation(self, data):
+        return data.to_geojson()
+
+    def get_fields(self):
+        return {'geojson': serializers.JSONField()}
 
     class Meta:
         model = Layer
