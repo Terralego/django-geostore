@@ -36,7 +36,9 @@ urlpatterns = [
     path('redoc/',
          schema_view.with_ui('redoc', cache_timeout=None),
          name='schema-redoc'),
-    path(r'layer/<str:group>/intersects/', IntersectView.as_view(), name='intersect'),
+    path(r'layer/<str:group>/intersects/',
+         IntersectView.as_view(),
+         name='intersect'),
     path(r'layer/<str:group>/tiles/<int:z>/<int:x>/<int:y>/',
          MVTView.as_view()),
     path('', include('terracommon.trrequests.urls'))

@@ -1,10 +1,9 @@
-from datetime import date
 import json
+from datetime import date
 
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
-
 
 from terracommon.terra.models import Layer, TerraUser
 
@@ -99,7 +98,6 @@ class FeaturesTestCase(TestCase):
         for count, day in dates:
             self.assertEqual(count, self.layer.features.for_date(day).count())
 
-
     def test_intersects(self):
         """Create a fake line geometry to intersect with"""
         self.layer.features.create(
@@ -109,7 +107,8 @@ class FeaturesTestCase(TestCase):
             to_date='12-31'
         )
 
-        response = self.client.post(reverse('intersect', args=[self.group_name]),
+        response = self.client.post(
+            reverse('intersect', args=[self.group_name]),
             {'geom': json.dumps(self.intersect_geometry), },
         )
 
@@ -118,12 +117,13 @@ class FeaturesTestCase(TestCase):
         resp_data = response.json()
 
         self.assertEqual(1, len(resp_data.get('features')))
-        self.assertDictEqual(self.intersect_ref_geometry, resp_data.get('features')[0].get('geometry'))
+        self.assertDictEqual(self.intersect_ref_geometry,
+                             resp_data.get('features')[0].get('geometry'))
 
         """Must not intersect with this point"""
-        response = self.client.post(reverse('intersect', args=[self.group_name]),
-            {'geom': self.fake_geometry.json, },
-        )
+        response = self.client.post(
+            reverse('intersect', args=[self.group_name]),
+            {'geom': self.fake_geometry.json, },)
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(0, len(response.json().get('features')))

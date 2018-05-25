@@ -7,7 +7,6 @@ from django.core.serializers import serialize
 from django.db.models import F
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotFound)
-from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date
 from django.views.generic import View
 from rest_framework.response import Response
@@ -86,7 +85,8 @@ class IntersectView(APIView):
         date_filter = (parse_date(self.request.GET.get('date', ''))
                        or date.today())
 
-        features = Feature.objects.for_date(date_filter).filter(layer__group=group)
+        features = Feature.objects.for_date(
+                    date_filter).filter(layer__group=group)
 
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))
