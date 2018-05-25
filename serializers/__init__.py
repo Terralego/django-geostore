@@ -61,18 +61,9 @@ class LayerSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'schema', 'group')
 
 
-class LayerWithFeaturesSerializer(serializers.ModelSerializer):
-    features = FeatureInLayerSerializer(many=True)
-
+class GeoJSONLayerSerializer(serializers.JSONField):
     def to_representation(self, data):
         return data.to_geojson()
-
-    def get_fields(self):
-        return {'geojson': serializers.JSONField()}
-
-    class Meta:
-        model = Layer
-        fields = ('id', 'name', 'schema', 'group', 'features')
 
 
 class LayerRelationSerializer(serializers.ModelSerializer):
