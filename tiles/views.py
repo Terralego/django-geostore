@@ -20,10 +20,12 @@ from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
 class MVTView(View):
 
     def get_tile(self):
-        tile = b''
+        big_tile = b''
 
         for layer in self.layers:
-            tile += self.get_tile_for_layer(layer)
+            feature_count, tile = self.get_tile_for_layer(layer)
+            if feature_count:
+                big_tile += tile
         return tile
 
     def get_tile_for_layer(self, layer):
@@ -56,9 +58,9 @@ class MVTView(View):
             FROM tilegeom
             ''',
             args + (layer.pk, layer.name)
-        )
+        )[0]
 
-        return mvt_query[0].mvt
+        return (mvt_query.count, mvt_query.mvt)
 
     def get(self, request, group, z, x, y):
         self.z = z
