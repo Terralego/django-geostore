@@ -20,11 +20,18 @@ from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
 class MVTView(View):
 
     def get_tile(self):
+        tile = b''
+
+        for layer in self.layers:
+            tile += self.get_tile_for_layer(layer)
+        return tile
+
+    def get_tile_for_layer(self, layer):
         bounds = mercantile.bounds(self.x, self.y, self.z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
 
-        layer_query = self.layer.features.for_date(self.date_filter).annotate(
+        layer_query = layer.features.for_date(self.date_filter).annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
                 geom3857=ST_Transform('geom', 3857)
             ).filter(
@@ -45,32 +52,31 @@ class MVTView(View):
             f'''
             WITH tilegeom as ({layer_raw_query})
             SELECT %s AS id, count(*) AS count,
-                   ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
+                   ST_AsMVT(tilegeom, %s, 4096, 'geometry') AS mvt
             FROM tilegeom
             ''',
-            args + (self.layer.pk, )
+            args + (layer.pk, layer.name)
         )
 
-        return mvt_query[0]
+        return mvt_query[0].mvt
 
-    def get(self, request, layer_pk, z, x, y):
+    def get(self, request, group, z, x, y):
         self.z = z
         self.x = x
         self.y = y
 
-        self.layer = get_object_or_404(Layer, pk=layer_pk)
+        self.layers = Layer.objects.filter(group=group)
+
+        if self.layers.count() == 0:
+            return HttpResponseNotFound()
 
         self.date_filter = (parse_date(self.request.GET.get('date', ''))
                             or date.today())
 
-        qs = self.get_tile()
-        if qs.count > 0:
-            return HttpResponse(
-                        qs.mvt,
-                        content_type="application/vnd.mapbox-vector-tile"
-                        )
-        else:
-            return HttpResponseNotFound()
+        return HttpResponse(
+                    self.get_tile(),
+                    content_type="application/vnd.mapbox-vector-tile"
+                    )
 
 
 class IntersectView(APIView):
