@@ -82,12 +82,11 @@ class MVTView(View):
 
 
 class IntersectView(APIView):
-    def post(self, request, layer_pk):
-        layer = get_object_or_404(Layer, pk=layer_pk)
+    def post(self, request, group):
         date_filter = (parse_date(self.request.GET.get('date', ''))
                        or date.today())
 
-        features = layer.features.for_date(date_filter)
+        features = Feature.objects.for_date(date_filter).filter(layer__group=group)
 
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))

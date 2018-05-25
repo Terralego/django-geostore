@@ -1,7 +1,10 @@
 from datetime import date
+import json
 
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
+from django.urls import reverse
+
 
 from terracommon.terra.models import Layer, TerraUser
 
@@ -14,13 +17,42 @@ class FeaturesTestCase(TestCase):
           45.583289756006316
         ]
       }''')
+    intersect_geometry = {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1.3839340209960938,
+            43.602521593464054
+          ],
+          [
+            1.4869308471679688,
+            43.60376465190968
+          ]
+        ]
+    }
+    intersect_ref_geometry = {
+        "type": "LineString",
+        "coordinates": [
+            [
+                1.440925598144531,
+                43.64750394449096
+            ],
+            [
+                1.440582275390625,
+                43.574421623084234
+            ]
+        ]
+    }
+    group_name = 'mygroup'
 
     def setUp(self):
         self.user = TerraUser.objects.create_user(
             email='foo@bar.com',
             password='123456'
         )
-        self.layer = Layer.objects.create()
+        self.client.login(username='foo@bar.com', password='123456')
+
+        self.layer = Layer.objects.create(group=self.group_name)
 
     def test_features_dates(self):
         self.layer.features.create(
@@ -66,3 +98,32 @@ class FeaturesTestCase(TestCase):
 
         for count, day in dates:
             self.assertEqual(count, self.layer.features.for_date(day).count())
+
+
+    def test_intersects(self):
+        """Create a fake line geometry to intersect with"""
+        self.layer.features.create(
+            geom=GEOSGeometry(json.dumps(self.intersect_ref_geometry)),
+            properties={},
+            from_date='01-01',
+            to_date='12-31'
+        )
+
+        response = self.client.post(reverse('intersect', args=[self.group_name]),
+            {'geom': json.dumps(self.intersect_geometry), },
+        )
+
+        self.assertEqual(200, response.status_code)
+
+        resp_data = response.json()
+
+        self.assertEqual(1, len(resp_data.get('features')))
+        self.assertDictEqual(self.intersect_ref_geometry, resp_data.get('features')[0].get('geometry'))
+
+        """Must not intersect with this point"""
+        response = self.client.post(reverse('intersect', args=[self.group_name]),
+            {'geom': self.fake_geometry.json, },
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(0, len(response.json().get('features')))
