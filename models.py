@@ -1,14 +1,13 @@
 import json
 import uuid
 
-from django.db import transaction
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.gis.db import models
 from django.contrib.gis.geos.geometry import GEOSGeometry
-from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos.point import Point
-
+from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
+from django.db import transaction
 from django.db.models import Manager
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -34,7 +33,7 @@ class Layer(models.Model):
         """
         rl = list(reader)
         chunks = [rl[i:i+chunk_size]
-                    for i in range(0, len(rl), chunk_size)]
+                  for i in range(0, len(rl), chunk_size)]
 
         if init:
             for chunk in chunks:
