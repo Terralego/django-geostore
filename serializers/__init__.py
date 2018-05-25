@@ -1,4 +1,7 @@
+from urllib.parse import unquote
+        
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
 from rest_framework import serializers
 
@@ -55,10 +58,18 @@ class FeatureInLayerSerialize(serializers.ModelSerializer):
 
 
 class LayerSerializer(serializers.ModelSerializer):
+    group_intersect = serializers.SerializerMethodField()
+    group_tiles = serializers.SerializerMethodField()
+
+    def get_group_intersect(self, obj):
+        return reverse('group-intersect', args=[obj.group, ])
+
+    def get_group_tiles(self, obj):
+        return unquote(reverse('group-tiles-pattern', args=[obj.group]))
 
     class Meta:
         model = Layer
-        fields = ('id', 'name', 'schema', 'group')
+        fields = '__all__'
 
 
 class LayerWithFeaturesSerializer(serializers.ModelSerializer):

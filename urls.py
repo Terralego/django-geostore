@@ -1,4 +1,5 @@
 from django.urls import include, path
+from django.http import HttpResponseNotFound
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
@@ -38,9 +39,14 @@ urlpatterns = [
          name='schema-redoc'),
     path(r'layer/<str:group>/intersects/',
          IntersectView.as_view(),
-         name='intersect'),
+         name='group-intersect'),
     path(r'layer/<str:group>/tiles/<int:z>/<int:x>/<int:y>/',
-         MVTView.as_view()),
+         MVTView.as_view(),
+         name='group-tiles'),
+    # Fake pattern to be able to reverse this
+    path(r'layer/<str:group>/tiles/{z}/{x}/{y}/',
+         lambda request, group: HttpResponseNotFound(),
+         name='group-tiles-pattern'),
     path('', include('terracommon.trrequests.urls'))
 ]
 
