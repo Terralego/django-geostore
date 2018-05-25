@@ -108,7 +108,7 @@ class FeaturesTestCase(TestCase):
         )
 
         response = self.client.post(
-            reverse('intersect', args=[self.group_name]),
+            reverse('group-intersect', args=[self.group_name]),
             {'geom': json.dumps(self.intersect_geometry), },
         )
 
@@ -122,7 +122,7 @@ class FeaturesTestCase(TestCase):
 
         """Must not intersect with this point"""
         response = self.client.post(
-            reverse('intersect', args=[self.group_name]),
+            reverse('group-intersect', args=[self.group_name]),
             {'geom': self.fake_geometry.json, },)
 
         self.assertEqual(200, response.status_code)
