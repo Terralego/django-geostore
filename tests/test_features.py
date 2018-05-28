@@ -1,8 +1,9 @@
 from datetime import date
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from .factories import LayerFactory
+from .factories import LayerFactory, FeatureFactory
 
 
 class FeaturesTestCase(TestCase):
@@ -29,3 +30,12 @@ class FeaturesTestCase(TestCase):
 
         for count, day in dates:
             self.assertEqual(count, self.layer.features.for_date(day).count())
+
+    def test_feature_date_malformed(self):
+        with self.assertRaises(ValidationError):
+            FeatureFactory(from_date='1970-01-01', to_date='1970-01-01')
+
+    def test_feature_date_illegal(self):
+        with self.assertRaises(ValueError):
+            FeatureFactory(from_date='99-99', to_date='99-99')
+        
