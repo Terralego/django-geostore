@@ -2,8 +2,9 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 
-from .factories import LayerFactory, FeatureFactory
+from .factories import LayerFactory, FeatureFactory, TerraUserFactory
 
 
 class FeaturesTestCase(TestCase):
@@ -16,6 +17,8 @@ class FeaturesTestCase(TestCase):
             {'from_date': '01-20', 'to_date': '12-20'},
         ]
         self.layer = LayerFactory.create(add_features=features_dates)
+        self.user = TerraUserFactory()
+        self.client.force_login(self.user)
 
     def test_features_dates(self):
         dates = (
@@ -38,4 +41,12 @@ class FeaturesTestCase(TestCase):
     def test_feature_date_illegal(self):
         with self.assertRaises(ValueError):
             FeatureFactory(from_date='99-99', to_date='99-99')
+    
+    def test_to_geojson(self):
+        response = self.client.get(reverse('layer-geojson', args=[self.layer.pk]))
+        self.assertEqual(200, response.status_code)
+
+        response = response.json()
+        self.assertEqual('FeatureCollection', response.get('type'))
+        self.assertEqual(self.layer.features.all().count(), len(response.get('features')))
         
