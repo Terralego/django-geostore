@@ -2,8 +2,8 @@ from datetime import date
 
 from django.test import TestCase
 
-from terracommon.terra.models import Layer
-from .factories import FeatureFactory, LayerFactory
+from .factories import LayerFactory
+
 
 class FeaturesTestCase(TestCase):
     def setUp(self):
@@ -15,7 +15,6 @@ class FeaturesTestCase(TestCase):
             {'from_date': '01-20', 'to_date': '12-20'},
         ]
         self.layer = LayerFactory.create(add_features=features_dates)
-
 
     def test_features_dates(self):
         dates = (

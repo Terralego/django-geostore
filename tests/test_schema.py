@@ -2,9 +2,10 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from terracommon.terra.models import Feature, Layer, TerraUser
+from terracommon.terra.models import Feature
 
 from .factories import LayerFactory, TerraUserFactory
+
 
 class SchemaValidationTestCase(TestCase):
     def setUp(self):

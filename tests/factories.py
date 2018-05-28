@@ -1,5 +1,4 @@
 import factory
-
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
 from terracommon.terra.models import Feature, Layer, TerraUser
@@ -10,7 +9,7 @@ class TerraUserFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = TerraUser
-    
+
     email = 'foo@bar.com'
     is_active = True
 
@@ -24,7 +23,6 @@ class TerraUserFactory(factory.DjangoModelFactory):
     def organizations(self, create, count, **kwargs):
         if count:
             self.organizations.add(OrganizationFactory())
-
 
 
 class LayerFactory(factory.DjangoModelFactory):

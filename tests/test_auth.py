@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 
 from .factories import TerraUserFactory
 
+
 class AuthenticationTestCase(TestCase):
     USER_PASSWORD = '123456'
 
