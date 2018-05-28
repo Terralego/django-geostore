@@ -14,6 +14,7 @@ class TerraUserFactory(factory.DjangoModelFactory):
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
+        kwargs.update({'password': kwargs.get('password', '123456')})
         manager = cls._get_manager(model_class)
         return manager.create_user(*args, **kwargs)
 
@@ -24,8 +25,9 @@ class LayerFactory(factory.DjangoModelFactory):
 
     @factory.post_generation
     def add_features(self, create, features, **kwargs):
-        for feature in features:
-            FeatureFactory(layer=self, **feature)
+        if features:
+            for feature in features:
+                FeatureFactory(layer=self, **feature)
 
 
 class FeatureFactory(factory.DjangoModelFactory):

@@ -4,17 +4,16 @@ from rest_framework.test import APIClient
 
 from terracommon.terra.models import Feature, Layer, TerraUser
 
+from .factories import LayerFactory, TerraUserFactory
 
 class SchemaValidationTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = TerraUser.objects.create_user(
-            email='foo@bar.com',
-            password='123456'
-        )
+        self.user = TerraUserFactory()
+
         self.client.force_authenticate(user=self.user)
 
-        self.layer = Layer.objects.create(
+        self.layer = LayerFactory(
             name="tree",
             schema={
                 "name": {
