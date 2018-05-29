@@ -1,16 +1,7 @@
-import json
-import mimetypes
-import tempfile
-from datetime import date
-
-from django.contrib.gis.gdal import DataSource
-
-from django.contrib.gis.geos.geometry import GEOSGeometry
-from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from .factories import LayerFactory, FeatureFactory, TerraUserFactory
+from .factories import LayerFactory
 
 
 class VectorTilesTestCase(TestCase):
@@ -44,9 +35,11 @@ class VectorTilesTestCase(TestCase):
             ]
             }
         ''')
-        response = self.client.get(reverse('layer-tiles', args=[layer.pk, 13, 4126, 2991]))
+        response = self.client.get(reverse('layer-tiles',
+                                           args=[layer.pk, 13, 4126, 2991]))
         self.assertEqual(200, response.status_code)
         self.assertGreater(len(response.content), 0)
 
-        response = self.client.get(reverse('layer-tiles', args=[layer.pk, 1, 1, 1]))
+        response = self.client.get(reverse('layer-tiles',
+                                           args=[layer.pk, 1, 1, 1]))
         self.assertEqual(404, response.status_code)

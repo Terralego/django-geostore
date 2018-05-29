@@ -1,7 +1,6 @@
 import json
 from datetime import date
 
-from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
@@ -43,14 +42,16 @@ class FeaturesTestCase(TestCase):
     def test_feature_date_illegal(self):
         with self.assertRaises(ValueError):
             FeatureFactory(from_date='99-99', to_date='99-99')
-    
+
     def test_to_geojson(self):
-        response = self.client.get(reverse('layer-geojson', args=[self.layer.pk]))
+        response = self.client.get(reverse('layer-geojson',
+                                           args=[self.layer.pk]))
         self.assertEqual(200, response.status_code)
 
         response = response.json()
         self.assertEqual('FeatureCollection', response.get('type'))
-        self.assertEqual(self.layer.features.all().count(), len(response.get('features')))
+        self.assertEqual(self.layer.features.all().count(),
+                         len(response.get('features')))
 
     def test_features_intersections(self):
         layer = LayerFactory()
@@ -58,25 +59,24 @@ class FeaturesTestCase(TestCase):
                 "type": "FeatureCollection",
                 "features": [
                     {
-                    "type": "Feature",
-                    "properties": {},
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [
-                        [
-                            1.109619140625,
-                            44.036269809534616
-                        ],
-                        [
-                            1.7633056640625,
-                            43.12103377575541
-                        ]
-                        ]
-                    }
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [
+                                    1.109619140625,
+                                    44.036269809534616
+                                ],
+                                [
+                                    1.7633056640625,
+                                    43.12103377575541
+                                ]
+                            ]
+                        }
                     }
                 ]
             }
-
 
         layer.from_geojson(
             from_date='01-01',
@@ -130,8 +130,7 @@ class FeaturesTestCase(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertEqual(0, len(response.json().get('features')))
 
-
-        """Tests that the intersects view throw an error if geometry is 
+        """Tests that the intersects view throw an error if geometry is
            invalid
         """
         response = self.client.post(
