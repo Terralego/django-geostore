@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from .factories import LayerFactory, FeatureFactory, TerraUserFactory
+from .factories import FeatureFactory, LayerFactory, TerraUserFactory
 
 
 class FeaturesTestCase(TestCase):
