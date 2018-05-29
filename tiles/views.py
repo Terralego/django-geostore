@@ -83,7 +83,7 @@ class IntersectView(APIView):
 
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))
-        except TypeError:
+        except (TypeError, ValueError):
             return HttpResponseBadRequest(
                         content='Provided geometry is not valid')
 

@@ -1,3 +1,4 @@
+import json
 from datetime import date
 
 from django.contrib.gis.geos.geometry import GEOSGeometry
@@ -53,61 +54,90 @@ class FeaturesTestCase(TestCase):
 
     def test_features_intersections(self):
         layer = LayerFactory()
+        reference_geometry = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                        [
+                            1.109619140625,
+                            44.036269809534616
+                        ],
+                        [
+                            1.7633056640625,
+                            43.12103377575541
+                        ]
+                        ]
+                    }
+                    }
+                ]
+            }
+
 
         layer.from_geojson(
             from_date='01-01',
             to_date='12-31',
-            geojson_data='''
-            {
-            "type": "FeatureCollection",
-            "features": [
-                {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [
-                    [
-                        1.109619140625,
-                        44.036269809534616
-                    ],
-                    [
-                        1.7633056640625,
-                        43.12103377575541
-                    ]
-                    ]
-                }
-                }
-            ]
-            }
-            ''')
+            geojson_data=json.dumps(reference_geometry))
 
         """The layer below must intersect"""
-        features = layer.features.intersects(GEOSGeometry('''
+        response = self.client.post(
+            reverse('layer-intersects', args=[layer.pk, ]),
             {
-                "type": "LineString",
-                "coordinates": [
-                [
-                    1.856689453125,
-                    43.92163712834673
-                ],
-                [
-                    1.109619140625,
-                    43.4249985081581
-                ]
-                ]
+                'geom': '''
+                    {
+                        "type": "LineString",
+                        "coordinates": [
+                        [
+                            1.856689453125,
+                            43.92163712834673
+                        ],
+                        [
+                            1.109619140625,
+                            43.4249985081581
+                        ]
+                        ]
+                    }
+                '''
             }
-        '''))
-        self.assertEqual(1, len(features))
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertDictEqual(
+            reference_geometry.get('features')[0],
+            response.json().get('features')[0]
+        )
 
         """The layer below must NOT intersect"""
-        features = layer.features.intersects(GEOSGeometry('''
+        response = self.client.post(
+            reverse('layer-intersects', args=[layer.pk, ]),
             {
-                "type": "Point",
-                "coordinates": [
-                1.9940185546874998,
-                44.55133484083592
-                ]
+                'geom': '''
+                    {
+                        "type": "Point",
+                        "coordinates": [
+                        1.9940185546874998,
+                        44.55133484083592
+                        ]
+                    }
+                '''
             }
-        '''))
-        self.assertEqual(0, len(features))
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(0, len(response.json().get('features')))
+
+
+        """Tests that the intersects view throw an error if geometry is 
+           invalid
+        """
+        response = self.client.post(
+            reverse('layer-intersects', args=[layer.pk, ]),
+            {
+                'geom': '''Invalid geometry'''
+            }
+        )
+        self.assertEqual(400, response.status_code)
