@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
@@ -49,4 +50,64 @@ class FeaturesTestCase(TestCase):
         response = response.json()
         self.assertEqual('FeatureCollection', response.get('type'))
         self.assertEqual(self.layer.features.all().count(), len(response.get('features')))
-        
+
+    def test_features_intersections(self):
+        layer = LayerFactory()
+
+        layer.from_geojson(
+            from_date='01-01',
+            to_date='12-31',
+            geojson_data='''
+            {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                    [
+                        1.109619140625,
+                        44.036269809534616
+                    ],
+                    [
+                        1.7633056640625,
+                        43.12103377575541
+                    ]
+                    ]
+                }
+                }
+            ]
+            }
+            ''')
+
+        """The layer below must intersect"""
+        features = layer.features.intersects(GEOSGeometry('''
+            {
+                "type": "LineString",
+                "coordinates": [
+                [
+                    1.856689453125,
+                    43.92163712834673
+                ],
+                [
+                    1.109619140625,
+                    43.4249985081581
+                ]
+                ]
+            }
+        '''))
+        self.assertEqual(1, len(features))
+
+        """The layer below must NOT intersect"""
+        features = layer.features.intersects(GEOSGeometry('''
+            {
+                "type": "Point",
+                "coordinates": [
+                1.9940185546874998,
+                44.55133484083592
+                ]
+            }
+        '''))
+        self.assertEqual(0, len(features))
