@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .fields import DateFieldYearLess
+from .helpers import ChunkIterator
 from .managers import FeatureQuerySet, TerraUserManager
 
 
@@ -31,10 +32,8 @@ class Layer(models.Model):
         :param chunk_size: only used if init=True, control the size of
                            bulk_create
         """
-        rl = list(reader)
-        chunks = [rl[i:i+chunk_size]
-                  for i in range(0, len(rl), chunk_size)]
-
+        # rl = list(reader)
+        chunks = ChunkIterator(reader, chunk_size)
         if init:
             for chunk in chunks:
                 entries = [
