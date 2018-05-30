@@ -1,11 +1,11 @@
 import json
 from datetime import date
 
-from django.contrib.gis.geos.geometry import GEOSGeometry
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from .factories import LayerFactory, TerraUserFactory
+from .factories import FeatureFactory, LayerFactory, TerraUserFactory
 
 
 class FeaturesTestCase(TestCase):
@@ -72,32 +72,108 @@ class FeaturesTestCase(TestCase):
         for count, day in dates:
             self.assertEqual(count, self.layer.features.for_date(day).count())
 
-    def test_intersects(self):
-        """Create a fake line geometry to intersect with"""
-        self.layer.features.create(
-            geom=GEOSGeometry(json.dumps(self.intersect_ref_geometry)),
-            properties={},
-            from_date='01-01',
-            to_date='12-31'
-        )
+    def test_feature_date_malformed(self):
+        with self.assertRaises(ValidationError):
+            FeatureFactory(from_date='1970-01-01', to_date='1970-01-01')
 
+    def test_feature_date_illegal(self):
+        with self.assertRaises(ValueError):
+            FeatureFactory(from_date='99-99', to_date='99-99')
+
+    def test_to_geojson(self):
+        response = self.client.get(reverse('layer-geojson',
+                                           args=[self.layer.pk]))
+        self.assertEqual(200, response.status_code)
+
+        response = response.json()
+        self.assertEqual('FeatureCollection', response.get('type'))
+        self.assertEqual(self.layer.features.all().count(),
+                         len(response.get('features')))
+
+    def test_features_intersections(self):
+        layer = LayerFactory(group=self.group_name)
+        reference_geometry = {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": [
+                                [
+                                    1.109619140625,
+                                    44.036269809534616
+                                ],
+                                [
+                                    1.7633056640625,
+                                    43.12103377575541
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+
+        layer.from_geojson(
+            from_date='01-01',
+            to_date='12-31',
+            geojson_data=json.dumps(reference_geometry))
+
+        """The layer below must intersect"""
         response = self.client.post(
-            reverse('group-intersect', args=[self.group_name]),
-            {'geom': json.dumps(self.intersect_geometry), },
+            reverse('group-intersect', args=[self.group_name, ]),
+            {
+                'geom': '''
+                    {
+                        "type": "LineString",
+                        "coordinates": [
+                        [
+                            1.856689453125,
+                            43.92163712834673
+                        ],
+                        [
+                            1.109619140625,
+                            43.4249985081581
+                        ]
+                        ]
+                    }
+                '''
+            }
         )
 
         self.assertEqual(200, response.status_code)
+        self.assertDictEqual(
+            reference_geometry.get('features')[0],
+            response.json().get('features')[0]
+        )
 
-        resp_data = response.json()
-
-        self.assertEqual(1, len(resp_data.get('features')))
-        self.assertDictEqual(self.intersect_ref_geometry,
-                             resp_data.get('features')[0].get('geometry'))
-
-        """Must not intersect with this point"""
+        """The layer below must NOT intersect"""
         response = self.client.post(
-            reverse('group-intersect', args=[self.group_name]),
-            {'geom': json.dumps(self.fake_geometry), },)
+            reverse('group-intersect', args=[self.group_name, ]),
+            {
+                'geom': '''
+                    {
+                        "type": "Point",
+                        "coordinates": [
+                        1.9940185546874998,
+                        44.55133484083592
+                        ]
+                    }
+                '''
+            }
+        )
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(0, len(response.json().get('features')))
+
+        """Tests that the intersects view throw an error if geometry is
+           invalid
+        """
+        response = self.client.post(
+            reverse('group-intersect', args=[self.group_name, ]),
+            {
+                'geom': '''Invalid geometry'''
+            }
+        )
+        self.assertEqual(400, response.status_code)
