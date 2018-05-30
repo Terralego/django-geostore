@@ -2,6 +2,7 @@ from django.test import TestCase
 
 from terracommon.terra.helpers import ChunkIterator
 
+
 class HelpersTestCase(TestCase):
 
     def test_chunk_iterator(self):
@@ -12,4 +13,3 @@ class HelpersTestCase(TestCase):
 
         self.assertEqual(11, len(chunks))
         self.assertEqual(10, len(chunks.pop()))
-        

@@ -6,7 +6,7 @@ class ChunkIterator:
 
     def __iter__(self):
         return self
-    
+
     def __next__(self):
         try:
             chunk = []
