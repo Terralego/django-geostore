@@ -2,25 +2,21 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from terracommon.terra.models import TerraUser
+from .factories import TerraUserFactory
 
 
 class AuthenticationTestCase(TestCase):
-    USERNAME = 'foo@bar.com'
     USER_PASSWORD = '123456'
 
     def setUp(self):
         self.client = APIClient()
-        self.user = TerraUser.objects.create_user(
-            email=self.USERNAME,
-            password=self.USER_PASSWORD
-        )
+        self.user = TerraUserFactory.create(password=self.USER_PASSWORD)
 
     def test_authentication_jwt(self):
         """Feature with valid properties is successfully POSTed"""
         response = self.client.post(reverse('token-obtain'),
                                     {
-                                        'email': self.USERNAME,
+                                        'email': self.user.email,
                                         'password': self.USER_PASSWORD
                                     },)
 

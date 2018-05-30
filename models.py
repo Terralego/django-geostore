@@ -64,13 +64,15 @@ class Layer(models.Model):
                 if sp:
                     transaction.savepoint_commit(sp)
 
-    def from_geojson(self, geojson_data, from_date, to_date):
+    def from_geojson(self, geojson_data, from_date, to_date, update=False):
         """
         Import geojson raw data in a layer
         Args:
             geojson_data(str): must be raw text json data
         """
         geojson = json.loads(geojson_data)
+        if update:
+            self.features.all().delete()
         for feature in geojson.get('features', []):
             Feature.objects.create(
                 layer=self,
