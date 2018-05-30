@@ -5,8 +5,10 @@ from .factories import LayerFactory
 
 
 class VectorTilesTestCase(TestCase):
+    group_name = 'mygroup'
+
     def test_vector_tiles_view(self):
-        layer = LayerFactory()
+        layer = LayerFactory(group=self.group_name)
 
         layer.from_geojson(
             from_date='01-01',
@@ -35,11 +37,13 @@ class VectorTilesTestCase(TestCase):
             ]
             }
         ''')
-        response = self.client.get(reverse('layer-tiles',
-                                           args=[layer.pk, 13, 4126, 2991]))
+        response = self.client.get(
+            reverse('group-tiles', args=[self.group_name, 13, 4126, 2991]))
         self.assertEqual(200, response.status_code)
         self.assertGreater(len(response.content), 0)
 
-        response = self.client.get(reverse('layer-tiles',
-                                           args=[layer.pk, 1, 1, 1]))
-        self.assertEqual(404, response.status_code)
+        response = self.client.get(reverse('group-tiles',
+                                           args=[self.group_name, 1, 1, 1]))
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(b'', response.content)

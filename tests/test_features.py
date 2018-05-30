@@ -9,6 +9,41 @@ from .factories import FeatureFactory, LayerFactory, TerraUserFactory
 
 
 class FeaturesTestCase(TestCase):
+    fake_geometry = {
+        "type": "Point",
+        "coordinates": [
+          2.,
+          45.
+        ]
+    }
+    intersect_geometry = {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1.3839340209960938,
+            43.602521593464054
+          ],
+          [
+            1.4869308471679688,
+            43.60376465190968
+          ]
+        ]
+    }
+    intersect_ref_geometry = {
+        "type": "LineString",
+        "coordinates": [
+            [
+                1.440925598144531,
+                43.64750394449096
+            ],
+            [
+                1.440582275390625,
+                43.574421623084234
+            ]
+        ]
+    }
+    group_name = 'mygroup'
+
     def setUp(self):
         features_dates = [
             {'from_date': '12-01', 'to_date': '02-01'},
@@ -17,7 +52,9 @@ class FeaturesTestCase(TestCase):
             {'from_date': '10-01', 'to_date': '12-31'},
             {'from_date': '01-20', 'to_date': '12-20'},
         ]
-        self.layer = LayerFactory.create(add_features=features_dates)
+        self.layer = LayerFactory.create(group=self.group_name,
+                                         add_features=features_dates)
+
         self.user = TerraUserFactory()
         self.client.force_login(self.user)
 
@@ -54,7 +91,7 @@ class FeaturesTestCase(TestCase):
                          len(response.get('features')))
 
     def test_features_intersections(self):
-        layer = LayerFactory()
+        layer = LayerFactory(group=self.group_name)
         reference_geometry = {
                 "type": "FeatureCollection",
                 "features": [
@@ -85,7 +122,7 @@ class FeaturesTestCase(TestCase):
 
         """The layer below must intersect"""
         response = self.client.post(
-            reverse('layer-intersects', args=[layer.pk, ]),
+            reverse('group-intersect', args=[self.group_name, ]),
             {
                 'geom': '''
                     {
@@ -113,7 +150,7 @@ class FeaturesTestCase(TestCase):
 
         """The layer below must NOT intersect"""
         response = self.client.post(
-            reverse('layer-intersects', args=[layer.pk, ]),
+            reverse('group-intersect', args=[self.group_name, ]),
             {
                 'geom': '''
                     {
@@ -134,7 +171,7 @@ class FeaturesTestCase(TestCase):
            invalid
         """
         response = self.client.post(
-            reverse('layer-intersects', args=[layer.pk, ]),
+            reverse('group-intersect', args=[self.group_name, ]),
             {
                 'geom': '''Invalid geometry'''
             }
