@@ -7,7 +7,6 @@ from django.core.serializers import serialize
 from django.db.models import F
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotFound)
-from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date
 from django.views.generic import View
 from rest_framework.response import Response
@@ -20,11 +19,20 @@ from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
 class MVTView(View):
 
     def get_tile(self):
+        big_tile = b''
+
+        for layer in self.layers:
+            feature_count, tile = self.get_tile_for_layer(layer)
+            if feature_count:
+                big_tile += tile
+        return tile
+
+    def get_tile_for_layer(self, layer):
         bounds = mercantile.bounds(self.x, self.y, self.z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
 
-        layer_query = self.layer.features.for_date(self.date_filter).annotate(
+        layer_query = layer.features.for_date(self.date_filter).annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
                 geom3857=ST_Transform('geom', 3857)
             ).filter(
@@ -45,41 +53,40 @@ class MVTView(View):
             f'''
             WITH tilegeom as ({layer_raw_query})
             SELECT %s AS id, count(*) AS count,
-                   ST_AsMVT(tilegeom, 'name', 4096, 'geometry') AS mvt
+                   ST_AsMVT(tilegeom, %s, 4096, 'geometry') AS mvt
             FROM tilegeom
             ''',
-            args + (self.layer.pk, )
-        )
+            args + (layer.pk, layer.name)
+        )[0]
 
-        return mvt_query[0]
+        return (mvt_query.count, mvt_query.mvt)
 
-    def get(self, request, layer_pk, z, x, y):
+    def get(self, request, group, z, x, y):
         self.z = z
         self.x = x
         self.y = y
 
-        self.layer = get_object_or_404(Layer, pk=layer_pk)
+        self.layers = Layer.objects.filter(group=group)
+
+        if self.layers.count() == 0:
+            return HttpResponseNotFound()
 
         self.date_filter = (parse_date(self.request.GET.get('date', ''))
                             or date.today())
 
-        qs = self.get_tile()
-        if qs.count > 0:
-            return HttpResponse(
-                        qs.mvt,
-                        content_type="application/vnd.mapbox-vector-tile"
-                        )
-        else:
-            return HttpResponseNotFound()
+        return HttpResponse(
+                    self.get_tile(),
+                    content_type="application/vnd.mapbox-vector-tile"
+                    )
 
 
 class IntersectView(APIView):
-    def post(self, request, layer_pk):
-        layer = get_object_or_404(Layer, pk=layer_pk)
+    def post(self, request, group):
         date_filter = (parse_date(self.request.GET.get('date', ''))
                        or date.today())
 
-        features = layer.features.for_date(date_filter)
+        features = Feature.objects.for_date(
+                    date_filter).filter(layer__group=group)
 
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))
