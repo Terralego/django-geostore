@@ -32,7 +32,10 @@ class MVTView(View):
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
 
-        layer_query = layer.features.for_date(self.date_filter).annotate(
+        layer_query = layer.features.for_date(
+            self.date_from,
+            self.date_to
+            ).annotate(
                 bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, 3857),
                 geom3857=ST_Transform('geom', 3857)
             ).filter(
@@ -71,8 +74,10 @@ class MVTView(View):
         if self.layers.count() == 0:
             return HttpResponseNotFound()
 
-        self.date_filter = (parse_date(self.request.GET.get('date', ''))
-                            or date.today())
+        self.date_from = (parse_date(self.request.GET.get('from', ''))
+                          or date.today())
+        self.date_to = (parse_date(self.request.GET.get('to', ''))
+                        or self.date_from)
 
         return HttpResponse(
                     self.get_tile(),
@@ -82,11 +87,13 @@ class MVTView(View):
 
 class IntersectView(APIView):
     def post(self, request, group):
-        date_filter = (parse_date(self.request.GET.get('date', ''))
-                       or date.today())
+        date_from = (parse_date(self.request.POST.get('from', ''))
+                     or date.today())
+        date_to = (parse_date(self.request.POST.get('to', ''))
+                   or date_from)
 
-        features = Feature.objects.for_date(
-                    date_filter).filter(layer__group=group)
+        features = Feature.objects.filter(layer__group=group).for_date(
+            date_from, date_to)
 
         try:
             geometry = GEOSGeometry(request.POST.get('geom', None))
@@ -94,9 +101,23 @@ class IntersectView(APIView):
             return HttpResponseBadRequest(
                         content='Provided geometry is not valid')
 
+        response = {}
+        for feature in features.intersects(geometry):
+            feature.properties.update({
+                'date_from': date_from,
+                'date_to': date_to
+            })
+
+            if feature.identifier in response:
+                (response[feature.identifier].properties
+                    .append(feature.properties))
+            else:
+                feature.properties = [feature.properties, ]
+                response[feature.identifier] = feature
+
         return Response(json.loads(
                     serialize('geojson',
-                              features.intersects(geometry),
+                              [f for f in response.values()],
                               fields=('properties',),
                               geometry_field='geom',
                               properties_field='properties'),

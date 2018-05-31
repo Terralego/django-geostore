@@ -92,6 +92,10 @@ class Layer(models.Model):
 
 class Feature(models.Model):
     geom = models.GeometryField()
+    identifier = models.CharField(max_length=255,
+                                  blank=False,
+                                  null=False,
+                                  default=uuid.uuid4)
     properties = JSONField()
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
