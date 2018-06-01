@@ -1,6 +1,7 @@
 import json
 import uuid
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.gis.db import models
 from django.contrib.gis.geos.geometry import GEOSGeometry
@@ -11,10 +12,12 @@ from django.db import transaction
 from django.db.models import Manager
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from mercantile import tiles
 
 from .fields import DateFieldYearLess
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet, TerraUserManager
+from .tiles.helpers import VectorTile
 
 
 class Layer(models.Model):
@@ -102,6 +105,21 @@ class Feature(models.Model):
                                 default='12-31')
 
     objects = Manager.from_queryset(FeatureQuerySet)()
+
+    def clean_cache(self):
+        vtile = VectorTile(self.layer)
+        vtile.clean_tiles(self.get_intersected_tiles())
+
+    def get_intersected_tiles(self):
+        return [(tile.x, tile.y, tile.z)
+                for tile in tiles(*self.get_bounding_box(),
+                                  range(settings.MAX_TILE_ZOOM + 1))]
+
+    def get_bounding_box(self):
+        return self.geom.extent
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
 
 class LayerRelation(models.Model):
