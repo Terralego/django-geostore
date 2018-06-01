@@ -10,10 +10,15 @@ from terracommon.terra.models import Layer, Feature, LayerRelation, \
 
 
 class TerraUserSerializer(serializers.ModelSerializer):
+    permissions = serializers.SerializerMethodField()
+
+    def get_permissions(self, obj):
+        return obj.get_all_permissions()
+
     class Meta:
         model = TerraUser
         fields = ('id', 'is_superuser', 'email', 'properties', 'is_staff',
-                  'is_active')
+                  'is_active', 'permissions')
 
 
 class PropertiesSerializer(serializers.ModelSerializer):
