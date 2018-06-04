@@ -17,6 +17,7 @@ from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
 
 ESPG_3857 = 3857
 
+
 class MVTView(View):
 
     def get_tile(self):
@@ -118,7 +119,7 @@ class IntersectView(APIView):
 
         return Response(json.loads(
                     serialize('geojson',
-                              [f for f in response.values()],
+                              response.values(),
                               fields=('properties',),
                               geometry_field='geom',
                               properties_field='properties'),
