@@ -4,6 +4,8 @@ from django.db.models import F
 
 from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
 
+ESPG_3857 = 3857
+
 
 def cached_tile(func, expiration=3600*24):
     def wrapper(self, x, y, z, *args, **kwargs):
@@ -32,8 +34,8 @@ class VectorTile(object):
                                      self.ymin,
                                      self.xmax,
                                      self.ymax,
-                                     3857),
-                geom3857=ST_Transform('geom', 3857)
+                                     ESPG_3857),
+                geom3857=ST_Transform('geom', ESPG_3857)
             ).filter(
                 bbox__intersects=F('geom3857')
             ).annotate(

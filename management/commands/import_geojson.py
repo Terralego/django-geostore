@@ -37,6 +37,11 @@ class Command(BaseCommand):
                             action="store",
                             required=True,
                             help='GeoJSON files to import')
+        parser.add_argument('-i', '--identifier',
+                            action="store",
+                            help="Field in properties that will be used as "
+                                 "identifier of the features, so features can"
+                                 " be grouped on layer's operations")
         parser.add_argument('-f', '--from',
                             action="store",
                             required=True,
@@ -64,6 +69,7 @@ class Command(BaseCommand):
         from_date = options.get('from')
         to_date = options.get('to')
         group = options.get('group')
+        identifier = options.get('identifier', None)
 
         sp = transaction.savepoint()
 
@@ -77,15 +83,19 @@ class Command(BaseCommand):
             layer = Layer.objects.create(name=layer_name,
                                          schema=schema,
                                          group=group)
+            print(f"The created layer pk is {layer.pk}, it can be used to "
+                  "import more features in the same layer with different "
+                  "options")
 
-        self.import_datas(layer, geojson_files, from_date, to_date)
+        self.import_datas(layer, geojson_files, from_date, to_date, identifier)
 
         if dryrun:
             transaction.savepoint_rollback(sp)
         else:
             transaction.savepoint_commit(sp)
 
-    def import_datas(self, layer, geojson_files, from_date, to_date):
+    def import_datas(self, layer, geojson_files, from_date, to_date,
+                     identifier):
         for file_in in geojson_files:
             geojson = file_in.read()
-            layer.from_geojson(geojson, from_date, to_date)
+            layer.from_geojson(geojson, from_date, to_date, identifier)

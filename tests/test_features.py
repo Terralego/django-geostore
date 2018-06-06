@@ -1,6 +1,7 @@
 import json
 from datetime import date
 
+from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
@@ -70,7 +71,8 @@ class FeaturesTestCase(TestCase):
         )
 
         for count, day in dates:
-            self.assertEqual(count, self.layer.features.for_date(day).count())
+            self.assertEqual(count,
+                             self.layer.features.for_date(day, day).count())
 
     def test_feature_date_malformed(self):
         with self.assertRaises(ValidationError):
@@ -92,75 +94,32 @@ class FeaturesTestCase(TestCase):
 
     def test_features_intersections(self):
         layer = LayerFactory(group=self.group_name)
-        reference_geometry = {
-                "type": "FeatureCollection",
-                "features": [
-                    {
-                        "type": "Feature",
-                        "properties": {},
-                        "geometry": {
-                            "type": "LineString",
-                            "coordinates": [
-                                [
-                                    1.109619140625,
-                                    44.036269809534616
-                                ],
-                                [
-                                    1.7633056640625,
-                                    43.12103377575541
-                                ]
-                            ]
-                        }
-                    }
-                ]
-            }
-
-        layer.from_geojson(
+        FeatureFactory(
+            layer=layer,
             from_date='01-01',
             to_date='12-31',
-            geojson_data=json.dumps(reference_geometry))
+            geom=GEOSGeometry(json.dumps(self.intersect_ref_geometry)))
 
         """The layer below must intersect"""
         response = self.client.post(
             reverse('group-intersect', args=[self.group_name, ]),
             {
-                'geom': '''
-                    {
-                        "type": "LineString",
-                        "coordinates": [
-                        [
-                            1.856689453125,
-                            43.92163712834673
-                        ],
-                        [
-                            1.109619140625,
-                            43.4249985081581
-                        ]
-                        ]
-                    }
-                '''
+                'geom': json.dumps(self.intersect_geometry)
             }
         )
 
         self.assertEqual(200, response.status_code)
+        self.assertEqual(1, len(response.json().get('features')))
         self.assertDictEqual(
-            reference_geometry.get('features')[0],
-            response.json().get('features')[0]
+            self.intersect_ref_geometry,
+            response.json().get('features')[0].get('geometry')
         )
 
         """The layer below must NOT intersect"""
         response = self.client.post(
             reverse('group-intersect', args=[self.group_name, ]),
             {
-                'geom': '''
-                    {
-                        "type": "Point",
-                        "coordinates": [
-                        1.9940185546874998,
-                        44.55133484083592
-                        ]
-                    }
-                '''
+                'geom': json.dumps(self.fake_geometry)
             }
         )
 
@@ -177,3 +136,115 @@ class FeaturesTestCase(TestCase):
             }
         )
         self.assertEqual(400, response.status_code)
+
+    def test_features_dates_intersects(self):
+        group_name = 'date_intersect'
+        layer = LayerFactory(group=group_name)
+
+        features = [
+            {
+                'from_date': '01-01',
+                'to_date': '01-31',
+                'properties': {
+                    'number': 1,
+                }
+            }, {
+                'from_date': '02-01',
+                'to_date': '09-30',
+                'properties': {
+                    'number': 2,
+                }
+            }, {
+                'from_date': '10-01',
+                'to_date': '11-01',
+                'properties': {
+                    'number': 3,
+                }
+            }, {
+                'from_date': '12-01',
+                'to_date': '01-20',
+                'properties': {
+                    'number': 3,
+                }
+            }
+        ]
+
+        for feature in features:
+            FeatureFactory(
+                layer=layer,
+                geom=json.dumps(self.intersect_ref_geometry),
+                **feature
+            )
+
+        periods = (
+            (date(2018, 1, 5), date(2018, 2, 5), 3, []),
+            (date(2018, 4, 1), date(2018, 5, 1), 1, []),
+            (date(2018, 8, 30), date(2018, 10, 10), 2, []),
+            (date(2018, 11, 10), date(2018, 12, 10), 1, []),
+        )
+
+        for from_date, to_date, count, numbers in periods:
+            response = self.client.post(
+                reverse('group-intersect', args=[group_name, ]),
+                {
+                    'from': from_date,
+                    'to': to_date,
+                    'geom': json.dumps(self.intersect_geometry)
+                }
+            )
+            self.assertEqual(count, len(response.json().get('features', None)))
+
+    def test_features_sameidentifier_intersects(self):
+        group_name = "sameidentifier"
+        feature_identifier = "myidentifier"
+
+        layer = LayerFactory(group=group_name)
+
+        features = [
+            {
+                'from_date': '01-01',
+                'to_date': '01-31',
+                'properties': {
+                    'number': 1,
+                }
+            }, {
+                'from_date': '02-01',
+                'to_date': '09-30',
+                'properties': {
+                    'number': 2,
+                }
+            }, {
+                'from_date': '10-01',
+                'to_date': '11-01',
+                'properties': {
+                    'number': 3,
+                }
+            }, {
+                'from_date': '12-01',
+                'to_date': '01-20',
+                'properties': {
+                    'number': 3,
+                }
+            }
+        ]
+
+        for feature in features:
+            FeatureFactory(
+                identifier=feature_identifier,
+                layer=layer,
+                geom=json.dumps(self.intersect_ref_geometry),
+                **feature
+            )
+
+        response = self.client.post(
+            reverse('group-intersect', args=[group_name, ]),
+            {
+                'from': date(2018, 8, 30),
+                'to': date(2018, 10, 10),
+                'geom': json.dumps(self.intersect_geometry)
+            }
+        )
+        response = response.json()
+        self.assertEqual(1, len(response.get('features')))
+        self.assertEqual(2,
+                         len(response.get('features')[0].get('properties')))
