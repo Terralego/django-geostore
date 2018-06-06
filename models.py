@@ -119,9 +119,12 @@ class Feature(models.Model):
         vtile.clean_tiles(self.get_intersected_tiles())
 
     def get_intersected_tiles(self):
-        return [(tile.x, tile.y, tile.z)
-                for tile in tiles(*self.get_bounding_box(),
-                                  range(settings.MAX_TILE_ZOOM + 1))]
+        try:
+            return [(tile.x, tile.y, tile.z)
+                    for tile in tiles(*self.get_bounding_box(),
+                                      range(settings.MAX_TILE_ZOOM + 1))]
+        except ValueError:
+            return []
 
     def get_bounding_box(self):
         return self.geom.extent
