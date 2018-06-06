@@ -64,7 +64,8 @@ class Layer(models.Model):
                 if sp:
                     transaction.savepoint_commit(sp)
 
-    def from_geojson(self, geojson_data, from_date, to_date, update=False):
+    def from_geojson(self, geojson_data, from_date, to_date, id_field=None,
+                     update=False):
         """
         Import geojson raw data in a layer
         Args:
@@ -74,9 +75,12 @@ class Layer(models.Model):
         if update:
             self.features.all().delete()
         for feature in geojson.get('features', []):
+            properties = feature.get('properties', {})
+            identifier = properties.get(id_field, uuid.uuid4())
             Feature.objects.create(
                 layer=self,
-                properties=feature.get('properties', {}),
+                identifier=identifier,
+                properties=properties,
                 geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
                 from_date=from_date,
                 to_date=to_date
@@ -92,6 +96,10 @@ class Layer(models.Model):
 
 class Feature(models.Model):
     geom = models.GeometryField()
+    identifier = models.CharField(max_length=255,
+                                  blank=False,
+                                  null=False,
+                                  default=uuid.uuid4)
     properties = JSONField()
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
