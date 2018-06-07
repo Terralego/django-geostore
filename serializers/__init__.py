@@ -13,7 +13,7 @@ class TerraUserSerializer(serializers.ModelSerializer):
     permissions = serializers.SerializerMethodField()
 
     def get_permissions(self, obj):
-        return obj.get_all_permissions()
+        return list(obj.get_all_permissions())
 
     class Meta:
         model = TerraUser
