@@ -61,5 +61,5 @@ class VectorTilesTestCase(TestCase):
         cached_tile = tile.get_tile(x, y, z, features)
         self.assertEqual(cached_tile,
                          cache.get(tile.get_tile_cache_key(x, y, z)))
-        features[0].clean_cache()
+        features[0].clean_vect_tile_cache()
         self.assertIsNone(cache.get(tile.get_tile_cache_key(x, y, z)))
