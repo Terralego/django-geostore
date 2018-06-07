@@ -10,7 +10,7 @@ class TerraUserFactory(factory.DjangoModelFactory):
     class Meta:
         model = TerraUser
 
-    email = 'foo@bar.com'
+    email = factory.Faker('email')
     is_active = True
 
     @classmethod
