@@ -114,7 +114,7 @@ class Feature(models.Model):
 
     objects = Manager.from_queryset(FeatureQuerySet)()
 
-    def clean_cache(self):
+    def clean_vect_tile_cache(self):
         vtile = VectorTile(self.layer)
         vtile.clean_tiles(self.get_intersected_tiles())
 
@@ -124,6 +124,7 @@ class Feature(models.Model):
                     for tile in tiles(*self.get_bounding_box(),
                                       range(settings.MAX_TILE_ZOOM + 1))]
         except ValueError:
+            # TODO find why a ValueError is raised with some Point() geometries
             return []
 
     def get_bounding_box(self):
@@ -131,7 +132,7 @@ class Feature(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.clean_cache()
+        self.clean_vect_tile_cache()
 
 
 class LayerRelation(models.Model):
