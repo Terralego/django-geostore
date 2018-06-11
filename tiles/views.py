@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from ..models import Feature, Layer
 from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
 
-ESPG_3857 = 3857
+EPSG_3857 = 3857
 
 
 class MVTView(View):
@@ -38,8 +38,8 @@ class MVTView(View):
             self.date_from,
             self.date_to
             ).annotate(
-                bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, ESPG_3857),
-                geom3857=ST_Transform('geom', ESPG_3857)
+                bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, EPSG_3857),
+                geom3857=ST_Transform('geom', EPSG_3857)
             ).filter(
                 bbox__intersects=F('geom3857')
             ).annotate(
