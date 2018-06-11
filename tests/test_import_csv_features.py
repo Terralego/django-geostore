@@ -60,7 +60,8 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '1.408246', '43.575224']]
         )
 
-        self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'], init=True, longitude='x', latitude='y')
+        self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'], init=True,
+                                       longitude='x', latitude='y')
 
         """Init mode only create new items, it does not reset database"""
         self.assertEqual(self.layer.features.all().count(), 6)
@@ -92,7 +93,8 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '-1.560408', '47.218658']]
         )
 
-        self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'], longitude='long', latitude='lat')
+        self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'],
+                                       longitude='long', latitude='lat')
 
         expected = initial + 1
         self.assertEqual(self.layer.features.all().count(), expected)

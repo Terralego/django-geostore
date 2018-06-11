@@ -26,7 +26,8 @@ class Layer(models.Model):
     schema = JSONField(default=dict, blank=True)
 
     def from_csv_dictreader(self, reader, pk_properties, init=False,
-                            chunk_size=1000, fast=False, longitude=None, latitude=None):
+                            chunk_size=1000, fast=False, longitude=None,
+                            latitude=None):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
@@ -45,7 +46,8 @@ class Layer(models.Model):
                 for row in chunk:
                     geometry = None
                     if row.get(longitude) and row.get(latitude):
-                        geometry = Point(float(row.get(longitude)), float(row.get(latitude)))
+                        geometry = Point(float(row.get(longitude)),
+                                         float(row.get(latitude)))
                     if geometry is None:
                         continue
                     entries.append(
@@ -64,7 +66,8 @@ class Layer(models.Model):
                 for row in chunk:
                     geometry = None
                     if row.get(longitude) and row.get(latitude):
-                        geometry = Point(float(row.get(longitude)), float(row.get(latitude)))
+                        geometry = Point(float(row.get(longitude)),
+                                         float(row.get(latitude)))
                     if geometry is None:
                         continue
                     Feature.objects.update_or_create(
@@ -75,7 +78,7 @@ class Layer(models.Model):
                         },
                         layer=self,
                         **{f'properties__{p}': row.get(p, '')
-                            for p in pk_properties}
+                           for p in pk_properties}
                     )
                 if sp:
                     transaction.savepoint_commit(sp)
@@ -104,10 +107,10 @@ class Layer(models.Model):
 
     def to_geojson(self):
         return json.loads(serialize('geojson',
-                          self.features.all(),
-                          fields=('properties',),
-                          geometry_field='geom',
-                          properties_field='properties'))
+                                    self.features.all(),
+                                    fields=('properties',),
+                                    geometry_field='geom',
+                                    properties_field='properties'))
 
 
 class Feature(models.Model):
