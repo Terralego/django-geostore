@@ -26,7 +26,7 @@ class Layer(models.Model):
     schema = JSONField(default=dict, blank=True)
 
     def from_csv_dictreader(self, reader, pk_properties, init=False,
-                            chunk_size=1000, fast=False):
+                            chunk_size=1000, fast=False, longitude=None, latitude=None):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
@@ -34,19 +34,27 @@ class Layer(models.Model):
                     (no updates)
         :param chunk_size: only used if init=True, control the size of
                            bulk_create
+        :param longitude: name of longitude column
+        :param latitude: name of latitude column
         """
         # rl = list(reader)
         chunks = ChunkIterator(reader, chunk_size)
         if init:
             for chunk in chunks:
-                entries = [
-                    Feature(
-                        geom=Point(),
-                        properties=row,
-                        layer=self,
+                entries = []
+                for row in chunk:
+                    geometry = None
+                    if row.get(longitude) and row.get(latitude):
+                        geometry = Point(float(row.get(longitude)), float(row.get(latitude)))
+                    if geometry is None:
+                        continue
+                    entries.append(
+                        Feature(
+                            geom=geometry,
+                            properties=row,
+                            layer=self,
+                        )
                     )
-                    for row in chunk
-                ]
                 Feature.objects.bulk_create(entries)
         else:
             for chunk in chunks:
@@ -54,9 +62,14 @@ class Layer(models.Model):
                 if fast:
                     sp = transaction.savepoint()
                 for row in chunk:
+                    geometry = None
+                    if row.get(longitude) and row.get(latitude):
+                        geometry = Point(float(row.get(longitude)), float(row.get(latitude)))
+                    if geometry is None:
+                        continue
                     Feature.objects.update_or_create(
                         defaults={
-                            'geom': Point(),
+                            'geom': geometry,
                             'properties': row,
                             'layer': self,
                         },
