@@ -7,7 +7,8 @@ from django.core.serializers import serialize
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotFound)
 from django.utils.dateparse import parse_date
-from django.views.generic import View
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -15,7 +16,9 @@ from ..models import Feature, Layer
 from .helpers import VectorTile
 
 
-class MVTView(View):
+class MVTView(APIView):
+
+    permission_classes = ()
 
     def get_tile(self):
         big_tile = b''
@@ -31,6 +34,18 @@ class MVTView(View):
         features = layer.features.for_date(self.date_from, self.date_to)
         return tile.get_tile(self.x, self.y, self.z, features)
 
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'from', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
+            openapi.Parameter(
+                'to', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
+            ],
+        responses={
+            200: 'Returns a protobuf mapbox vector tile',
+            404: 'The layer group does not exist'
+            }
+    )
     def get(self, request, group, z, x, y):
         if z > settings.MAX_TILE_ZOOM:
             return HttpResponseBadRequest()
@@ -55,6 +70,21 @@ class MVTView(View):
 
 
 class IntersectView(APIView):
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'from', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
+            openapi.Parameter(
+                'to', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
+            openapi.Parameter(
+                'geom', openapi.IN_QUERY, type=openapi.TYPE_STRING),
+            ],
+        responses={
+            200: 'serialized GeoJSON data',
+            400: 'Geometry is incorrect'
+            }
+    )
     def post(self, request, group):
         date_from = (parse_date(self.request.POST.get('from', ''))
                      or date.today())
