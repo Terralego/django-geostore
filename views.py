@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
@@ -44,4 +45,8 @@ class UserInformationsView(APIView):
 
 class SettingsView(APIView):
     def get(self, request):
-        pass
+        terra_settings = {
+            'statuses': dict(settings.STATUSES.VALUE_TO_CONST),
+        }
+
+        return Response(terra_settings)
