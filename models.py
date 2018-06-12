@@ -24,6 +24,48 @@ class Layer(models.Model):
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 
+    def __initial_import_from_csv(self, chunks, geometry_columns=None):
+        for chunk in chunks:
+            entries = []
+            for row in chunk:
+                geometry = GeometryDefiner.get_geometry(geometry_columns,
+                                                        row)
+                if geometry is None:
+                    # TODO: Log this
+                    continue
+                entries.append(
+                    Feature(
+                        geom=geometry,
+                        properties=row,
+                        layer=self,
+                    )
+                )
+            Feature.objects.bulk_create(entries)
+
+    def __complementary_import_from_csv(self, chunks, pk_properties,
+                                        fast=False, geometry_columns=None):
+        for chunk in chunks:
+            sp = None
+            if fast:
+                sp = transaction.savepoint()
+            for row in chunk:
+                geometry = GeometryDefiner.get_geometry(geometry_columns,
+                                                        row)
+                if geometry is None:
+                    continue
+                Feature.objects.update_or_create(
+                    defaults={
+                        'geom': geometry,
+                        'properties': row,
+                        'layer': self,
+                    },
+                    layer=self,
+                    **{f'properties__{p}': row.get(p, '')
+                       for p in pk_properties}
+                )
+            if sp:
+                transaction.savepoint_commit(sp)
+
     def from_csv_dictreader(self, reader, pk_properties, init=False,
                             chunk_size=1000, fast=False,
                             geometry_columns=None):
@@ -38,43 +80,10 @@ class Layer(models.Model):
         """
         chunks = ChunkIterator(reader, chunk_size)
         if init:
-            for chunk in chunks:
-                entries = []
-                for row in chunk:
-                    geometry = GeometryDefiner.get_geometry(geometry_columns,
-                                                            row)
-                    if geometry is None:
-                        continue
-                    entries.append(
-                        Feature(
-                            geom=geometry,
-                            properties=row,
-                            layer=self,
-                        )
-                    )
-                Feature.objects.bulk_create(entries)
+            self.__initial_import_from_csv(chunks, geometry_columns)
         else:
-            for chunk in chunks:
-                sp = None
-                if fast:
-                    sp = transaction.savepoint()
-                for row in chunk:
-                    geometry = GeometryDefiner.get_geometry(geometry_columns,
-                                                            row)
-                    if geometry is None:
-                        continue
-                    Feature.objects.update_or_create(
-                        defaults={
-                            'geom': geometry,
-                            'properties': row,
-                            'layer': self,
-                        },
-                        layer=self,
-                        **{f'properties__{p}': row.get(p, '')
-                           for p in pk_properties}
-                    )
-                if sp:
-                    transaction.savepoint_commit(sp)
+            self.__complementary_import_from_csv(chunks, pk_properties, fast,
+                                                 geometry_columns)
 
     def from_geojson(self, geojson_data, from_date, to_date, id_field=None,
                      update=False):
