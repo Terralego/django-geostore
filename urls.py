@@ -56,7 +56,8 @@ urlpatterns = [
 router = routers.SimpleRouter()
 
 router.register(r'layer', LayerViewSet)
-router.register(r'layer/(?P<layer_pk>\d+)/feature', FeatureViewSet)
+router.register(r'layer/(?P<layer_pk>\d+)/feature', FeatureViewSet,
+                base_name='feature')
 router.register(r'layer_relation', LayerRelationViewSet)
 router.register(r'layer_relation/(?P<layerrelation_pk>\d+)/feature_relation',
                 FeatureRelationViewSet)
