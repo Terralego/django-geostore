@@ -103,8 +103,8 @@ class IntersectView(APIView):
         response = {}
         for feature in features.intersects(geometry):
             feature.properties.update({
-                'date_from': date_from,
-                'date_to': date_to
+                'date_from': feature.from_date,
+                'date_to': feature.to_date
             })
 
             if feature.identifier in response:
