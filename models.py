@@ -1,4 +1,5 @@
 import json
+import logging
 import uuid
 
 from django.conf import settings
@@ -19,6 +20,8 @@ from .helpers import ChunkIterator, GeometryDefiner
 from .managers import FeatureQuerySet, TerraUserManager
 from .tiles.helpers import VectorTile
 
+logger = logging.getLogger(__name__)
+
 
 class Layer(models.Model):
     name = models.CharField(max_length=256)
@@ -31,7 +34,7 @@ class Layer(models.Model):
             for row in chunk:
                 geometry = GeometryDefiner.get_geometry(geometry_columns, row)
                 if geometry is None:
-                    # TODO: Log this
+                    logger.warning(f'geometry error, row skipped : {row}')
                     continue
                 entries.append(
                     Feature(
@@ -69,7 +72,9 @@ class Layer(models.Model):
                                           for p in pk_properties}}) \
                             .update(**{'properties': row})
                     except ObjectDoesNotExist:
-                        # TODO: Log this
+                        logger.warning('feature does not exist, '
+                                       'empty geometry, '
+                                       f'row skipped : {row}')
                         continue
             if sp:
                 transaction.savepoint_commit(sp)
