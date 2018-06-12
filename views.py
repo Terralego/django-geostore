@@ -40,3 +40,8 @@ class UserInformationsView(APIView):
     def get(self, request):
         user = self.request.user
         return Response(TerraUserSerializer(user).data)
+
+
+class SettingsView(APIView):
+    def get(self, request):
+        pass

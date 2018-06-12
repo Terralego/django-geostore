@@ -1,10 +1,9 @@
 import json
 from datetime import date
 
-import mercantile
+from django.conf import settings
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.core.serializers import serialize
-from django.db.models import F
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotFound)
 from django.utils.dateparse import parse_date
@@ -13,9 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ..models import Feature, Layer
-from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
-
-EPSG_3857 = 3857
+from .helpers import VectorTile
 
 
 class MVTView(View):
@@ -30,43 +27,13 @@ class MVTView(View):
         return tile
 
     def get_tile_for_layer(self, layer):
-        bounds = mercantile.bounds(self.x, self.y, self.z)
-        xmin, ymin = mercantile.xy(bounds.west, bounds.south)
-        xmax, ymax = mercantile.xy(bounds.east, bounds.north)
-
-        layer_query = layer.features.for_date(
-            self.date_from,
-            self.date_to
-            ).annotate(
-                bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, EPSG_3857),
-                geom3857=ST_Transform('geom', EPSG_3857)
-            ).filter(
-                bbox__intersects=F('geom3857')
-            ).annotate(
-                geometry=ST_AsMvtGeom(
-                    F('geom3857'),
-                    'bbox',
-                    4096,
-                    256,
-                    True
-                )
-            )
-
-        layer_raw_query, args = layer_query.query.sql_with_params()
-
-        mvt_query = Feature.objects.raw(
-            f'''
-            WITH tilegeom as ({layer_raw_query})
-            SELECT %s AS id, count(*) AS count,
-                   ST_AsMVT(tilegeom, %s, 4096, 'geometry') AS mvt
-            FROM tilegeom
-            ''',
-            args + (layer.pk, layer.name)
-        )[0]
-
-        return (mvt_query.count, mvt_query.mvt)
+        tile = VectorTile(layer)
+        features = layer.features.for_date(self.date_from, self.date_to)
+        return tile.get_tile(self.x, self.y, self.z, features)
 
     def get(self, request, group, z, x, y):
+        if z > settings.MAX_TILE_ZOOM:
+            return HttpResponseBadRequest()
         self.z = z
         self.x = x
         self.y = y
