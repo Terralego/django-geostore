@@ -46,7 +46,7 @@ class UserInformationsView(APIView):
 class SettingsView(APIView):
     def get(self, request):
         terra_settings = {
-            'statuses': dict(settings.STATUSES),
+            'statuses': dict(settings.STATUSES.VALUE_TO_CONST),
         }
 
         return Response(terra_settings)
