@@ -53,6 +53,9 @@ class Layer(models.Model):
                 sp = transaction.savepoint()
             for row in chunk:
                 geometry = GeometryDefiner.get_geometry(geometry_columns, row)
+                filter_kwargs = {f'properties__{p}': row.get(p, '')
+                                 for p in pk_properties}
+                filter_kwargs['layer'] = self
                 if geometry is not None:
                     Feature.objects.update_or_create(
                         defaults={
@@ -60,17 +63,12 @@ class Layer(models.Model):
                             'properties': row,
                             'layer': self,
                         },
-                        layer=self,
-                        **{f'properties__{p}': row.get(p, '')
-                           for p in pk_properties}
+                        **filter_kwargs
                     )
                 else:
                     try:
-                        Feature.objects \
-                            .filter(**{**{'layer': self},
-                                       **{f'properties__{p}': row.get(p, '')
-                                          for p in pk_properties}}) \
-                            .update(**{'properties': row})
+                        Feature.objects.filter(**filter_kwargs).update(
+                            **{'properties': row})
                     except ObjectDoesNotExist:
                         logger.warning('feature does not exist, '
                                        'empty geometry, '
