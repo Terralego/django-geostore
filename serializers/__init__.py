@@ -11,6 +11,10 @@ from terracommon.terra.models import Layer, Feature, LayerRelation, \
 
 class TerraUserSerializer(serializers.ModelSerializer):
     permissions = serializers.SerializerMethodField()
+    groups = serializers.SerializerMethodField()
+
+    def get_groups(self, obj):
+        return [group.name for group in obj.groups.all()]
 
     def get_permissions(self, obj):
         return list(obj.get_all_permissions())
@@ -18,7 +22,7 @@ class TerraUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = TerraUser
         fields = ('id', 'is_superuser', 'email', 'properties', 'is_staff',
-                  'is_active', 'permissions')
+                  'is_active', 'permissions', 'groups')
 
 
 class PropertiesSerializer(serializers.ModelSerializer):
