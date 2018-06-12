@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.gis.db import models
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Manager
@@ -28,8 +29,7 @@ class Layer(models.Model):
         for chunk in chunks:
             entries = []
             for row in chunk:
-                geometry = GeometryDefiner.get_geometry(geometry_columns,
-                                                        row)
+                geometry = GeometryDefiner.get_geometry(geometry_columns, row)
                 if geometry is None:
                     # TODO: Log this
                     continue
@@ -49,20 +49,28 @@ class Layer(models.Model):
             if fast:
                 sp = transaction.savepoint()
             for row in chunk:
-                geometry = GeometryDefiner.get_geometry(geometry_columns,
-                                                        row)
-                if geometry is None:
-                    continue
-                Feature.objects.update_or_create(
-                    defaults={
-                        'geom': geometry,
-                        'properties': row,
-                        'layer': self,
-                    },
-                    layer=self,
-                    **{f'properties__{p}': row.get(p, '')
-                       for p in pk_properties}
-                )
+                geometry = GeometryDefiner.get_geometry(geometry_columns, row)
+                if geometry is not None:
+                    Feature.objects.update_or_create(
+                        defaults={
+                            'geom': geometry,
+                            'properties': row,
+                            'layer': self,
+                        },
+                        layer=self,
+                        **{f'properties__{p}': row.get(p, '')
+                           for p in pk_properties}
+                    )
+                else:
+                    try:
+                        Feature.objects \
+                            .filter(**{**{'layer': self},
+                                       **{f'properties__{p}': row.get(p, '')
+                                          for p in pk_properties}}) \
+                            .update(**{'properties': row})
+                    except ObjectDoesNotExist:
+                        # TODO: Log this
+                        continue
             if sp:
                 transaction.savepoint_commit(sp)
 
