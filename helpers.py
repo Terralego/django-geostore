@@ -30,7 +30,7 @@ class GeometryDefiner:
     LATITUDE = 'latitude'
 
     def get_geometry(column_names, row):
-        if type(column_names) is not dict:
+        if not isinstance(column_names, dict):
             return None
         if all(getattr(GeometryDefiner, columns_type) in column_names.keys()
                for columns_type in ['LONGITUDE', 'LATITUDE']):
