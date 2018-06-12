@@ -28,7 +28,7 @@ class Layer(models.Model):
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 
-    def __initial_import_from_csv(self, chunks, geometry_columns=None):
+    def _initial_import_from_csv(self, chunks, geometry_columns=None):
         for chunk in chunks:
             entries = []
             for row in chunk:
@@ -45,8 +45,8 @@ class Layer(models.Model):
                 )
             Feature.objects.bulk_create(entries)
 
-    def __complementary_import_from_csv(self, chunks, pk_properties,
-                                        fast=False, geometry_columns=None):
+    def _complementary_import_from_csv(self, chunks, pk_properties,
+                                       fast=False, geometry_columns=None):
         for chunk in chunks:
             sp = None
             if fast:
@@ -93,10 +93,10 @@ class Layer(models.Model):
         """
         chunks = ChunkIterator(reader, chunk_size)
         if init:
-            self.__initial_import_from_csv(chunks, geometry_columns)
+            self._initial_import_from_csv(chunks, geometry_columns)
         else:
-            self.__complementary_import_from_csv(chunks, pk_properties, fast,
-                                                 geometry_columns)
+            self._complementary_import_from_csv(chunks, pk_properties, fast,
+                                                geometry_columns)
 
     def from_geojson(self, geojson_data, from_date, to_date, id_field=None,
                      update=False):
