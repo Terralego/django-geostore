@@ -1,3 +1,6 @@
+from django.contrib.gis.geos.point import Point
+
+
 class ChunkIterator:
 
     def __init__(self, iterator, chunksize):
@@ -20,6 +23,24 @@ class ChunkIterator:
 
     def next(self):
         return self.__next__()
+
+
+class GeometryDefiner:
+    LONGITUDE = 'longitude'
+    LATITUDE = 'latitude'
+
+    def get_geometry(column_names, row):
+        if type(column_names) is not dict:
+            return None
+        if all(getattr(GeometryDefiner, columns_type) in column_names.keys()
+               for columns_type in ['LONGITUDE', 'LATITUDE']):
+            lat_column = column_names.get(GeometryDefiner.LATITUDE)
+            long_column = column_names.get(GeometryDefiner.LONGITUDE)
+            if all(row.get(column) for column in [long_column, lat_column]):
+                x = float(row.get(long_column))
+                y = float(row.get(lat_column))
+                return Point(x, y)
+        return None
 
 
 class Choices:

@@ -4,6 +4,7 @@ import tempfile
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 
+from terracommon.terra.helpers import GeometryDefiner
 from terracommon.terra.models import Layer
 
 
@@ -60,8 +61,13 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '1.408246', '43.575224']]
         )
 
+        geometry_columns = {
+            GeometryDefiner.LONGITUDE: 'x',
+            GeometryDefiner.LATITUDE: 'y'
+        }
+
         self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'], init=True,
-                                       longitude='x', latitude='y')
+                                       geometry_columns=geometry_columns)
 
         """Init mode only create new items, it does not reset database"""
         self.assertEqual(self.layer.features.all().count(), 6)
@@ -93,8 +99,13 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '-1.560408', '47.218658']]
         )
 
+        geometry_columns = {
+            GeometryDefiner.LONGITUDE: 'long',
+            GeometryDefiner.LATITUDE: 'lat'
+        }
+
         self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'],
-                                       longitude='long', latitude='lat')
+                                       geometry_columns=geometry_columns)
 
         expected = initial + 1
         self.assertEqual(self.layer.features.all().count(), expected)

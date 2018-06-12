@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.gis.db import models
 from django.contrib.gis.geos.geometry import GEOSGeometry
-from django.contrib.gis.geos.point import Point
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
 from django.db import transaction
@@ -15,7 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from mercantile import tiles
 
 from .fields import DateFieldYearLess
-from .helpers import ChunkIterator
+from .helpers import ChunkIterator, GeometryDefiner
 from .managers import FeatureQuerySet, TerraUserManager
 from .tiles.helpers import VectorTile
 
@@ -26,8 +25,8 @@ class Layer(models.Model):
     schema = JSONField(default=dict, blank=True)
 
     def from_csv_dictreader(self, reader, pk_properties, init=False,
-                            chunk_size=1000, fast=False, longitude=None,
-                            latitude=None):
+                            chunk_size=1000, fast=False,
+                            geometry_columns=None):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
@@ -35,19 +34,15 @@ class Layer(models.Model):
                     (no updates)
         :param chunk_size: only used if init=True, control the size of
                            bulk_create
-        :param longitude: name of longitude column
-        :param latitude: name of latitude column
+        :param geometry_columns: name of geometry columns
         """
-        # rl = list(reader)
         chunks = ChunkIterator(reader, chunk_size)
         if init:
             for chunk in chunks:
                 entries = []
                 for row in chunk:
-                    geometry = None
-                    if row.get(longitude) and row.get(latitude):
-                        geometry = Point(float(row.get(longitude)),
-                                         float(row.get(latitude)))
+                    geometry = GeometryDefiner.get_geometry(geometry_columns,
+                                                            row)
                     if geometry is None:
                         continue
                     entries.append(
@@ -64,10 +59,8 @@ class Layer(models.Model):
                 if fast:
                     sp = transaction.savepoint()
                 for row in chunk:
-                    geometry = None
-                    if row.get(longitude) and row.get(latitude):
-                        geometry = Point(float(row.get(longitude)),
-                                         float(row.get(latitude)))
+                    geometry = GeometryDefiner.get_geometry(geometry_columns,
+                                                            row)
                     if geometry is None:
                         continue
                     Feature.objects.update_or_create(
