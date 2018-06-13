@@ -7,7 +7,6 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.gis.db import models
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.contrib.postgres.fields import JSONField
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Manager
@@ -69,7 +68,7 @@ class Layer(models.Model):
                     try:
                         Feature.objects.filter(**filter_kwargs).update(
                             **{'properties': row})
-                    except ObjectDoesNotExist:
+                    except Feature.DoesNotExist:
                         logger.warning('feature does not exist, '
                                        'empty geometry, '
                                        f'row skipped : {row}')
