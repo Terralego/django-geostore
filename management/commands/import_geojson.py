@@ -33,7 +33,7 @@ class Command(BaseCommand):
                                   "Only needed if -l option is provided"))
         parser.add_argument('-g', '--geojson',
                             nargs='+',
-                            type=argparse.FileType('r'),
+                            type=argparse.FileType('r', encoding='UTF-8'),
                             action="store",
                             required=True,
                             help='GeoJSON files to import')
