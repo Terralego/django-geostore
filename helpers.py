@@ -32,8 +32,8 @@ class GeometryDefiner:
     def get_geometry(column_names, row):
         if not isinstance(column_names, dict):
             return None
-        if all(getattr(GeometryDefiner, columns_type) in column_names.keys()
-               for columns_type in ['LONGITUDE', 'LATITUDE']):
+        if sorted(column_names.keys()) == [GeometryDefiner.LATITUDE,
+                                           GeometryDefiner.LONGITUDE]:
             lat_column = column_names.get(GeometryDefiner.LATITUDE)
             long_column = column_names.get(GeometryDefiner.LONGITUDE)
             if all(row.get(column) for column in [long_column, lat_column]):
