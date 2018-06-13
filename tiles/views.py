@@ -27,7 +27,7 @@ class MVTView(APIView):
             feature_count, tile = self.get_tile_for_layer(layer)
             if feature_count:
                 big_tile += tile
-        return tile
+        return big_tile
 
     def get_tile_for_layer(self, layer):
         tile = VectorTile(layer)
