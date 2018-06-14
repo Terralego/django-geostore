@@ -47,7 +47,7 @@ class MVTView(APIView):
             }
     )
     def get(self, request, group, z, x, y):
-        if settings.MAX_TILE_ZOOM > z > settings.MIN_TILE_ZOOM:
+        if not settings.MAX_TILE_ZOOM > z > settings.MIN_TILE_ZOOM:
             return HttpResponse(status=204)
         self.z = z
         self.x = x
