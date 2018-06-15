@@ -27,7 +27,7 @@ class MVTView(APIView):
             feature_count, tile = self.get_tile_for_layer(layer)
             if feature_count:
                 big_tile += tile
-        return tile
+        return big_tile
 
     def get_tile_for_layer(self, layer):
         tile = VectorTile(layer)
@@ -47,8 +47,8 @@ class MVTView(APIView):
             }
     )
     def get(self, request, group, z, x, y):
-        if z > settings.MAX_TILE_ZOOM:
-            return HttpResponseBadRequest()
+        if not settings.MAX_TILE_ZOOM > z > settings.MIN_TILE_ZOOM:
+            return HttpResponse(status=204)
         self.z = z
         self.x = x
         self.y = y
@@ -74,6 +74,8 @@ class IntersectView(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(
+                'callbackid', openapi.IN_QUERY, type=openapi.TYPE_STRING),
+            openapi.Parameter(
                 'from', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
             openapi.Parameter(
                 'to', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
@@ -90,6 +92,7 @@ class IntersectView(APIView):
                      or date.today())
         date_to = (parse_date(self.request.POST.get('to', ''))
                    or date_from)
+        callbackid = self.request.POST.get('callbackid', None)
 
         features = Feature.objects.filter(layer__group=group).for_date(
             date_from, date_to)
@@ -100,24 +103,30 @@ class IntersectView(APIView):
             return HttpResponseBadRequest(
                         content='Provided geometry is not valid')
 
-        response = {}
+        results = {}
         for feature in features.intersects(geometry):
             feature.properties.update({
                 'date_from': feature.from_date,
                 'date_to': feature.to_date
             })
 
-            if feature.identifier in response:
-                (response[feature.identifier].properties
+            if feature.identifier in results:
+                (results[feature.identifier].properties
                     .append(feature.properties))
             else:
                 feature.properties = [feature.properties, ]
-                response[feature.identifier] = feature
+                results[feature.identifier] = feature
 
-        return Response(json.loads(
-                    serialize('geojson',
-                              response.values(),
-                              fields=('properties',),
-                              geometry_field='geom',
-                              properties_field='properties'),
-                    ))
+        response = {
+            'request': {
+                'callbackid': callbackid,
+                'geom': geometry.json,
+            },
+            'results': json.loads(serialize('geojson',
+                                  results.values(),
+                                  fields=('properties',),
+                                  geometry_field='geom',
+                                  properties_field='properties')),
+        }
+
+        return Response(response)

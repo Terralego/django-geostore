@@ -1,10 +1,11 @@
 import json
+import logging
 import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.gis.db import models
-from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
+from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
 from django.db import transaction
@@ -14,9 +15,11 @@ from django.utils.translation import gettext_lazy as _
 from mercantile import tiles
 
 from .fields import DateFieldYearLess
-from .helpers import ChunkIterator
+from .helpers import ChunkIterator, GeometryDefiner
 from .managers import FeatureQuerySet, TerraUserManager
 from .tiles.helpers import VectorTile
+
+logger = logging.getLogger(__name__)
 
 PROJECTION_CRS84 = 'urn:ogc:def:crs:OGC:1.3:CRS84'
 
@@ -26,8 +29,58 @@ class Layer(models.Model):
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 
+    def _initial_import_from_csv(self, chunks, geometry_columns=None):
+        for chunk in chunks:
+            entries = []
+            for row in chunk:
+                geometry = GeometryDefiner.get_geometry(geometry_columns, row)
+                if geometry is None:
+                    logger.warning(f'geometry error, row skipped : {row}')
+                    continue
+                entries.append(
+                    Feature(
+                        geom=geometry,
+                        properties=row,
+                        layer=self,
+                    )
+                )
+            Feature.objects.bulk_create(entries)
+
+    def _complementary_import_from_csv(self, chunks, pk_properties,
+                                       fast=False, geometry_columns=None):
+        for chunk in chunks:
+            sp = None
+            if fast:
+                sp = transaction.savepoint()
+            for row in chunk:
+                geometry = GeometryDefiner.get_geometry(geometry_columns, row)
+                filter_kwargs = {f'properties__{p}': row.get(p, '')
+                                 for p in pk_properties}
+                filter_kwargs['layer'] = self
+                if geometry is not None:
+                    Feature.objects.update_or_create(
+                        defaults={
+                            'geom': geometry,
+                            'properties': row,
+                            'layer': self,
+                        },
+                        **filter_kwargs
+                    )
+                else:
+                    try:
+                        Feature.objects.filter(**filter_kwargs).update(
+                            **{'properties': row})
+                    except Feature.DoesNotExist:
+                        logger.warning('feature does not exist, '
+                                       'empty geometry, '
+                                       f'row skipped : {row}')
+                        continue
+            if sp:
+                transaction.savepoint_commit(sp)
+
     def from_csv_dictreader(self, reader, pk_properties, init=False,
-                            chunk_size=1000, fast=False):
+                            chunk_size=1000, fast=False,
+                            geometry_columns=None):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
@@ -35,38 +88,14 @@ class Layer(models.Model):
                     (no updates)
         :param chunk_size: only used if init=True, control the size of
                            bulk_create
+        :param geometry_columns: name of geometry columns
         """
-        # rl = list(reader)
         chunks = ChunkIterator(reader, chunk_size)
         if init:
-            for chunk in chunks:
-                entries = [
-                    Feature(
-                        geom=Point(),
-                        properties=row,
-                        layer=self,
-                    )
-                    for row in chunk
-                ]
-                Feature.objects.bulk_create(entries)
+            self._initial_import_from_csv(chunks, geometry_columns)
         else:
-            for chunk in chunks:
-                sp = None
-                if fast:
-                    sp = transaction.savepoint()
-                for row in chunk:
-                    Feature.objects.update_or_create(
-                        defaults={
-                            'geom': Point(),
-                            'properties': row,
-                            'layer': self,
-                        },
-                        layer=self,
-                        **{f'properties__{p}': row.get(p, '')
-                            for p in pk_properties}
-                    )
-                if sp:
-                    transaction.savepoint_commit(sp)
+            self._complementary_import_from_csv(chunks, pk_properties, fast,
+                                                geometry_columns)
 
     def from_geojson(self, geojson_data, from_date, to_date, id_field=None,
                      update=False):
@@ -97,10 +126,10 @@ class Layer(models.Model):
 
     def to_geojson(self):
         return json.loads(serialize('geojson',
-                          self.features.all(),
-                          fields=('properties',),
-                          geometry_field='geom',
-                          properties_field='properties'))
+                                    self.features.all(),
+                                    fields=('properties',),
+                                    geometry_field='geom',
+                                    properties_field='properties'))
 
 
 class Feature(models.Model):
@@ -125,10 +154,10 @@ class Feature(models.Model):
         vtile.clean_tiles(self.get_intersected_tiles())
 
     def get_intersected_tiles(self):
+        zoom_range = range(settings.MIN_TILE_ZOOM, settings.MAX_TILE_ZOOM)
         try:
             return [(tile.x, tile.y, tile.z)
-                    for tile in tiles(*self.get_bounding_box(),
-                                      range(settings.MAX_TILE_ZOOM + 1))]
+                    for tile in tiles(*self.get_bounding_box(), zoom_range)]
         except ValueError:
             # TODO find why a ValueError is raised with some Point() geometries
             return []
