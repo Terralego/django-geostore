@@ -138,24 +138,23 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '1.408246', '43.575224']]
         )
 
-        def op1(geom=None, properties=None, layer=None):
-            if not isinstance(properties, dict):
-                return
+        def op1(feature_args, options):
+            properties = feature_args.get('properties')
             if properties.get('x'):
                 properties['long'] = properties['x']
                 del properties['x']
             if properties.get('y'):
                 properties['lat'] = properties['y']
                 del properties['y']
-            return {"geom": geom, "properties": properties, "layer": layer}
+            feature_args['properties'] = properties
+            return feature_args
 
-        def op2(geom=None, properties=None, layer=None):
-            if not isinstance(properties, dict):
-                return
+        def op2(feature_args, options):
+            properties = feature_args.get('properties')
             if properties.get('long') and properties.get('lat'):
-                geom = Point(float(properties.get('long')),
-                             float(properties.get('lat')))
-            return {"geom": geom, "properties": properties, "layer": layer}
+                feature_args['geom'] = Point(float(properties.get('long')),
+                                             float(properties.get('lat')))
+            return feature_args
 
         self.layer.from_csv_dictreader(reader=reader,
                                        operations=[op1, op2],
