@@ -4,8 +4,8 @@ import tempfile
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 
-from terracommon.terra.helpers import GeometryDefiner
 from terracommon.terra.models import Layer
+from terracommon.terra.transformations import set_geometry_from_options
 
 
 class ImportCSVFeaturesTestCase(TestCase):
@@ -37,6 +37,8 @@ class ImportCSVFeaturesTestCase(TestCase):
 
         initial = self.layer.features.all().count()
         self.layer.from_csv_dictreader(reader=reader,
+                                       options=[],
+                                       operations=[],
                                        pk_properties=['CODGEO'])
 
         expected = initial
@@ -62,15 +64,14 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '1.408246', '43.575224']]
         )
 
-        geometry_columns = {
-            GeometryDefiner.LONGITUDE: 'x',
-            GeometryDefiner.LATITUDE: 'y'
-        }
+        options = {'longitude': 'x', 'latitude': 'y'}
+        operations = [set_geometry_from_options]
 
         self.layer.from_csv_dictreader(reader=reader,
+                                       options=options,
+                                       operations=operations,
                                        pk_properties=['SIREN', 'NIC'],
-                                       init=True,
-                                       geometry_columns=geometry_columns)
+                                       init=True)
 
         """Init mode only create new items, it does not reset database"""
         self.assertEqual(self.layer.features.all().count(), 6)
@@ -102,14 +103,13 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '-1.560408', '47.218658']]
         )
 
-        geometry_columns = {
-            GeometryDefiner.LONGITUDE: 'long',
-            GeometryDefiner.LATITUDE: 'lat'
-        }
+        options = {'longitude': 'long', 'latitude': 'lat'}
+        operations = [set_geometry_from_options]
 
         self.layer.from_csv_dictreader(reader=reader,
-                                       pk_properties=['SIREN', 'NIC'],
-                                       geometry_columns=geometry_columns)
+                                       options=options,
+                                       operations=operations,
+                                       pk_properties=['SIREN', 'NIC'])
 
         expected = initial + 1
         self.assertEqual(self.layer.features.all().count(), expected)
@@ -157,6 +157,7 @@ class ImportCSVFeaturesTestCase(TestCase):
             return feature_args
 
         self.layer.from_csv_dictreader(reader=reader,
+                                       options=[],
                                        operations=[op1, op2],
                                        pk_properties=['SIREN', 'NIC'])
 

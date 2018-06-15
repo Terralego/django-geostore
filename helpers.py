@@ -29,6 +29,7 @@ class GeometryDefiner:
     LONGITUDE = 'longitude'
     LATITUDE = 'latitude'
 
+    @staticmethod
     def get_geometry(column_names, row):
         if not isinstance(column_names, dict):
             return None

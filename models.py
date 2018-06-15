@@ -15,7 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from mercantile import tiles
 
 from .fields import DateFieldYearLess
-from .helpers import ChunkIterator, GeometryDefiner
+from .helpers import ChunkIterator
 from .managers import FeatureQuerySet, TerraUserManager
 from .tiles.helpers import VectorTile
 
@@ -29,8 +29,7 @@ class Layer(models.Model):
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 
-    def _initial_import_from_csv(self, chunks, options, operations,
-                                 geometry_columns=None):
+    def _initial_import_from_csv(self, chunks, options, operations):
         for chunk in chunks:
             entries = []
             for row in chunk:
@@ -39,17 +38,9 @@ class Layer(models.Model):
                     "properties": row,
                     "layer": self
                 }
+
                 for operation in operations:
                     feature_args = operation(feature_args, options)
-
-                if not feature_args.get("geom"):
-                    geometry = GeometryDefiner.get_geometry(geometry_columns,
-                                                            feature_args[
-                                                                "properties"])
-                    if not geometry:
-                        logger.warning(f'geometry error, row skipped : {row}')
-                        continue
-                    feature_args["geom"] = geometry
 
                 entries.append(
                     Feature(**feature_args)
@@ -57,8 +48,7 @@ class Layer(models.Model):
             Feature.objects.bulk_create(entries)
 
     def _complementary_import_from_csv(self, chunks, options, operations,
-                                       pk_properties, fast=False,
-                                       geometry_columns=None):
+                                       pk_properties, fast=False):
         for chunk in chunks:
             sp = None
             if fast:
@@ -72,12 +62,6 @@ class Layer(models.Model):
 
                 for operation in operations:
                     feature_args = operation(feature_args, options)
-
-                if not feature_args.get("geom"):
-                    geometry = GeometryDefiner.get_geometry(geometry_columns,
-                                                            feature_args[
-                                                                "properties"])
-                    feature_args["geom"] = geometry
 
                 filter_kwargs = {
                     f'properties__{p}': feature_args["properties"].get(p, '')
@@ -101,10 +85,8 @@ class Layer(models.Model):
             if sp:
                 transaction.savepoint_commit(sp)
 
-    def from_csv_dictreader(self, reader, pk_properties, options=None,
-                            operations=None,
-                            init=False, chunk_size=1000, fast=False,
-                            geometry_columns=None):
+    def from_csv_dictreader(self, reader, pk_properties, options, operations,
+                            init=False, chunk_size=1000, fast=False):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
@@ -112,19 +94,13 @@ class Layer(models.Model):
                     (no updates)
         :param chunk_size: only used if init=True, control the size of
                            bulk_create
-        :param geometry_columns: name of geometry columns
         """
-        if options is None:
-            options = {}
-        if operations is None:
-            operations = []
         chunks = ChunkIterator(reader, chunk_size)
         if init:
             self._initial_import_from_csv(
                 chunks=chunks,
                 options=options,
-                operations=operations,
-                geometry_columns=geometry_columns
+                operations=operations
             )
         else:
             self._complementary_import_from_csv(
@@ -132,8 +108,7 @@ class Layer(models.Model):
                 options=options,
                 operations=operations,
                 pk_properties=pk_properties,
-                fast=fast,
-                geometry_columns=geometry_columns
+                fast=fast
             )
 
     def from_geojson(self, geojson_data, from_date, to_date, id_field=None,
