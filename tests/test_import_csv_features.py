@@ -36,7 +36,8 @@ class ImportCSVFeaturesTestCase(TestCase):
         )
 
         initial = self.layer.features.all().count()
-        self.layer.from_csv_dictreader(reader, ['CODGEO'])
+        self.layer.from_csv_dictreader(reader=reader,
+                                       pk_properties=['CODGEO'])
 
         expected = initial
         self.assertEqual(self.layer.features.all().count(), expected)
@@ -66,7 +67,9 @@ class ImportCSVFeaturesTestCase(TestCase):
             GeometryDefiner.LATITUDE: 'y'
         }
 
-        self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'], init=True,
+        self.layer.from_csv_dictreader(reader=reader,
+                                       pk_properties=['SIREN', 'NIC'],
+                                       init=True,
                                        geometry_columns=geometry_columns)
 
         """Init mode only create new items, it does not reset database"""
@@ -104,7 +107,8 @@ class ImportCSVFeaturesTestCase(TestCase):
             GeometryDefiner.LATITUDE: 'lat'
         }
 
-        self.layer.from_csv_dictreader(reader, ['SIREN', 'NIC'],
+        self.layer.from_csv_dictreader(reader=reader,
+                                       pk_properties=['SIREN', 'NIC'],
                                        geometry_columns=geometry_columns)
 
         expected = initial + 1
@@ -114,3 +118,49 @@ class ImportCSVFeaturesTestCase(TestCase):
                                           properties__NIC='00097')
         self.assertEqual(feature.properties.get('L1_NORMALISEE', ''),
                          '52 RUE JACQUES BABINET')
+
+    def test_operations(self):
+        self.layer.features.create(
+            geom=Point(1.405812, 43.574511),
+            properties={
+                'SIREN': '437582422',
+                'NIC': '00097',
+                'L1_NORMALISEE': '36 RUE JACQUES BABINET',
+                'L2_NORMALISEE': '31100 TOULOUSE',
+                'L3_NORMALISEE': 'France',
+            },
+        )
+
+        reader = self.get_csv_reader_from_dict(
+            ['SIREN', 'NIC', 'L1_NORMALISEE', 'L2_NORMALISEE',
+             'L3_NORMALISEE', 'x', 'y'],
+            [['437582422', '00097', '52 RUE JACQUES BABINET', '31100 TOULOUSE',
+              'France', '1.408246', '43.575224']]
+        )
+
+        def op1(geom=None, properties=None, layer=None):
+            if not isinstance(properties, dict):
+                return
+            if properties.get('x'):
+                properties['long'] = properties['x']
+                del properties['x']
+            if properties.get('y'):
+                properties['lat'] = properties['y']
+                del properties['y']
+            return {"geom": geom, "properties": properties, "layer": layer}
+
+        def op2(geom=None, properties=None, layer=None):
+            if not isinstance(properties, dict):
+                return
+            if properties.get('long') and properties.get('lat'):
+                geom = Point(float(properties.get('long')),
+                             float(properties.get('lat')))
+            return {"geom": geom, "properties": properties, "layer": layer}
+
+        self.layer.from_csv_dictreader(reader=reader,
+                                       operations=[op1, op2],
+                                       pk_properties=['SIREN', 'NIC'])
+
+        feature = self.layer.features.get(properties__SIREN='437582422',
+                                          properties__NIC='00097')
+        self.assertEqual((1.408246, 43.575224), feature.geom.coords)
