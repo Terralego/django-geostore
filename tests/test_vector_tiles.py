@@ -48,7 +48,7 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(response.content), 0)
 
         response = self.client.get(reverse('group-tiles',
-                                           args=[self.group_name, 1, 1, 1]))
+                                           args=[self.group_name, 13, 1, 1]))
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(b'', response.content)

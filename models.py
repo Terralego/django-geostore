@@ -147,10 +147,10 @@ class Feature(models.Model):
         vtile.clean_tiles(self.get_intersected_tiles())
 
     def get_intersected_tiles(self):
+        zoom_range = range(settings.MIN_TILE_ZOOM, settings.MAX_TILE_ZOOM)
         try:
             return [(tile.x, tile.y, tile.z)
-                    for tile in tiles(*self.get_bounding_box(),
-                                      range(settings.MAX_TILE_ZOOM + 1))]
+                    for tile in tiles(*self.get_bounding_box(), zoom_range)]
         except ValueError:
             # TODO find why a ValueError is raised with some Point() geometries
             return []
