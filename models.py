@@ -4,8 +4,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.gis.db import models
-from django.contrib.gis.geos.geometry import GEOSGeometry
-from django.contrib.gis.geos.point import Point
+from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
 from django.db import transaction
@@ -18,6 +17,8 @@ from .fields import DateFieldYearLess
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet, TerraUserManager
 from .tiles.helpers import VectorTile
+
+PROJECTION_CRS84 = 'urn:ogc:def:crs:OGC:1.3:CRS84'
 
 
 class Layer(models.Model):
@@ -75,6 +76,11 @@ class Layer(models.Model):
             geojson_data(str): must be raw text json data
         """
         geojson = json.loads(geojson_data)
+        projection = geojson.get('crs', {}).get(
+            'properties', {}).get('name', None)
+        if projection and not projection == PROJECTION_CRS84:
+            raise GEOSException('GeoJSON projection must be CRS84')
+
         if update:
             self.features.all().delete()
         for feature in geojson.get('features', []):
