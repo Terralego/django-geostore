@@ -109,10 +109,14 @@ class FeaturesTestCase(TestCase):
         )
 
         self.assertEqual(200, response.status_code)
-        self.assertEqual(1, len(response.json().get('features')))
+        response = response.json().get('results', {})
+        self.assertEqual(
+            1,
+            len(response.get('features'))
+        )
         self.assertDictEqual(
             self.intersect_ref_geometry,
-            response.json().get('features')[0].get('geometry')
+            response.get('features')[0].get('geometry')
         )
 
         """The layer below must NOT intersect"""
@@ -124,7 +128,9 @@ class FeaturesTestCase(TestCase):
         )
 
         self.assertEqual(200, response.status_code)
-        self.assertEqual(0, len(response.json().get('features')))
+
+        response = response.json().get('results', {})
+        self.assertEqual(0, len(response.get('features')))
 
         """Tests that the intersects view throw an error if geometry is
            invalid
@@ -192,7 +198,10 @@ class FeaturesTestCase(TestCase):
                     'geom': json.dumps(self.intersect_geometry)
                 }
             )
-            self.assertEqual(count, len(response.json().get('features', None)))
+            self.assertEqual(
+                count,
+                len(response.json().get('results', {}).get('features', None))
+            )
 
     def test_features_sameidentifier_intersects(self):
         group_name = "sameidentifier"
@@ -244,7 +253,8 @@ class FeaturesTestCase(TestCase):
                 'geom': json.dumps(self.intersect_geometry)
             }
         )
-        response = response.json()
+        response = response.json().get('results')
+
         self.assertEqual(1, len(response.get('features')))
         self.assertEqual(2,
                          len(response.get('features')[0].get('properties')))
