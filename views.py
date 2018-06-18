@@ -53,4 +53,6 @@ class SettingsView(APIView):
             'statuses': dict(settings.STATUSES.VALUE_TO_CONST),
         }
 
+        terra_settings.update(settings.TERRA_APPLIANCE_SETTINGS)
+
         return Response(terra_settings)
