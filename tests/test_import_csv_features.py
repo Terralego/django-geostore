@@ -64,8 +64,13 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '1.408246', '43.575224']]
         )
 
-        options = {'longitude': 'x', 'latitude': 'y'}
-        operations = [set_geometry_from_options]
+        options = {
+            'longitude': 'x',
+            'latitude': 'y',
+        }
+        operations = [
+            set_geometry_from_options,
+        ]
 
         self.layer.from_csv_dictreader(reader=reader,
                                        options=options,
@@ -73,7 +78,7 @@ class ImportCSVFeaturesTestCase(TestCase):
                                        pk_properties=['SIREN', 'NIC'],
                                        init=True)
 
-        """Init mode only create new items, it does not reset database"""
+        # Init mode only create new items, it does not reset database
         self.assertEqual(self.layer.features.all().count(), 6)
 
         feature = self.layer.features.get(properties__SIREN='813792686',
@@ -103,8 +108,13 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '-1.560408', '47.218658']]
         )
 
-        options = {'longitude': 'long', 'latitude': 'lat'}
-        operations = [set_geometry_from_options]
+        options = {
+            'longitude': 'long',
+            'latitude': 'lat',
+        }
+        operations = [
+            set_geometry_from_options,
+        ]
 
         self.layer.from_csv_dictreader(reader=reader,
                                        options=options,
@@ -156,9 +166,14 @@ class ImportCSVFeaturesTestCase(TestCase):
                                              float(properties.get('lat')))
             return feature_args
 
+        options = {}
+        operations = [
+            op1,
+            op2,
+        ]
         self.layer.from_csv_dictreader(reader=reader,
-                                       options=[],
-                                       operations=[op1, op2],
+                                       options=options,
+                                       operations=operations,
                                        pk_properties=['SIREN', 'NIC'])
 
         feature = self.layer.features.get(properties__SIREN='437582422',
