@@ -20,5 +20,6 @@ def set_geometry_from_options(feature_args, options):
     if geometry:
         feature_args['geom'] = geometry
     else:
-        logger.warning(f'geometry error, feature skipped : {feature_args}')
+        logger.warning(f'can not define geometry for: {feature_args}'
+                       f' from options: {options}')
     return feature_args

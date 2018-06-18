@@ -42,6 +42,11 @@ class Layer(models.Model):
                 for operation in operations:
                     feature_args = operation(feature_args, options)
 
+                if not feature_args.get("geom"):
+                    logger.warning('empty geometry,'
+                                   f' row skipped : {row}')
+                    continue
+
                 entries.append(
                     Feature(**feature_args)
                 )
@@ -78,9 +83,9 @@ class Layer(models.Model):
                         Feature.objects.filter(**filter_kwargs).update(
                             **{'properties': feature_args["properties"]})
                     except Feature.DoesNotExist:
-                        logger.warning('feature does not exist, '
-                                       'empty geometry, '
-                                       f'row skipped : {row}')
+                        logger.warning('feature does not exist,'
+                                       ' empty geometry,'
+                                       f' row skipped : {row}')
                         continue
             if sp:
                 transaction.savepoint_commit(sp)
