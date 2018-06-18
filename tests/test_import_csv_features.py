@@ -148,7 +148,7 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '1.408246', '43.575224']]
         )
 
-        def op1(feature_args, options):
+        def custom_transformation(feature_args, options):
             properties = feature_args.get('properties')
             if properties.get('x'):
                 properties['long'] = properties['x']
@@ -159,17 +159,13 @@ class ImportCSVFeaturesTestCase(TestCase):
             feature_args['properties'] = properties
             return feature_args
 
-        def op2(feature_args, options):
-            properties = feature_args.get('properties')
-            if properties.get('long') and properties.get('lat'):
-                feature_args['geom'] = Point(float(properties.get('long')),
-                                             float(properties.get('lat')))
-            return feature_args
-
-        options = {}
+        options = {
+            'latitude': 'lat',
+            'longitude': 'long',
+        }
         operations = [
-            op1,
-            op2,
+            custom_transformation,
+            set_geometry_from_options,
         ]
         self.layer.from_csv_dictreader(reader=reader,
                                        options=options,
