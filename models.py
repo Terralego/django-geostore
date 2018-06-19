@@ -40,7 +40,7 @@ class Layer(models.Model):
                 }
 
                 for operation in operations:
-                    feature_args = operation(feature_args, options)
+                    operation(feature_args, options)
 
                 if not feature_args.get("geom"):
                     logger.warning('empty geometry,'
@@ -66,7 +66,7 @@ class Layer(models.Model):
                 }
 
                 for operation in operations:
-                    feature_args = operation(feature_args, options)
+                    operation(feature_args, options)
 
                 filter_kwargs = {
                     f'properties__{p}': feature_args["properties"].get(p, '')
