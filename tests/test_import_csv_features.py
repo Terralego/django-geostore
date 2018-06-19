@@ -157,7 +157,6 @@ class ImportCSVFeaturesTestCase(TestCase):
                 properties['lat'] = properties['y']
                 del properties['y']
             feature_args['properties'] = properties
-            return feature_args
 
         options = {
             'latitude': 'lat',

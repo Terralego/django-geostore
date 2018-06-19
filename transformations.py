@@ -22,4 +22,3 @@ def set_geometry_from_options(feature_args, options):
     else:
         logger.warning(f'can not define geometry for: {feature_args}'
                        f' from options: {options}')
-    return feature_args
