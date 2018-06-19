@@ -5,7 +5,7 @@ from .helpers import GeometryDefiner
 logger = logging.getLogger(__name__)
 
 
-def set_geometry_from_options(options, **feature_args):
+def set_geometry_from_options(feature_args, options):
     geometry_columns = {
         GeometryDefiner.LONGITUDE: options.get('longitude'),
         GeometryDefiner.LATITUDE: options.get('latitude')

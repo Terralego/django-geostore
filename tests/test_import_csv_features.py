@@ -148,7 +148,7 @@ class ImportCSVFeaturesTestCase(TestCase):
               'France', '1.408246', '43.575224']]
         )
 
-        def custom_transformation(options, **feature_args):
+        def custom_transformation(feature_args, options):
             properties = feature_args.get('properties')
             if properties.get('x'):
                 properties['long'] = properties['x']
@@ -174,8 +174,4 @@ class ImportCSVFeaturesTestCase(TestCase):
 
         feature = self.layer.features.get(properties__SIREN='437582422',
                                           properties__NIC='00097')
-        self.assertIsNone(feature.properties.get('x'))
-        self.assertIsNone(feature.properties.get('y'))
-        self.assertIsNotNone(feature.properties.get('lat'))
-        self.assertIsNotNone(feature.properties.get('long'))
         self.assertEqual((1.408246, 43.575224), feature.geom.coords)
