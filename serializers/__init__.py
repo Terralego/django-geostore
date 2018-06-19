@@ -21,8 +21,8 @@ class TerraUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TerraUser
-        fields = ('id', 'is_superuser', 'email', 'properties', 'is_staff',
-                  'is_active', 'permissions', 'groups')
+        fields = ('id', 'is_superuser', 'email', 'uuid', 'properties',
+                  'is_staff', 'is_active', 'permissions', 'groups')
 
 
 class PropertiesSerializer(serializers.ModelSerializer):

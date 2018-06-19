@@ -57,4 +57,6 @@ class SettingsView(APIView):
                 },
         }
 
+        terra_settings.update(settings.TERRA_APPLIANCE_SETTINGS)
+
         return Response(terra_settings)
