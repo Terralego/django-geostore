@@ -21,7 +21,10 @@ from .tiles.helpers import VectorTile
 
 logger = logging.getLogger(__name__)
 
-PROJECTION_CRS84 = 'urn:ogc:def:crs:OGC:1.3:CRS84'
+ACCEPTED_PROJECTIONS = [
+    'urn:ogc:def:crs:OGC:1.3:CRS84',
+    'EPSG:4326',
+]
 
 
 class Layer(models.Model):
@@ -126,8 +129,9 @@ class Layer(models.Model):
         geojson = json.loads(geojson_data)
         projection = geojson.get('crs', {}).get(
             'properties', {}).get('name', None)
-        if projection and not projection == PROJECTION_CRS84:
-            raise GEOSException('GeoJSON projection must be CRS84')
+        if projection and not self.is_projection_allowed(projection):
+            raise GEOSException(
+                f'GeoJSON projection must be in {ACCEPTED_PROJECTIONS}')
 
         if update:
             self.features.all().delete()
@@ -149,6 +153,9 @@ class Layer(models.Model):
                                     fields=('properties',),
                                     geometry_field='geom',
                                     properties_field='properties'))
+
+    def is_projection_allowed(self, projection):
+        return projection in ACCEPTED_PROJECTIONS
 
 
 class Feature(models.Model):
