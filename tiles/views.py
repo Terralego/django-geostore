@@ -88,17 +88,17 @@ class IntersectView(APIView):
             }
     )
     def post(self, request, group):
-        date_from = (parse_date(self.request.POST.get('from', ''))
+        date_from = (parse_date(self.request.data.get('from', ''))
                      or date.today())
-        date_to = (parse_date(self.request.POST.get('to', ''))
+        date_to = (parse_date(self.request.data.get('to', ''))
                    or date_from)
-        callbackid = self.request.POST.get('callbackid', None)
+        callbackid = self.request.data.get('callbackid', None)
 
         features = Feature.objects.filter(layer__group=group).for_date(
             date_from, date_to)
 
         try:
-            geometry = GEOSGeometry(request.POST.get('geom', None))
+            geometry = GEOSGeometry(request.data.get('geom', None))
         except (TypeError, ValueError):
             return HttpResponseBadRequest(
                         content='Provided geometry is not valid')
