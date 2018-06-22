@@ -2,7 +2,6 @@ import factory
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
 from terracommon.terra.models import Feature, Layer, TerraUser
-from terracommon.trrequests.tests.factories import OrganizationFactory
 
 
 class TerraUserFactory(factory.DjangoModelFactory):
@@ -18,11 +17,6 @@ class TerraUserFactory(factory.DjangoModelFactory):
         kwargs.update({'password': kwargs.get('password', '123456')})
         manager = cls._get_manager(model_class)
         return manager.create_user(*args, **kwargs)
-
-    @factory.post_generation
-    def organizations(self, create, count, **kwargs):
-        if count:
-            self.organizations.add(OrganizationFactory())
 
 
 class LayerFactory(factory.DjangoModelFactory):
