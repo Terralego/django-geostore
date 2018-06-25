@@ -44,7 +44,6 @@ urlpatterns = [
     path(r'layer/<str:group>/tiles/{z}/{x}/{y}/',
          lambda request, group: HttpResponseNotFound(),
          name='group-tiles-pattern'),
-    path('', include('terracommon.trrequests.urls'))
 ]
 
 router = routers.SimpleRouter()
