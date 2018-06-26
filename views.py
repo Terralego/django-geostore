@@ -49,7 +49,6 @@ class UserInformationsView(APIView):
 
 class SettingsView(APIView):
     def get(self, request):
-        print(settings.STATUSES.CONST_CHOICES)
         terra_settings = {
             'states': {
                 y: x

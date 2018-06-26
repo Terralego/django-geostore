@@ -33,7 +33,7 @@ urlpatterns = [
          auth_views.refresh_jwt_token,
          name='token-refresh'),
     path(r'auth/user/', UserInformationsView.as_view()),
-    path(r'settings/', SettingsView.as_view()),
+    path(r'settings/', SettingsView.as_view(), name='settings'),
     path(r'layer/<str:group>/intersects/',
          IntersectView.as_view(),
          name='group-intersect'),
