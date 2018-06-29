@@ -6,23 +6,7 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from terracommon.terra.models import Layer, Feature, LayerRelation, \
-                                     FeatureRelation, TerraUser
-
-
-class TerraUserSerializer(serializers.ModelSerializer):
-    permissions = serializers.SerializerMethodField()
-    groups = serializers.SerializerMethodField()
-
-    def get_groups(self, obj):
-        return [group.name for group in obj.groups.all()]
-
-    def get_permissions(self, obj):
-        return list(obj.get_all_permissions())
-
-    class Meta:
-        model = TerraUser
-        fields = ('id', 'is_superuser', 'email', 'uuid', 'properties',
-                  'is_staff', 'is_active', 'permissions', 'groups')
+                                     FeatureRelation
 
 
 class PropertiesSerializer(serializers.ModelSerializer):

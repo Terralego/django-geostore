@@ -1,10 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from terracommon.terra.models import TerraUser
+from terracommon.accounts.tests.factories import TerraUserFactory
 
-from .factories import TerraUserFactory
+UserModel = get_user_model()
 
 
 class AuthenticationTestCase(TestCase):
@@ -46,7 +47,7 @@ class AuthenticationTestCase(TestCase):
         self.assertIn('non_field_errors', response.data)
 
     def test_create_superuser(self):
-        superuser = TerraUser.objects.create_superuser('admin@bar.com',
+        superuser = UserModel.objects.create_superuser('admin@bar.com',
                                                        '123456')
         self.assertTrue(superuser.is_staff)
         self.assertTrue(superuser.is_superuser)
