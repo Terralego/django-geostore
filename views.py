@@ -5,10 +5,11 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from terracommon.accounts.serializers import TerraUserSerializer
+
 from .models import FeatureRelation, Layer, LayerRelation
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
-                          LayerRelationSerializer, LayerSerializer,
-                          TerraUserSerializer)
+                          LayerRelationSerializer, LayerSerializer)
 
 
 class LayerViewSet(viewsets.ModelViewSet):
