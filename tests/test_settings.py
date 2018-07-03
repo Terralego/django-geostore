@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from .factories import TerraUserFactory
+from terracommon.accounts.tests.factories import TerraUserFactory
 
 
 class SettingsViewTestCase(TestCase):
