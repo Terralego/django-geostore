@@ -8,8 +8,7 @@ from rest_framework_jwt import views as auth_views
 
 from .tiles.views import IntersectView, MVTView
 from .views import (FeatureRelationViewSet, FeatureViewSet,
-                    LayerRelationViewSet, LayerViewSet, SettingsView,
-                    UserInformationsView)
+                    LayerRelationViewSet, LayerViewSet, UserInformationsView)
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -33,7 +32,6 @@ urlpatterns = [
          auth_views.refresh_jwt_token,
          name='token-refresh'),
     path(r'auth/user/', UserInformationsView.as_view()),
-    path(r'settings/', SettingsView.as_view(), name='settings'),
     path(r'layer/<str:group>/intersects/',
          IntersectView.as_view(),
          name='group-intersect'),

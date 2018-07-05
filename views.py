@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
@@ -46,17 +45,3 @@ class UserInformationsView(APIView):
     def get(self, request):
         user = self.request.user
         return Response(TerraUserSerializer(user).data)
-
-
-class SettingsView(APIView):
-    def get(self, request):
-        terra_settings = {
-            'states': {
-                y: x
-                for x, y in settings.STATES.VALUE_TO_CONST.items()
-                },
-        }
-
-        terra_settings.update(settings.TERRA_APPLIANCE_SETTINGS)
-
-        return Response(terra_settings)
