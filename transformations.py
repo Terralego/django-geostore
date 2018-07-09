@@ -20,5 +20,6 @@ def set_geometry_from_options(feature_args, options):
     if geometry:
         feature_args['geom'] = geometry
     else:
-        logger.warning(f'can not define geometry for: {feature_args}'
-                       f' from options: {options}')
+        pk_properties = [(key, feature_args["properties"].get(key)) for key in
+                         options.get('pk_properties')]
+        logger.warning(f'can not define geometry for: {str(pk_properties)}')
