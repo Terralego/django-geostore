@@ -54,6 +54,7 @@ class Command(BaseCommand):
                                  "Format : MM-DD")
         parser.add_argument('-gr', '--group',
                             action="store",
+                            default="__nogroup__",
                             help="Group name of the created layer")
         parser.add_argument('--dry-run',
                             action="store_true",
