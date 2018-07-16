@@ -1,4 +1,20 @@
 from django.contrib.gis.geos.point import Point
+from django.http import HttpResponse, HttpResponseForbidden
+
+
+def get_media_response(request, path, permissions=None, headers=None):
+    if isinstance(permissions, list):
+        if not set(permissions).intersection(
+                request.user.get_all_permissions()):
+            return HttpResponseForbidden()
+
+    response = HttpResponse()
+    if isinstance(headers, dict):
+        for header, value in headers.items():
+            response[header] = value
+    response['X-Accel-Redirect'] = f'{path}'
+
+    return response
 
 
 class ChunkIterator:
