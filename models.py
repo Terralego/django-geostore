@@ -170,6 +170,11 @@ class Feature(models.Model):
     to_date = DateFieldYearLess(help_text="Layer validity period end",
                                 default='12-31')
 
+    source = models.IntegerField(null=True,
+                                 help_text='Internal field used by pgRouting')
+    target = models.IntegerField(null=True,
+                                 help_text='Internal field used by pgRouting')
+
     objects = Manager.from_queryset(FeatureQuerySet)()
 
     def clean_vect_tile_cache(self):

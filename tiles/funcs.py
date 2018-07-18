@@ -1,4 +1,4 @@
-from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.db.models import FloatField, GeometryField
 from django.db.models import Func
 
 
@@ -22,4 +22,24 @@ class ST_Transform(Func):
 
 class ST_MakeEnvelope(Func):
     function = 'ST_MakeEnvelope'
+    output_field = RawGeometryField()
+
+
+class ST_Distance(Func):
+    function = 'ST_Distance'
+    output_field = FloatField()
+
+
+class ST_LineLocatePoint(Func):
+    function = 'ST_LineLocatePoint'
+    output_field = FloatField()
+
+
+class ST_LineInterpolatePoint(Func):
+    function = 'ST_LineInterpolatePoint'
+    output_field = RawGeometryField()
+
+
+class ST_Split(Func):
+    function = 'ST_Split'
     output_field = RawGeometryField()
