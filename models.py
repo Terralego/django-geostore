@@ -116,8 +116,8 @@ class Layer(models.Model):
                 fast=fast
             )
 
-    def from_geojson(self, geojson_data, from_date, to_date, id_field=None,
-                     update=False):
+    def from_geojson(self, geojson_data, from_date='01-01', to_date='12-31',
+                     id_field=None, update=False):
         """
         Import geojson raw data in a layer
         Args:
