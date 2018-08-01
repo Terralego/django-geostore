@@ -2,9 +2,6 @@ from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from terracommon.accounts.serializers import TerraUserSerializer
 
 from .models import FeatureRelation, Layer, LayerRelation
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
@@ -39,9 +36,3 @@ class FeatureRelationViewSet(viewsets.ModelViewSet):
     queryset = FeatureRelation.objects.all()
     serializer_class = FeatureRelationSerializer
     swagger_schema = None  # FIXME: Temporary disable schema generation
-
-
-class UserInformationsView(APIView):
-    def get(self, request):
-        user = self.request.user
-        return Response(TerraUserSerializer(user).data)
