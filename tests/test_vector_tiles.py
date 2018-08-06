@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.db import connection
 from django.test import TestCase
 from django.urls import reverse
 
@@ -42,16 +43,39 @@ class VectorTilesTestCase(TestCase):
         ''')
 
     def test_vector_tiles_view(self):
-        response = self.client.get(
-            reverse('group-tiles', args=[self.group_name, 13, 4126, 2991]))
-        self.assertEqual(200, response.status_code)
-        self.assertGreater(len(response.content), 0)
+        with self.settings(DEBUG=True,
+                           CACHES={
+                               'default': {
+                                   'BACKEND': ('django.core.cache.backends'
+                                               '.locmem.LocMemCache')
+                                }}):
 
-        response = self.client.get(reverse('group-tiles',
-                                           args=[self.group_name, 13, 1, 1]))
+            # first query that generate the cache
+            response = self.client.get(
+                reverse('group-tiles', args=[self.group_name, 13, 4126, 2991]))
+            self.assertEqual(200, response.status_code)
+            self.assertGreater(len(response.content), 0)
+            query_count = len(connection.queries)
+            original_content = response.content
 
-        self.assertEqual(200, response.status_code)
-        self.assertEqual(b'', response.content)
+            # verify data is cached
+            response = self.client.get(
+                reverse('group-tiles', args=[self.group_name, 13, 4126, 2991]))
+            self.assertEqual(
+                len(connection.queries),
+                query_count - 1
+            )
+            self.assertEqual(
+                original_content,
+                response.content
+            )
+
+            response = self.client.get(
+                reverse('group-tiles',
+                        args=[self.group_name, 13, 1, 1]))
+
+            self.assertEqual(200, response.status_code)
+            self.assertEqual(b'', response.content)
 
     def test_caching_geometry(self):
         features = self.layer.features.all()
