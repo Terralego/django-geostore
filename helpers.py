@@ -11,7 +11,7 @@ def get_media_response(request, file, permissions=None, headers=None):
 
     response = HttpResponse()
     if not settings.MEDIA_ACCEL_REDIRECT:
-        response = HttpResponse(file)
+        response = HttpResponse(file, content_type='application/octet-stream')
     if isinstance(headers, dict):
         for header, value in headers.items():
             response[header] = value
