@@ -12,8 +12,8 @@ def get_media_response(request, data, permissions=None, headers=None):
     if isinstance(data, (io.IOBase, File)):
         content, url = data, data.url
     else:
+        # https://docs.djangoproject.com/fr/2.1/ref/request-response/#passing-iterators # noqa
         content, url = open(data['path']), data['url']
-
     if isinstance(permissions, list):
         if not set(permissions).intersection(
                 request.user.get_all_permissions()):
