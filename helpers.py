@@ -8,18 +8,18 @@ from django.http import HttpResponse, HttpResponseForbidden
 
 def get_media_response(request, data, permissions=None, headers=None):
     # For compatibility purpose
-    path, url = None, None
+    content, url = None, None
     if isinstance(data, (io.IOBase, File)):
-        url = data.url
+        content, url = data, data.url
     else:
-        path, url = data['path'], data['url']
+        content, url = open(data['path']), data['url']
 
     if isinstance(permissions, list):
         if not set(permissions).intersection(
                 request.user.get_all_permissions()):
             return HttpResponseForbidden()
 
-    response = HttpResponse()
+    response = HttpResponse(content_type='application/octet-stream')
     if isinstance(headers, dict):
         for header, value in headers.items():
             response[header] = value
@@ -27,15 +27,7 @@ def get_media_response(request, data, permissions=None, headers=None):
     if settings.MEDIA_ACCEL_REDIRECT:
         response['X-Accel-Redirect'] = f'{url}'
     else:
-        contenttype = 'application/octet-stream'
-
-        if path is None:
-            response.content = data
-            response.content_type = contenttype
-        else:
-            with open(path) as fp:
-                response.content = fp
-                response.content_type = contenttype
+        response.content = content
 
     return response
 
