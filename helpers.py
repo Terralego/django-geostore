@@ -4,6 +4,13 @@ from django.http import HttpResponse, HttpResponseForbidden
 
 
 def get_media_response(request, file, permissions=None, headers=None):
+    # For compatibility purpose
+    path, url = None, None
+    if hasattr(file, 'read'):
+        path, url = None, file.url
+    else:
+        path, url = file['path'], file['url']
+
     if isinstance(permissions, list):
         if not set(permissions).intersection(
                 request.user.get_all_permissions()):
@@ -11,12 +18,17 @@ def get_media_response(request, file, permissions=None, headers=None):
 
     response = HttpResponse()
     if not settings.MEDIA_ACCEL_REDIRECT:
-        response = HttpResponse(file, content_type='application/octet-stream')
+        if path is None:
+            response = HttpResponse(file,
+                                    content_type='application/octet-stream')
+        else:
+            response = HttpResponse(open(path),
+                                    content_type='application/octet-stream')
     if isinstance(headers, dict):
         for header, value in headers.items():
             response[header] = value
     if settings.MEDIA_ACCEL_REDIRECT:
-        response['X-Accel-Redirect'] = f'{file.url}'
+        response['X-Accel-Redirect'] = f'{url}'
 
     return response
 
