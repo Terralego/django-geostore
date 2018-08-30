@@ -1,15 +1,18 @@
+import io
+
 from django.conf import settings
 from django.contrib.gis.geos.point import Point
+from django.core.files import File
 from django.http import HttpResponse, HttpResponseForbidden
 
 
-def get_media_response(request, file, permissions=None, headers=None):
+def get_media_response(request, data, permissions=None, headers=None):
     # For compatibility purpose
     path, url = None, None
-    if hasattr(file, 'read'):
-        path, url = None, file.url
+    if isinstance(data, (io.IOBase, File)):
+        url = data.url
     else:
-        path, url = file['path'], file['url']
+        path, url = data['path'], data['url']
 
     if isinstance(permissions, list):
         if not set(permissions).intersection(
@@ -18,15 +21,18 @@ def get_media_response(request, file, permissions=None, headers=None):
 
     response = HttpResponse()
     if not settings.MEDIA_ACCEL_REDIRECT:
+        contenttype = 'application/octet-stream'
+
         if path is None:
-            response = HttpResponse(file,
-                                    content_type='application/octet-stream')
+            response = HttpResponse(data, content_type=contenttype)
         else:
-            response = HttpResponse(open(path),
-                                    content_type='application/octet-stream')
+            with open(path) as fp:
+                response = HttpResponse(fp, content_type=contenttype)
+
     if isinstance(headers, dict):
         for header, value in headers.items():
             response[header] = value
+
     if settings.MEDIA_ACCEL_REDIRECT:
         response['X-Accel-Redirect'] = f'{url}'
 
