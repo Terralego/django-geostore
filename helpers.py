@@ -20,21 +20,22 @@ def get_media_response(request, data, permissions=None, headers=None):
             return HttpResponseForbidden()
 
     response = HttpResponse()
-    if not settings.MEDIA_ACCEL_REDIRECT:
-        contenttype = 'application/octet-stream'
-
-        if path is None:
-            response = HttpResponse(data, content_type=contenttype)
-        else:
-            with open(path) as fp:
-                response = HttpResponse(fp, content_type=contenttype)
-
     if isinstance(headers, dict):
         for header, value in headers.items():
             response[header] = value
 
     if settings.MEDIA_ACCEL_REDIRECT:
         response['X-Accel-Redirect'] = f'{url}'
+    else:
+        contenttype = 'application/octet-stream'
+
+        if path is None:
+            response.content = data
+            response.content_type = contenttype
+        else:
+            with open(path) as fp:
+                response.content = fp
+                response.content_type = contenttype
 
     return response
 
