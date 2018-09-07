@@ -53,12 +53,16 @@ class FeatureInLayerSerializer(serializers.ModelSerializer):
 class LayerSerializer(serializers.ModelSerializer):
     group_intersect = serializers.SerializerMethodField()
     group_tiles = serializers.SerializerMethodField()
+    routing_url = serializers.SerializerMethodField()
 
     def get_group_intersect(self, obj):
         return reverse('group-intersect', args=[obj.group, ])
 
     def get_group_tiles(self, obj):
         return unquote(reverse('group-tiles-pattern', args=[obj.group]))
+
+    def get_routing_url(self, obj):
+        return reverse('layer-route', args=[obj.pk, ])
 
     class Meta:
         model = Layer
