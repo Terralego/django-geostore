@@ -95,7 +95,8 @@ class Routing(object):
                             'id',
                             'source',
                             'target',
-                            'layer_id = %s')
+                            'layer_id = %s',
+                            clean := TRUE)
                     """
 
         cursor.execute(raw_query,
