@@ -1,3 +1,5 @@
+from django.contrib.gis.geos import GEOSGeometry, LineString, Point
+from django.http import HttpResponseBadRequest
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
@@ -6,6 +8,7 @@ from rest_framework.response import Response
 from .models import FeatureRelation, Layer, LayerRelation
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
+from .tiles.helpers import Routing
 
 
 class LayerViewSet(viewsets.ModelViewSet):
@@ -16,6 +19,24 @@ class LayerViewSet(viewsets.ModelViewSet):
     def to_geojson(self, request, pk=None):
         layer = self.get_object()
         return Response(layer.to_geojson())
+
+    @detail_route(methods=['post'])
+    def route(self, request, pk=None):
+        layer = self.get_object()
+
+        try:
+            geometry = GEOSGeometry(request.data.get('geom', None))
+            if not isinstance(geometry, LineString):
+                raise ValueError
+            points = [Point(c, srid=geometry.srid) for c in geometry.coords]
+        except (TypeError, ValueError):
+            return HttpResponseBadRequest(
+                    content='Provided geometry is not valid LineString')
+
+        routing = Routing(points, layer)
+        route = routing.get_route()
+
+        return Response(route.geojson, content_type='application/vnd.geo+json')
 
 
 class FeatureViewSet(viewsets.ModelViewSet):

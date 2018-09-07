@@ -1,5 +1,5 @@
 import mercantile
-from django.contrib.gis.geos import GEOSGeometry, MultiLineString, Point
+from django.contrib.gis.geos import GEOSGeometry, MultiLineString
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
@@ -110,11 +110,10 @@ class Routing(object):
         snapped_points = []
 
         for point in self.points:
-            geom = Point(*point['coordinates'], srid=4326)
-            closest_feature = self._get_closest_geometry(geom)
+            closest_feature = self._get_closest_geometry(point)
 
             snapped_points.append(
-                self._snap_point_on_feature(geom, closest_feature))
+                self._snap_point_on_feature(point, closest_feature))
 
         return snapped_points
 
