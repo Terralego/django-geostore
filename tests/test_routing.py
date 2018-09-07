@@ -85,5 +85,4 @@ class RoutingTestCase(TestCase):
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
-
-        self.assertIsInstance(GEOSGeometry(response), LineString)
+        self.assertIsInstance(GEOSGeometry(response.get('geom')), LineString)

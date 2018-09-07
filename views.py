@@ -23,6 +23,7 @@ class LayerViewSet(viewsets.ModelViewSet):
     @detail_route(methods=['post'])
     def route(self, request, pk=None):
         layer = self.get_object()
+        callbackid = self.request.data.get('callbackid', None)
 
         try:
             geometry = GEOSGeometry(request.data.get('geom', None))
@@ -34,9 +35,16 @@ class LayerViewSet(viewsets.ModelViewSet):
                     content='Provided geometry is not valid LineString')
 
         routing = Routing(points, layer)
-        route = routing.get_route()
 
-        return Response(route.geojson, content_type='application/vnd.geo+json')
+        response_data = {
+            'request': {
+                'callbackid': callbackid,
+                'geom': geometry.json,
+            },
+            'geom': routing.get_route().geojson
+        }
+
+        return Response(response_data, content_type='application/json')
 
 
 class FeatureViewSet(viewsets.ModelViewSet):
