@@ -1,10 +1,8 @@
 import mercantile
-from django.contrib.gis.geos import Point
-from django.contrib.gis.geos.geometry import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, MultiLineString, Point
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
-from shapely.ops import linemerge
 
 from .funcs import (ST_AsMvtGeom, ST_Distance, ST_LineLocatePoint,
                     ST_MakeEnvelope, ST_Transform)
@@ -105,7 +103,7 @@ class Routing(object):
         return ('OK',) == cursor.fetchone()
 
     def _merge_routes(self, routes):
-        return GEOSGeometry(linemerge(routes).to_wkt())
+        return MultiLineString(*routes).merged
 
     def _get_points_in_lines(self):
         '''Returns position of the point in the closed geometry'''
