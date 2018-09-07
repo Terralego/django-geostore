@@ -14,7 +14,8 @@ class RoutingTestCasse(TestCase):
         geojson_path = os.path.join(
                           os.path.dirname(__file__),
                           'files',
-                          'toulouse.geojson'),
+                          'toulouse.geojson')
+
         with open(geojson_path,
                   mode='r',
                   encoding="utf-8") as geojson:
