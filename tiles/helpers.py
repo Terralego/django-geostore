@@ -155,6 +155,9 @@ class Routing(object):
             """Return raw route between two points from pgrouting's
             pgr_withPoints function that need to be transformed to
             real geometry
+            The result of pgr_withPoints() looks like this, the result is not
+            edges but nodes. The reconstitution must be based on this.
+            p(-1)---node(1)---node(2)---node(3)...node(20)---node(21)---p(-2)
             """
 
             q = """
