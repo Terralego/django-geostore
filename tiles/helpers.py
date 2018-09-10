@@ -104,7 +104,17 @@ class Routing(object):
         return ('OK',) == cursor.fetchone()
 
     def _merge_routes(self, routes):
-        return MultiLineString(*routes).merged
+        linestrings = []
+
+        # MultiLineStrings must be splitted in LineString objects
+        for route in routes:
+            if isinstance(route, MultiLineString):
+                for line in route:
+                    linestrings.append(line)
+            else:
+                linestrings.append(route)
+
+        return MultiLineString(*linestrings).merged
 
     def _get_points_in_lines(self):
         '''Returns position of the point in the closed geometry'''
