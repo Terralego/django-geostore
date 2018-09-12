@@ -194,7 +194,7 @@ class Routing(object):
                     pgr.*,
                     points.*,
                     terra_feature.geom AS edge_geom,
-                    (LAG(terra_feature.geom, 1) OVER (ORDER BY path_seq))
+                    (LAG(terra_feature.geom, 2) OVER (ORDER BY path_seq))
                         AS prev_geom,
                     (LEAD(terra_feature.geom) OVER (ORDER BY path_seq))
                         AS next_geom
