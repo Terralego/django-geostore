@@ -91,7 +91,7 @@ class Routing(object):
                     SELECT
                         pgr_createTopology(
                             %s,
-                            0.00000000000001,
+                            0.0001,
                             'geom',
                             'id',
                             'source',
@@ -144,7 +144,7 @@ class Routing(object):
         for index, point in enumerate(self.points):
             try:
                 next_point = self.points[index + 1]
-
+                print(point, next_point)
                 # If both points are on same edge we do not need pgRouting
                 # just split the edge from point to point.
                 if point.pk == next_point.pk:
@@ -153,6 +153,7 @@ class Routing(object):
                                                  [point.fraction,
                                                   next_point.fraction]))
                 else:
+                    # Ask pgRouting the route from point to the next point
                     raw_route = self._get_raw_route(point, next_point)
                     if raw_route:
                         route.append(raw_route)
@@ -184,12 +185,12 @@ class Routing(object):
                 -- This is a virtual table of points used for routing and
                 -- their position on the closest edge.
                 SELECT *,
-                    ST_Line_Interpolate_Point(
+                    ST_LineInterpolatePoint(
                         terra_feature.geom, fraction) AS point_geom,
                     ST_Split(
                         ST_Snap(
                             terra_feature.geom,
-                            ST_Line_Interpolate_Point(
+                            ST_LineInterpolatePoint(
                                 terra_feature.geom,
                                 fraction),
                             0.00001),
@@ -197,7 +198,7 @@ class Routing(object):
                             -- can be improved or come from a setting.
                             -- It could depend of the topology and the
                             -- precision of the geometries in the layer.
-                        ST_Line_Interpolate_Point(
+                        ST_LineInterpolatePoint(
                             terra_feature.geom, fraction)
                     ) AS point_geoms
                 FROM (VALUES (1, %s, %s::float), (2, %s, %s::float))
@@ -289,9 +290,11 @@ class Routing(object):
                 FROM pgr
             )
             SELECT ST_LineMerge(ST_Multi(ST_Collect(final_geometry)))
-                   AS geometry
+                    AS geometry
             FROM route;
             """
+            self._fix_point_fraction(start_point)
+            self._fix_point_fraction(end_point)
 
             with connection.cursor() as cursor:
                 cursor.execute(q, [
@@ -301,6 +304,20 @@ class Routing(object):
                                    start_point.pk, float(start_point.fraction),
                                    end_point.pk, float(end_point.fraction),
                                    ])
-                return GEOSGeometry(cursor.fetchone()[0])
+                try:
+                    return GEOSGeometry(cursor.fetchone()[0])
+                except TypeError:
+                    return None
 
             return None
+
+    def _fix_point_fraction(self, point):
+        """ This function is used to fix problem with pgrouting when point
+        position on the edge is 0.0 or 1.0, that create a routing topology
+        problem. See https://github.com/pgRouting/pgrouting/issues/760
+        So we create a fake fraction near the vertices of the edge.
+        """
+        if float(point.fraction) == 1.0:
+            point.fraction = 0.99999
+        elif float(point.fraction) == 0.0:
+            point.fraction = 0.00001
