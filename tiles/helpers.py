@@ -144,7 +144,6 @@ class Routing(object):
         for index, point in enumerate(self.points):
             try:
                 next_point = self.points[index + 1]
-                print(point, next_point)
                 # If both points are on same edge we do not need pgRouting
                 # just split the edge from point to point.
                 if point.pk == next_point.pk:
@@ -186,21 +185,22 @@ class Routing(object):
                 -- their position on the closest edge.
                 SELECT *,
                     ST_LineInterpolatePoint(
-                        terra_feature.geom, fraction) AS point_geom,
+                        terra_feature.geom, fraction
+                    ) AS point_geom,
+
                     ST_Split(
                         ST_Snap(
                             terra_feature.geom,
-                            ST_LineInterpolatePoint(
-                                terra_feature.geom,
-                                fraction),
-                            0.00001),
+                            ST_LineInterpolatePoint(terra_feature.geom,
+                                                    fraction),
+                            0.0001),
                             -- This tolerance seems to be enought, maybe it
                             -- can be improved or come from a setting.
                             -- It could depend of the topology and the
                             -- precision of the geometries in the layer.
-                        ST_LineInterpolatePoint(
-                            terra_feature.geom, fraction)
+                        ST_LineInterpolatePoint(terra_feature.geom, fraction)
                     ) AS point_geoms
+
                 FROM (VALUES (1, %s, %s::float), (2, %s, %s::float))
                     AS points (pid, edge_id, fraction)
                 LEFT OUTER JOIN terra_feature ON edge_id = terra_feature.id
@@ -211,8 +211,10 @@ class Routing(object):
                 -- and next_geom are used later to reconstruct the final
                 -- geometry of the shortest path.
                 SELECT
-                    pgr.*,
-                    points.*,
+                    pgr.path_seq,
+                    pgr.node,
+                    pgr.edge,
+                    points.point_geoms,
                     terra_feature.geom AS edge_geom,
                     (LAG(terra_feature.geom, 2) OVER (ORDER BY path_seq))
                         AS prev_geom,
@@ -243,7 +245,6 @@ class Routing(object):
                    we merge all segments.
                 */
                 SELECT
-                    *,
                     (
                         CASE
                         WHEN (LEAD(edge) OVER (ORDER BY path_seq)) = -1 THEN
