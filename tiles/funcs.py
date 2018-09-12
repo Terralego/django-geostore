@@ -43,3 +43,8 @@ class ST_LineInterpolatePoint(Func):
 class ST_Split(Func):
     function = 'ST_Split'
     output_field = RawGeometryField()
+
+
+class ST_LineSubstring(Func):
+    function = 'ST_LineSubstring'
+    output_field = GeometryField()

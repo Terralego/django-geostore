@@ -4,6 +4,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.status import HTTP_204_NO_CONTENT
 
 from .models import FeatureRelation, Layer, LayerRelation
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
@@ -35,16 +36,21 @@ class LayerViewSet(viewsets.ModelViewSet):
                     content='Provided geometry is not valid LineString')
 
         routing = Routing(points, layer)
+        route = routing.get_route()
 
-        response_data = {
-            'request': {
-                'callbackid': callbackid,
-                'geom': geometry.json,
-            },
-            'geom': routing.get_route().geojson
-        }
+        if route:
 
-        return Response(response_data, content_type='application/json')
+            response_data = {
+                'request': {
+                    'callbackid': callbackid,
+                    'geom': geometry.json,
+                },
+                'geom': route.geojson,
+            }
+
+            return Response(response_data, content_type='application/json')
+        else:
+            return Response(status=HTTP_204_NO_CONTENT)
 
 
 class FeatureViewSet(viewsets.ModelViewSet):

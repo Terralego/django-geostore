@@ -5,7 +5,7 @@ from django.db import connection
 from django.db.models import F, Value
 
 from .funcs import (ST_AsMvtGeom, ST_Distance, ST_LineLocatePoint,
-                    ST_MakeEnvelope, ST_Transform)
+                    ST_LineSubstring, ST_MakeEnvelope, ST_Transform)
 
 EPSG_3857 = 3857
 
@@ -81,7 +81,8 @@ class Routing(object):
         '''Return the geometry of the route from the given points'''
         self.points = self._get_points_in_lines()
         routes = self._points_route()
-        return self._merge_routes(routes)
+        if routes:
+            return self._merge_routes(routes)
 
     @classmethod
     def create_topology(cls, layer):
@@ -143,13 +144,31 @@ class Routing(object):
         for index, point in enumerate(self.points):
             try:
                 next_point = self.points[index + 1]
-                raw_route = self._get_raw_route(point, next_point)
-                if raw_route:
-                    route.append(raw_route)
+
+                # If both points are on same edge we do not need pgRouting
+                # just split the edge from point to point.
+                if point.pk == next_point.pk:
+                    route.append(
+                        self._get_line_substring(point,
+                                                 [point.fraction,
+                                                  next_point.fraction]))
+                else:
+                    raw_route = self._get_raw_route(point, next_point)
+                    if raw_route:
+                        route.append(raw_route)
 
             except IndexError:
                 break
         return route
+
+    def _get_line_substring(self, feature, fractions):
+        splitted = self.layer.features.annotate(
+                        splitted_geom=ST_LineSubstring(F('geom'),
+                                                       float(min(fractions)),
+                                                       float(max(fractions)))
+                   ).get(pk=feature.pk)
+
+        return splitted.splitted_geom
 
     def _get_raw_route(self, start_point, end_point):
             """Return raw route between two points from pgrouting's
