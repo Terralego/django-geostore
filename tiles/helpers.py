@@ -10,6 +10,20 @@ from .funcs import (ST_AsMvtGeom, ST_Distance, ST_LineLocatePoint,
 EPSG_3857 = 3857
 
 
+def cached_segment(func, expiration=3600*24):
+    def wrapper(self, from_point, to_point, *args, **kwargs):
+        cache_key = (f'route_{self.layer.pk}'
+                     f'_segment_{from_point.pk}_{to_point.pk}')
+
+        def build_segment():
+            return func(self, from_point, to_point, *args, **kwargs)
+
+        return GEOSGeometry(
+                    cache.get_or_set(cache_key, build_segment, expiration))
+
+    return wrapper
+
+
 def cached_tile(func, expiration=3600*24):
     def wrapper(self, x, y, z, *args, **kwargs):
         cache_key = self.get_tile_cache_key(x, y, z)
@@ -144,22 +158,29 @@ class Routing(object):
         for index, point in enumerate(self.points):
             try:
                 next_point = self.points[index + 1]
-                # If both points are on same edge we do not need pgRouting
-                # just split the edge from point to point.
-                if point.pk == next_point.pk:
-                    route.append(
-                        self._get_line_substring(point,
-                                                 [point.fraction,
-                                                  next_point.fraction]))
-                else:
-                    # Ask pgRouting the route from point to the next point
-                    raw_route = self._get_raw_route(point, next_point)
-                    if raw_route:
-                        route.append(raw_route)
-
             except IndexError:
                 break
+
+            segment = self._get_segment(point, next_point)
+
+            if segment:
+                route.append(segment)
+
         return route
+
+    @cached_segment
+    def _get_segment(self, from_point, to_point):
+        if from_point.pk == to_point.pk:
+            # If both points are on same edge we do not need pgRouting
+            # just split the edge from point to point.
+            segment = self._get_line_substring(from_point,
+                                               [from_point.fraction,
+                                                to_point.fraction])
+        else:
+            # Ask pgRouting the route from point to the next point
+            segment = self._get_raw_route(from_point, to_point)
+
+        return segment
 
     def _get_line_substring(self, feature, fractions):
         splitted = self.layer.features.annotate(
