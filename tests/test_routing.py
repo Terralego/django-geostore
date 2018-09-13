@@ -1,6 +1,7 @@
 import os
 
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point
+from django.contrib.gis.geos import (GEOSGeometry, LineString, MultiLineString,
+                                     Point)
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
@@ -85,4 +86,5 @@ class RoutingTestCase(TestCase):
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
-        self.assertIsInstance(GEOSGeometry(response.get('geom')), LineString)
+        self.assertIsInstance(GEOSGeometry(response.get('geom')),
+                              MultiLineString)
