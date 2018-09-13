@@ -45,7 +45,7 @@ class LayerViewSet(viewsets.ModelViewSet):
                     'callbackid': callbackid,
                     'geom': geometry.json,
                 },
-                'geom': route.geojson,
+                'geom': route,
             }
 
             return Response(response_data, content_type='application/json')

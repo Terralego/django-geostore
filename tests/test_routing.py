@@ -1,7 +1,6 @@
 import os
 
-from django.contrib.gis.geos import (GEOSGeometry, LineString, MultiLineString,
-                                     Point)
+from django.contrib.gis.geos import LineString, Point
 from django.db import connection
 from django.test import TestCase
 from django.urls import reverse
@@ -60,7 +59,7 @@ class RoutingTestCase(TestCase):
           [Point(*p['coordinates'], srid=4326) for p in self.points],
           self.layer)
 
-        self.assertIsInstance(routing.get_route(), GEOSGeometry)
+        self.assertIsInstance(routing.get_route(), dict)
 
     def test_routing_view_bad_geometry(self):
         response = self.client.post(
@@ -87,8 +86,8 @@ class RoutingTestCase(TestCase):
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
-        self.assertIsInstance(GEOSGeometry(response.get('geom')),
-                              MultiLineString)
+
+        self.assertEqual(response.get('geom').get('type'), 'FeatureCollection')
 
     def test_routing_cache(self):
         geometry = LineString(*[Point(*point['coordinates'], srid=4326)

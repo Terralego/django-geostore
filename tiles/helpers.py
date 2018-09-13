@@ -1,5 +1,7 @@
+import json
+
 import mercantile
-from django.contrib.gis.geos import GEOSGeometry, MultiLineString
+from django.contrib.gis.geos import GEOSGeometry
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
@@ -18,8 +20,7 @@ def cached_segment(func, expiration=3600*24):
         def build_segment():
             return func(self, from_point, to_point, *args, **kwargs)
 
-        return GEOSGeometry(
-                    cache.get_or_set(cache_key, build_segment, expiration))
+        return cache.get_or_set(cache_key, build_segment, expiration)
 
     return wrapper
 
@@ -94,9 +95,11 @@ class Routing(object):
     def get_route(self):
         '''Return the geometry of the route from the given points'''
         self.points = self._get_points_in_lines()
+
         routes = self._points_route()
+
         if routes:
-            return self._merge_routes(routes)
+            return self._serialize_routes(routes)
 
     @classmethod
     def create_topology(cls, layer):
@@ -118,18 +121,19 @@ class Routing(object):
                        [layer.features.model._meta.db_table, layer.pk])
         return ('OK',) == cursor.fetchone()
 
-    def _merge_routes(self, routes):
-        linestrings = []
-
-        # MultiLineStrings must be splitted in LineString objects
-        for route in routes:
-            if isinstance(route, MultiLineString):
-                for line in route:
-                    linestrings.append(line)
-            else:
-                linestrings.append(route)
-
-        return MultiLineString(*linestrings).merged
+    def _serialize_routes(self, routes):
+        return {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry":
+                        json.loads(GEOSGeometry(route['geometry']).geojson),
+                    "properties": route['properties'],
+                }
+                for route in routes
+            ]
+        }
 
     def _get_points_in_lines(self):
         '''Returns position of the point in the closed geometry'''
@@ -164,7 +168,7 @@ class Routing(object):
             segment = self._get_segment(point, next_point)
 
             if segment:
-                route.append(segment)
+                route.extend(segment)
 
         return route
 
@@ -173,9 +177,9 @@ class Routing(object):
         if from_point.pk == to_point.pk:
             # If both points are on same edge we do not need pgRouting
             # just split the edge from point to point.
-            segment = self._get_line_substring(from_point,
-                                               [from_point.fraction,
-                                                to_point.fraction])
+            segment = [self._get_line_substring(from_point,
+                                                [from_point.fraction,
+                                                 to_point.fraction]), ]
         else:
             # Ask pgRouting the route from point to the next point
             segment = self._get_raw_route(from_point, to_point)
@@ -183,13 +187,16 @@ class Routing(object):
         return segment
 
     def _get_line_substring(self, feature, fractions):
-        splitted = self.layer.features.annotate(
+        feature = self.layer.features.annotate(
                         splitted_geom=ST_LineSubstring(F('geom'),
                                                        float(min(fractions)),
                                                        float(max(fractions)))
                    ).get(pk=feature.pk)
 
-        return splitted.splitted_geom
+        return {
+            'geometry': feature.splitted_geom,
+            'properties': feature.properties,
+        }
 
     def _get_raw_route(self, start_point, end_point):
             """Return raw route between two points from pgrouting's
@@ -205,10 +212,10 @@ class Routing(object):
                 -- This is a virtual table of points used for routing and
                 -- their position on the closest edge.
                 SELECT *,
+                    properties AS point_properties,
                     ST_LineInterpolatePoint(
                         terra_feature.geom, fraction
                     ) AS point_geom,
-
                     ST_Split(
                         ST_Snap(
                             terra_feature.geom,
@@ -236,7 +243,9 @@ class Routing(object):
                     pgr.node,
                     pgr.edge,
                     points.point_geoms,
+                    points.point_properties,
                     terra_feature.geom AS edge_geom,
+                    terra_feature.properties,
                     (LAG(terra_feature.geom, 2) OVER (ORDER BY path_seq))
                         AS prev_geom,
                     (LEAD(terra_feature.geom) OVER (ORDER BY path_seq))
@@ -276,7 +285,7 @@ class Routing(object):
                                where the last points it places, if we keep it,
                                the final LineString go too far from the point.
                             */
-                            ST_GeomFromText('GEOMETRYCOLLECTION EMPTY', 4326)
+                            NULL
                         )
                         WHEN edge = -1 THEN
                         (
@@ -308,12 +317,22 @@ class Routing(object):
                             -- geometry
                             edge_geom
                         END
-                    ) AS final_geometry
+                    ) AS final_geometry,
+                    (
+                        CASE
+                        WHEN node < 0 THEN
+                            point_properties
+                        ELSE
+                            properties
+                        END
+                    ) AS properties
                 FROM pgr
             )
-            SELECT ST_LineMerge(ST_Multi(ST_Collect(final_geometry)))
-                    AS geometry
-            FROM route;
+            SELECT
+                final_geometry AS geometry,
+                properties
+            FROM route
+            WHERE final_geometry IS NOT NULL;
             """
             self._fix_point_fraction(start_point)
             self._fix_point_fraction(end_point)
@@ -326,10 +345,13 @@ class Routing(object):
                                    start_point.pk, float(start_point.fraction),
                                    end_point.pk, float(end_point.fraction),
                                    ])
-                try:
-                    return GEOSGeometry(cursor.fetchone()[0])
-                except TypeError:
-                    return None
+
+                return [
+                    {
+                        'geometry': geometry,
+                        'properties': properties
+                    } for geometry, properties in cursor.fetchall()
+                ]
 
             return None
 
