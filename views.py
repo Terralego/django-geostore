@@ -38,19 +38,18 @@ class LayerViewSet(viewsets.ModelViewSet):
         routing = Routing(points, layer)
         route = routing.get_route()
 
-        if route:
-
-            response_data = {
-                'request': {
-                    'callbackid': callbackid,
-                    'geom': geometry.json,
-                },
-                'geom': route,
-            }
-
-            return Response(response_data, content_type='application/json')
-        else:
+        if not route:
             return Response(status=HTTP_204_NO_CONTENT)
+
+        response_data = {
+            'request': {
+                'callbackid': callbackid,
+                'geom': geometry.json,
+            },
+            'geom': route,
+        }
+
+        return Response(response_data, content_type='application/json')
 
 
 class FeatureViewSet(viewsets.ModelViewSet):
