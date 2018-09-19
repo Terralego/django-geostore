@@ -10,9 +10,11 @@ class LayerFactory(factory.DjangoModelFactory):
 
     @factory.post_generation
     def add_features(self, create, features, **kwargs):
-        if features:
-            for feature in features:
-                FeatureFactory(layer=self, **feature)
+        if not features:
+            return
+
+        for feature in range(features):
+            FeatureFactory(layer=self)
 
 
 class FeatureFactory(factory.DjangoModelFactory):
