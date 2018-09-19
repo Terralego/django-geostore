@@ -25,7 +25,7 @@ ACCEPTED_PROJECTIONS = [
 
 
 class Layer(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
 

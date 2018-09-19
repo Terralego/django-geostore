@@ -6,15 +6,18 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 
+from terracommon.core.mixins import MultipleFieldLookupMixin
+
 from .models import FeatureRelation, Layer, LayerRelation
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
 from .tiles.helpers import Routing
 
 
-class LayerViewSet(viewsets.ModelViewSet):
+class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
+    lookup_fields = ('pk', 'name')
 
     @detail_route(methods=['get'], url_path='geojson')
     def to_geojson(self, request, pk=None):
