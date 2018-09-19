@@ -71,7 +71,7 @@ class VectorTile(object):
             f'''
             WITH tilegeom as ({layer_raw_query})
             SELECT %s AS id, count(*) AS count,
-                   ST_AsMVT(tilegeom, %s, 4096, 'geometry') AS mvt
+                ST_AsMVT(tilegeom, CAST(%s AS text), 4096, 'geometry') AS mvt
             FROM tilegeom
             ''',
             args + (self.layer.pk, self.layer.name)
