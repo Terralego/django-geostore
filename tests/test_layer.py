@@ -43,8 +43,8 @@ class LayerTestCase(TestCase):
 
         zip = ZipFile(BytesIO(response.content), 'r')
         self.assertListEqual(
-            ['prj', 'cpg', 'shx', 'shp', 'dbf'],
-            [f.split('.')[1] for f in zip.namelist()]
+            sorted(['prj', 'cpg', 'shx', 'shp', 'dbf']),
+            sorted([f.split('.')[1] for f in zip.namelist()])
             )
 
     def test_empty_shapefile_export(self):
