@@ -4,6 +4,7 @@ from zipfile import ZipFile
 from django.contrib.gis.geos import GEOSException
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
 
 from terracommon.accounts.tests.factories import TerraUserFactory
 
@@ -38,10 +39,17 @@ class LayerTestCase(TestCase):
 
         response = self.client.get(reverse('layer-shapefile',
                                            args=[self.layer.pk]))
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
 
         zip = ZipFile(BytesIO(response.content), 'r')
         self.assertListEqual(
             ['prj', 'cpg', 'shx', 'shp', 'dbf'],
             [f.split('.')[1] for f in zip.namelist()]
             )
+
+    def test_empty_shapefile_export(self):
+        empty_layer = LayerFactory()
+
+        response = self.client.get(reverse('layer-shapefile',
+                                           args=[empty_layer.pk]))
+        self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)

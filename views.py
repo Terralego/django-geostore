@@ -1,6 +1,6 @@
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point
 from django.http import HttpResponse, HttpResponseBadRequest
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -24,10 +24,13 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         layer = self.get_object()
         shape_file = layer.to_shapefile()
 
-        response = HttpResponse(content_type='application/zip')
-        response['Content-Disposition'] = (f'attachment; '
-                                           'filename="{layer.name}.zip"')
-        response.write(shape_file.getvalue())
+        if shape_file:
+            response = HttpResponse(content_type='application/zip')
+            response['Content-Disposition'] = (f'attachment; '
+                                               'filename="{layer.name}.zip"')
+            response.write(shape_file.getvalue())
+        else:
+            response = Response(status=status.HTTP_204_NO_CONTENT)
 
         return response
 

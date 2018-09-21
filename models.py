@@ -165,6 +165,9 @@ class Layer(models.Model):
             'properties': self.layer_properties,
         }
 
+        if not self.features.count():
+            return
+
         with TemporaryDirectory() as shape_folder:
             with fiona.open(os.path.join(shape_folder, 'shape.shp'),
                             mode='w',
@@ -182,9 +185,13 @@ class Layer(models.Model):
     def layer_properties(self):
         ''' Return properties of first feature of the layer
         '''
+        feature = self.features.first()
+        if not feature:
+            return {}
+
         return {
             prop: 'str'
-            for prop in self.features.first().properties
+            for prop in feature.properties
         }
 
     @cached_property
@@ -192,7 +199,11 @@ class Layer(models.Model):
         ''' Return the geometry type of the layer using the first feature in
             the layer
         '''
-        return self.features.first().geom.geom_type
+        feature = self.features.first()
+        if feature:
+            return feature.geom.geom_type
+
+        return None
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
