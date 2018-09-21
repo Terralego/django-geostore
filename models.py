@@ -1,7 +1,10 @@
 import json
 import logging
+import os
 import uuid
+from tempfile import TemporaryDirectory
 
+import fiona
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
@@ -9,7 +12,11 @@ from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Manager
+from django.utils.functional import cached_property
+from fiona.crs import from_epsg
 from mercantile import tiles
+
+from terracommon.core.helpers import make_zipfile_bytesio
 
 from .fields import DateFieldYearLess
 from .helpers import ChunkIterator
@@ -150,6 +157,42 @@ class Layer(models.Model):
                                     fields=('properties',),
                                     geometry_field='geom',
                                     properties_field='properties'))
+
+    def to_shapefile(self):
+
+        schema = {
+            'geometry': self.layer_geometry,
+            'properties': self.layer_properties,
+        }
+
+        with TemporaryDirectory() as shape_folder:
+            with fiona.open(os.path.join(shape_folder, 'shape.shp'),
+                            mode='w',
+                            driver='ESRI Shapefile',
+                            schema=schema,
+                            crs=from_epsg(3857)) as shapefile:
+                for feature in self.features.all():
+                    shapefile.write({
+                        'geometry': json.loads(feature.geom.json),
+                        'properties': feature.properties
+                        })
+            return make_zipfile_bytesio(shape_folder)
+
+    @cached_property
+    def layer_properties(self):
+        ''' Return properties of first feature of the layer
+        '''
+        return {
+            prop: 'str'
+            for prop in self.features.first().properties
+        }
+
+    @cached_property
+    def layer_geometry(self):
+        ''' Return the geometry type of the layer using the first feature in
+            the layer
+        '''
+        return self.features.first().geom.geom_type
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS

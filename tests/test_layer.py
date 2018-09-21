@@ -1,12 +1,20 @@
+from io import BytesIO
+from zipfile import ZipFile
+
 from django.contrib.gis.geos import GEOSException
 from django.test import TestCase
+from django.urls import reverse
 
-from .factories import LayerFactory
+from terracommon.accounts.tests.factories import TerraUserFactory
+
+from .factories import FeatureFactory, LayerFactory
 
 
 class LayerTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
+        self.user = TerraUserFactory()
+        self.client.force_login(self.user)
 
     def test_import_geojson(self):
         with_projection = """{"type": "FeatureCollection", "crs":
@@ -24,3 +32,16 @@ class LayerTestCase(TestCase):
                                  "BADPROJECTION" } }, "features": []}"""
         with self.assertRaises(GEOSException):
             self.layer.from_geojson(with_bad_projection, "01-01", "01-01")
+
+    def test_shapefile_export(self):
+        FeatureFactory(layer=self.layer)
+
+        response = self.client.get(reverse('layer-shapefile',
+                                           args=[self.layer.pk]))
+        self.assertEqual(200, response.status_code)
+
+        zip = ZipFile(BytesIO(response.content), 'r')
+        self.assertListEqual(
+            ['prj', 'cpg', 'shx', 'shp', 'dbf'],
+            [f.split('.')[1] for f in zip.namelist()]
+            )
