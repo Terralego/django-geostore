@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from rest_framework import serializers
 
+from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.terra.models import Layer, Feature, LayerRelation, \
                                      FeatureRelation
 
@@ -50,10 +51,11 @@ class FeatureInLayerSerializer(serializers.ModelSerializer):
         fields = ('id', 'geom', )
 
 
-class LayerSerializer(serializers.ModelSerializer):
+class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     group_intersect = serializers.SerializerMethodField()
     group_tiles = serializers.SerializerMethodField()
     routing_url = serializers.SerializerMethodField()
+    shapefile_url = serializers.SerializerMethodField()
 
     def get_group_intersect(self, obj):
         return reverse('group-intersect', args=[obj.group, ])
@@ -63,6 +65,17 @@ class LayerSerializer(serializers.ModelSerializer):
 
     def get_routing_url(self, obj):
         return reverse('layer-route', args=[obj.pk, ])
+
+    def get_shapefile_url(self, obj):
+        if self.current_user.is_anonymous:
+            return None
+
+        uidb64, token = self.get_uidb64_token_for_user(self.current_user)
+
+        return "{}?uidb64={}&token={}".format(
+            reverse('layer-shapefile', args=[obj.pk, ]),
+            uidb64,
+            token)
 
     class Meta:
         model = Layer

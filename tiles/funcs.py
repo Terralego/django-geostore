@@ -1,5 +1,5 @@
-from django.contrib.gis.db.models import (IntegerField, FloatField,
-                                          GeometryField)
+from django.contrib.gis.db.models import (FloatField, GeometryField,
+                                          IntegerField)
 from django.db.models import Func
 
 
