@@ -15,8 +15,6 @@ class VectorTilesTestCase(TestCase):
         self.layer = LayerFactory(group=self.group_name)
 
         self.layer.from_geojson(
-            from_date='01-01',
-            to_date='12-31',
             geojson_data='''
             {
             "type": "FeatureCollection",

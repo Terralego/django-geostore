@@ -27,7 +27,6 @@ class ImportgeojsonTest(TestCase):
         call_command(
             'import_geojson',
             f'-g{tmp_geojson.name}',
-            '-f 01-12', '-t 20-12',
             f'-s{tmp_schema.name}')
 
         os.remove(tmp_geojson.name)
