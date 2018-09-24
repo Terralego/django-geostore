@@ -1,4 +1,5 @@
-from django.contrib.gis.db.models import FloatField, GeometryField
+from django.contrib.gis.db.models import (IntegerField, FloatField,
+                                          GeometryField)
 from django.db.models import Func
 
 
@@ -48,3 +49,8 @@ class ST_Split(Func):
 class ST_LineSubstring(Func):
     function = 'ST_LineSubstring'
     output_field = GeometryField()
+
+
+class ST_SRID(Func):
+    function = 'ST_SRID'
+    output_field = IntegerField()
