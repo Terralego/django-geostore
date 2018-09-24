@@ -1,12 +1,10 @@
 import json
-from datetime import date
 
 from django.conf import settings
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.core.serializers import serialize
 from django.http import (HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotFound)
-from django.utils.dateparse import parse_date
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
@@ -31,16 +29,10 @@ class MVTView(APIView):
 
     def get_tile_for_layer(self, layer):
         tile = VectorTile(layer)
-        features = layer.features.for_date(self.date_from, self.date_to)
+        features = layer.features.all()
         return tile.get_tile(self.x, self.y, self.z, features)
 
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'from', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
-            openapi.Parameter(
-                'to', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
-            ],
         responses={
             200: 'Returns a protobuf mapbox vector tile',
             404: 'The layer group does not exist'
@@ -58,11 +50,6 @@ class MVTView(APIView):
         if self.layers.count() == 0:
             return HttpResponseNotFound()
 
-        self.date_from = (parse_date(self.request.GET.get('from', ''))
-                          or date.today())
-        self.date_to = (parse_date(self.request.GET.get('to', ''))
-                        or self.date_from)
-
         return HttpResponse(
                     self.get_tile(),
                     content_type="application/vnd.mapbox-vector-tile"
@@ -76,10 +63,6 @@ class IntersectView(APIView):
             openapi.Parameter(
                 'callbackid', openapi.IN_QUERY, type=openapi.TYPE_STRING),
             openapi.Parameter(
-                'from', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
-            openapi.Parameter(
-                'to', openapi.IN_QUERY, type=openapi.FORMAT_DATE),
-            openapi.Parameter(
                 'geom', openapi.IN_QUERY, type=openapi.TYPE_STRING),
             ],
         responses={
@@ -88,14 +71,9 @@ class IntersectView(APIView):
             }
     )
     def post(self, request, group):
-        date_from = (parse_date(self.request.data.get('from', ''))
-                     or date.today())
-        date_to = (parse_date(self.request.data.get('to', ''))
-                   or date_from)
         callbackid = self.request.data.get('callbackid', None)
 
-        features = Feature.objects.filter(layer__group=group).for_date(
-            date_from, date_to)
+        features = Feature.objects.filter(layer__group=group)
 
         try:
             geometry = GEOSGeometry(request.data.get('geom', None))
@@ -103,27 +81,13 @@ class IntersectView(APIView):
             return HttpResponseBadRequest(
                         content='Provided geometry is not valid')
 
-        results = {}
-        for feature in features.intersects(geometry):
-            feature.properties.update({
-                'date_from': feature.from_date,
-                'date_to': feature.to_date
-            })
-
-            if feature.identifier in results:
-                (results[feature.identifier].properties
-                    .append(feature.properties))
-            else:
-                feature.properties = [feature.properties, ]
-                results[feature.identifier] = feature
-
         response = {
             'request': {
                 'callbackid': callbackid,
                 'geom': geometry.json,
             },
             'results': json.loads(serialize('geojson',
-                                  results.values(),
+                                  features.intersects(geometry),
                                   fields=('properties',),
                                   geometry_field='geom',
                                   properties_field='properties')),

@@ -42,16 +42,6 @@ class Command(BaseCommand):
                             help="Field in properties that will be used as "
                                  "identifier of the features, so features can"
                                  " be grouped on layer's operations")
-        parser.add_argument('-f', '--from',
-                            action="store",
-                            required=True,
-                            help="Layer beginning validity period. "
-                                 "Format: MM-DD")
-        parser.add_argument('-t', '--to',
-                            action="store",
-                            required=True,
-                            help="Layer ending validity period. "
-                                 "Format : MM-DD")
         parser.add_argument('-gr', '--group',
                             action="store",
                             default="__nogroup__",
@@ -67,8 +57,6 @@ class Command(BaseCommand):
             options.get('layer', None) else uuid.uuid4()
         geojson_files = options.get('geojson')
         dryrun = options.get('dry_run')
-        from_date = options.get('from')
-        to_date = options.get('to')
         group = options.get('group')
         identifier = options.get('identifier', None)
 
@@ -88,15 +76,14 @@ class Command(BaseCommand):
                   "import more features in the same layer with different "
                   "options")
 
-        self.import_datas(layer, geojson_files, from_date, to_date, identifier)
+        self.import_datas(layer, geojson_files, identifier)
 
         if dryrun:
             transaction.savepoint_rollback(sp)
         else:
             transaction.savepoint_commit(sp)
 
-    def import_datas(self, layer, geojson_files, from_date, to_date,
-                     identifier):
+    def import_datas(self, layer, geojson_files, identifier):
         for file_in in geojson_files:
             geojson = file_in.read()
-            layer.from_geojson(geojson, from_date, to_date, identifier)
+            layer.from_geojson(geojson, identifier)

@@ -18,7 +18,6 @@ from mercantile import tiles
 
 from terracommon.core.helpers import make_zipfile_bytesio
 
-from .fields import DateFieldYearLess
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet
 from .tiles.funcs import ST_SRID
@@ -124,8 +123,7 @@ class Layer(models.Model):
                 fast=fast
             )
 
-    def from_geojson(self, geojson_data, from_date='01-01', to_date='12-31',
-                     id_field=None, update=False):
+    def from_geojson(self, geojson_data, id_field=None, update=False):
         """
         Import geojson raw data in a layer
         Args:
@@ -148,8 +146,6 @@ class Layer(models.Model):
                 identifier=identifier,
                 properties=properties,
                 geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
-                from_date=from_date,
-                to_date=to_date
             )
 
     def to_geojson(self):
@@ -226,10 +222,6 @@ class Feature(models.Model):
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
                               related_name='features')
-    from_date = DateFieldYearLess(help_text="Layer validity period start",
-                                  default='01-01')
-    to_date = DateFieldYearLess(help_text="Layer validity period end",
-                                default='12-31')
 
     source = models.IntegerField(null=True,
                                  help_text='Internal field used by pgRouting')
