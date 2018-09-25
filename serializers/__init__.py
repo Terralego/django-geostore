@@ -58,7 +58,7 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     shapefile_url = serializers.SerializerMethodField()
 
     def get_group_intersect(self, obj):
-        return reverse('group-intersect', args=[obj.group, ])
+        return reverse('layer-intersects', args=[obj.name, ])
 
     def get_group_tiles(self, obj):
         return unquote(reverse('group-tiles-pattern', args=[obj.group]))

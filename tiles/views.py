@@ -1,16 +1,9 @@
-import json
-
 from django.conf import settings
-from django.contrib.gis.geos.geometry import GEOSGeometry
-from django.core.serializers import serialize
-from django.http import (HttpResponse, HttpResponseBadRequest,
-                         HttpResponseNotFound)
-from drf_yasg import openapi
+from django.http import HttpResponse, HttpResponseNotFound
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Feature, Layer
+from ..models import Layer
 from .helpers import VectorTile
 
 
@@ -54,43 +47,3 @@ class MVTView(APIView):
                     self.get_tile(),
                     content_type="application/vnd.mapbox-vector-tile"
                     )
-
-
-class IntersectView(APIView):
-
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'callbackid', openapi.IN_QUERY, type=openapi.TYPE_STRING),
-            openapi.Parameter(
-                'geom', openapi.IN_QUERY, type=openapi.TYPE_STRING),
-            ],
-        responses={
-            200: 'serialized GeoJSON data',
-            400: 'Geometry is incorrect'
-            }
-    )
-    def post(self, request, group):
-        callbackid = self.request.data.get('callbackid', None)
-
-        features = Feature.objects.filter(layer__group=group)
-
-        try:
-            geometry = GEOSGeometry(request.data.get('geom', None))
-        except (TypeError, ValueError):
-            return HttpResponseBadRequest(
-                        content='Provided geometry is not valid')
-
-        response = {
-            'request': {
-                'callbackid': callbackid,
-                'geom': geometry.json,
-            },
-            'results': json.loads(serialize('geojson',
-                                  features.intersects(geometry),
-                                  fields=('properties',),
-                                  geometry_field='geom',
-                                  properties_field='properties')),
-        }
-
-        return Response(response)

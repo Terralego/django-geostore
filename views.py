@@ -1,4 +1,7 @@
+import json
+
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point
+from django.core.serializers import serialize
 from django.http import HttpResponse, HttpResponseBadRequest
 from rest_framework import status, viewsets
 from rest_framework.decorators import detail_route
@@ -71,6 +74,31 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         }
 
         return Response(response_data, content_type='application/json')
+
+    @detail_route(methods=['post'])
+    def intersects(self, request, *args, **kwargs):
+        layer = self.get_object()
+        callbackid = self.request.data.get('callbackid', None)
+
+        try:
+            geometry = GEOSGeometry(request.data.get('geom', None))
+        except (TypeError, ValueError):
+            return HttpResponseBadRequest(
+                        content='Provided geometry is not valid')
+
+        response = {
+            'request': {
+                'callbackid': callbackid,
+                'geom': geometry.json,
+            },
+            'results': json.loads(serialize('geojson',
+                                  layer.features.intersects(geometry),
+                                  fields=('properties',),
+                                  geometry_field='geom',
+                                  properties_field='properties')),
+        }
+
+        return Response(response)
 
 
 class FeatureViewSet(viewsets.ModelViewSet):

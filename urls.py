@@ -6,7 +6,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
 from rest_framework_jwt import views as auth_views
 
-from .tiles.views import IntersectView, MVTView
+from .tiles.views import MVTView
 from .views import (FeatureRelationViewSet, FeatureViewSet,
                     LayerRelationViewSet, LayerViewSet)
 
@@ -31,9 +31,6 @@ urlpatterns = [
     path('auth/refresh-token/',
          auth_views.refresh_jwt_token,
          name='token-refresh'),
-    path(r'layer/<str:group>/intersects/',
-         IntersectView.as_view(),
-         name='group-intersect'),
     path(r'layer/<str:group>/tiles/<int:z>/<int:x>/<int:y>/',
          MVTView.as_view(),
          name='group-tiles'),

@@ -70,7 +70,7 @@ class FeaturesTestCase(TestCase):
 
         """The layer below must intersect"""
         response = self.client.post(
-            reverse('group-intersect', args=[self.group_name, ]),
+            reverse('layer-intersects', args=[layer.pk, ]),
             {
                 'geom': json.dumps(self.intersect_geometry)
             }
@@ -89,7 +89,7 @@ class FeaturesTestCase(TestCase):
 
         """The layer below must NOT intersect"""
         response = self.client.post(
-            reverse('group-intersect', args=[self.group_name, ]),
+            reverse('layer-intersects', args=[layer.name, ]),
             {
                 'geom': json.dumps(self.fake_geometry)
             }
@@ -104,7 +104,7 @@ class FeaturesTestCase(TestCase):
            invalid
         """
         response = self.client.post(
-            reverse('group-intersect', args=[self.group_name, ]),
+            reverse('layer-intersects', args=[layer.pk, ]),
             {
                 'geom': '''Invalid geometry'''
             }
