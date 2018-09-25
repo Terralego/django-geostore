@@ -43,6 +43,31 @@ class FeaturesTestCase(TestCase):
             ]
         ]
     }
+    fake_linestring = {
+        "type": "LineString",
+        "coordinates": [
+            [
+                1.3839340209960938,
+                43.602521593464054
+            ],
+        ]
+    }
+    fake_polygon = {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    1.3839340209960938,
+                    43.602521593464054
+                ],
+                [
+                    1.440582275390625,
+                    43.574421623084234
+                ]
+            ]
+        ]
+    }
+
     group_name = 'mygroup'
 
     def setUp(self):
@@ -109,4 +134,24 @@ class FeaturesTestCase(TestCase):
                 'geom': '''Invalid geometry'''
             }
         )
+        self.assertEqual(400, response.status_code)
+
+    def test_features_linestring_format(self):
+        response = self.client.post(
+            reverse('layer-intersects', args=[self.group_name, ]),
+            {
+                'geom': json.dumps(self.fake_linestring)
+            }
+        )
+
+        self.assertEqual(400, response.status_code)
+
+    def test_features_polygon_format(self):
+        response = self.client.post(
+            reverse('layer-intersects', args=[self.group_name, ]),
+            {
+                'geom': json.dumps(self.fake_polygon)
+            }
+        )
+
         self.assertEqual(400, response.status_code)
