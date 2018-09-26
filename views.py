@@ -92,12 +92,11 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
                 'callbackid': callbackid,
                 'geom': geometry.json,
             },
-            'results': json.loads(serialize(
-                'geojson',
-                layer.features.intersects(geometry),
-                fields=('properties',),
-                geometry_field='geom',
-                properties_field='properties')),
+            'results': json.loads(serialize('geojson',
+                                  layer.features.intersects(geometry),
+                                  fields=('properties',),
+                                  geometry_field='geom',
+                                  properties_field='properties')),
         }
 
         return Response(response)
