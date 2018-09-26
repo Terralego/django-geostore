@@ -1,6 +1,7 @@
 import json
 
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point, GEOSException
+from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
+                                     Point)
 from django.core.serializers import serialize
 from django.http import HttpResponse, HttpResponseBadRequest
 from rest_framework import status, viewsets
@@ -25,7 +26,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
     @detail_route(methods=['get'],
                   url_path='shapefile',
-                  permission_classes=(TokenBasedPermission, ))
+                  permission_classes=(TokenBasedPermission,))
     def to_shapefile(self, request, pk=None):
         layer = self.get_object()
         shape_file = layer.to_shapefile()
@@ -57,7 +58,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
             points = [Point(c, srid=geometry.srid) for c in geometry.coords]
         except (TypeError, ValueError):
             return HttpResponseBadRequest(
-                    content='Provided geometry is not valid LineString')
+                content='Provided geometry is not valid LineString')
 
         routing = Routing(points, layer)
         route = routing.get_route()
@@ -83,18 +84,20 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         try:
             geometry = GEOSGeometry(request.data.get('geom', None))
         except (GEOSException, ValueError) as err:
-            return HttpResponseBadRequest(content='Provided geometry is not valid')
+            return HttpResponseBadRequest(
+                content=err)
 
         response = {
             'request': {
                 'callbackid': callbackid,
                 'geom': geometry.json,
             },
-            'results': json.loads(serialize('geojson',
-                                  layer.features.intersects(geometry),
-                                  fields=('properties',),
-                                  geometry_field='geom',
-                                  properties_field='properties')),
+            'results': json.loads(serialize(
+                'geojson',
+                layer.features.intersects(geometry),
+                fields=('properties',),
+                geometry_field='geom',
+                properties_field='properties')),
         }
 
         return Response(response)

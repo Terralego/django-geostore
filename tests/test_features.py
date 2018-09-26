@@ -137,7 +137,6 @@ class FeaturesTestCase(TestCase):
         self.assertEqual(400, response.status_code)
 
     def test_features_linestring_format(self):
-        layer = LayerFactory(group=self.group_name)
         response = self.client.post(
             reverse('layer-intersects', args=[self.layer.pk, ]),
             {
@@ -148,7 +147,6 @@ class FeaturesTestCase(TestCase):
         self.assertEqual(400, response.status_code)
 
     def test_features_polygon_format(self):
-        layer = LayerFactory(group=self.group_name)
         response = self.client.post(
             reverse('layer-intersects', args=[self.layer.pk, ]),
             {
