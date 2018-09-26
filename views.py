@@ -1,6 +1,6 @@
 import json
 
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point
+from django.contrib.gis.geos import GEOSGeometry, LineString, Point, GEOSException
 from django.core.serializers import serialize
 from django.http import HttpResponse, HttpResponseBadRequest
 from rest_framework import status, viewsets
@@ -82,9 +82,8 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
         try:
             geometry = GEOSGeometry(request.data.get('geom', None))
-        except (TypeError, ValueError):
-            return HttpResponseBadRequest(
-                        content='Provided geometry is not valid')
+        except (GEOSException, ValueError) as err:
+            return HttpResponseBadRequest(content='Provided geometry is not valid')
 
         response = {
             'request': {
