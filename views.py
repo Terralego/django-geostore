@@ -56,7 +56,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
             if not isinstance(geometry, LineString):
                 raise ValueError
             points = [Point(c, srid=geometry.srid) for c in geometry.coords]
-        except (GEOSException, TypeError):
+        except (GEOSException, TypeError, ValueError):
             return HttpResponseBadRequest(
                 content='Provided geometry is not valid LineString')
 
@@ -83,9 +83,9 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
         try:
             geometry = GEOSGeometry(request.data.get('geom', None))
-        except (GEOSException, ValueError) as err:
+        except (GEOSException, TypeError, ValueError):
             return HttpResponseBadRequest(
-                content=err)
+                content='Provided geometry is not valid')
 
         response = {
             'request': {
