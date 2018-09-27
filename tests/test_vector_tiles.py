@@ -85,3 +85,12 @@ class VectorTilesTestCase(TestCase):
                          cache.get(tile.get_tile_cache_key(x, y, z)))
         features[0].clean_vect_tile_cache()
         self.assertIsNone(cache.get(tile.get_tile_cache_key(x, y, z)))
+
+    def test_caching_key(self):
+        features = self.layer.features.all()
+        tile = VectorTile(self.layer, "CACHINGCACHE")
+        x, y, z = 16506, 11966, 15
+
+        cached_tile = tile.get_tile(x, y, z, features)
+        self.assertEqual(cached_tile,
+                         cache.get(tile.get_tile_cache_key(x, y, z)))
