@@ -90,6 +90,9 @@ class VectorTile(object):
 class Routing(object):
 
     def __init__(self, points, layer):
+        if layer.layer_geometry != 'LineString':
+            raise ValueError('Layer is not routable')
+
         self.points, self.layer = points, layer
 
     def get_route(self):

@@ -10,6 +10,8 @@ from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Layer
 from terracommon.terra.tiles.helpers import Routing
 
+from .factories import FeatureFactory
+
 
 class RoutingTestCase(TestCase):
     points = [
@@ -117,3 +119,11 @@ class RoutingTestCase(TestCase):
 
             self.assertTrue(all([counts[0] == c for c in counts]))
             self.assertTrue(all([initial_count > c for c in counts]))
+
+    def test_layer_with_polygon(self):
+        # test that a layer with another kind of geometry raise the right
+        # exception
+
+        feature = FeatureFactory()
+        with self.assertRaises(ValueError):
+            Routing(self.points, feature.layer)
