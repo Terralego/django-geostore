@@ -37,8 +37,8 @@ def cached_tile(func, expiration=3600*24):
 
 
 class VectorTile(object):
-    def __init__(self, layer):
-        self.layer = layer
+    def __init__(self, layer, cache_key=None):
+        self.layer, self.cache_key = layer, cache_key
 
     @cached_tile
     def get_tile(self, x, y, z, features):
@@ -80,7 +80,11 @@ class VectorTile(object):
         return (mvt_query.count, mvt_query.mvt)
 
     def get_tile_cache_key(self, x, y, z):
-        return f'tile_cache_{self.layer.pk}_{x}_{y}_{z}'
+        if self.cache_key:
+            cache_key = self.cache_key
+        else:
+            cache_key = self.layer.pk
+        return f'tile_cache_{cache_key}_{x}_{y}_{z}'
 
     def clean_tiles(self, tiles):
         return cache.delete_many(
