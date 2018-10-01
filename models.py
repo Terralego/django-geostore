@@ -179,6 +179,16 @@ class Layer(models.Model):
                         })
             return make_zipfile_bytesio(shape_folder)
 
+    def from_shapefile(self, zippath, shapefile):
+        with fiona.open(path=shapefile, vfs=f'zip://{zippath}') as shape:
+            for feature in shape:
+                properties = feature.get('properties', {})
+                Feature.objects.create(
+                    layer=self,
+                    properties=properties,
+                    geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
+                )
+
     @cached_property
     def layer_projection(self):
         feature = self.features.annotate(srid=ST_SRID(F('geom'))).first()

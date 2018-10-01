@@ -1,3 +1,4 @@
+import os
 from io import BytesIO
 from zipfile import ZipFile
 
@@ -73,6 +74,25 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
             self.client.get(url).status_code,
             HTTP_403_FORBIDDEN
         )
+
+    def test_shapefile_import(self):
+        layer = LayerFactory()
+        shapefile_path = os.path.join(os.path.dirname(__file__),
+                                      'files',
+                                      'shapefile.zip')
+
+        with ZipFile(shapefile_path, 'r') as shapezip:
+            try:
+                shapefile = [
+                        f'/{name}'
+                        for name in shapezip.namelist()
+                        if name.endswith('.shp')
+                    ][0]
+            except IndexError:
+                shapefile = None
+
+        layer.from_shapefile(shapefile_path, shapefile)
+        self.assertEqual(8, layer.features.all().count())
 
     def get_uidb64_token_for_user(self):
         return (urlsafe_base64_encode(force_bytes(self.user.pk)).decode(),
