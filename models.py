@@ -179,8 +179,8 @@ class Layer(models.Model):
                         })
             return make_zipfile_bytesio(shape_folder)
 
-    def from_shapefile(self, zippath, shapefile):
-        with fiona.open(path=shapefile, vfs=f'zip://{zippath}') as shape:
+    def from_shapefile(self, shapebytes):
+        with fiona.BytesCollection(shapebytes) as shape:
             for feature in shape:
                 properties = feature.get('properties', {})
                 Feature.objects.create(

@@ -3,6 +3,7 @@ import json
 from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
                                      Point)
 from django.core.serializers import serialize
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from rest_framework import status, viewsets
 from rest_framework.decorators import detail_route
@@ -10,7 +11,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 
-from terracommon.accounts.permissions import TokenBasedPermission
+from terracommon.accounts.permissions import IsPostOrToken
 from terracommon.core.mixins import MultipleFieldLookupMixin
 
 from .models import FeatureRelation, Layer, LayerRelation
@@ -24,20 +25,35 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     serializer_class = LayerSerializer
     lookup_fields = ('pk', 'name')
 
-    @detail_route(methods=['get'],
+    @detail_route(methods=['get', 'post'],
                   url_path='shapefile',
-                  permission_classes=(TokenBasedPermission,))
-    def to_shapefile(self, request, pk=None):
+                  permission_classes=(IsPostOrToken, ))
+    def shapefile(self, request, pk=None):
         layer = self.get_object()
-        shape_file = layer.to_shapefile()
 
-        if shape_file:
-            response = HttpResponse(content_type='application/zip')
-            response['Content-Disposition'] = ('attachment; '
-                                               f'filename="{layer.name}.zip"')
-            response.write(shape_file.getvalue())
+        if request.method == 'POST':
+
+            shapefile = request.data['shapefile']
+            try:
+                with transaction.atomic():
+                    layer.features.all().delete()
+                    layer.from_shapefile(shapefile.read())
+                    response = Response(status=status.HTTP_200_OK)
+            except ValueError:
+                response = Response(status=status.HTTP_400_BAD_REQUEST)
+
         else:
-            response = Response(status=status.HTTP_204_NO_CONTENT)
+            shape_file = layer.to_shapefile()
+
+            if shape_file:
+                response = HttpResponse(content_type='application/zip')
+                response['Content-Disposition'] = (
+                    'attachment; '
+                    f'filename="{layer.name}.zip"')
+
+                response.write(shape_file.getvalue())
+            else:
+                response = Response(status=status.HTTP_204_NO_CONTENT)
 
         return response
 
