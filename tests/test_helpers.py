@@ -27,18 +27,17 @@ class HelpersTestCase(TestCase):
         # Creating a real file
         # In this case, we test if get_media_response return content
         # from a file and so will use open()
-        tmp_file = open('/tmp/test.txt', 'wb')
-        tmp_file.write(b"ceci n'est pas une pipe")
-        tmp_file.seek(0)
+        tmp_name = '/tmp/test.txt'
+        with open(tmp_name, 'wb') as tmp_file:
+            tmp_file.write(b"ceci n'est pas une pipe")
 
         response = get_media_response(
             request,
-            {'path': tmp_file.name, 'url': None}  # url none, no accel-redirect
+            {'path': tmp_name, 'url': None}  # url none, no accel-redirect
         )
 
-        # Closing & deleting the file since we don't need it anymore
-        tmp_file.close()
-        os.remove(tmp_file.name)
+        # deleting the file since we don't need it anymore
+        os.remove(tmp_name)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsInstance(response.content, bytes)
