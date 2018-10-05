@@ -77,9 +77,10 @@ class RoutingTestCase(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_routing_view(self):
+        points = self.points
 
         geometry = LineString(*[Point(*point['coordinates'], srid=4326)
-                                for point in self.points])
+                                for point in points])
 
         response = self.client.post(
           reverse('layer-route', args=[self.layer.pk]),
@@ -90,6 +91,42 @@ class RoutingTestCase(TestCase):
         response = response.json()
 
         self.assertEqual(response.get('geom').get('type'), 'FeatureCollection')
+        self.assertTrue(len(response.get('geom').get('features')) >= 2)
+
+        # Ensure End Points are close to requested points
+        points = [Point(*p['coordinates'], srid=4326) for p in points]
+        start = Point(*response.get('geom').get('features')[0].get('geometry')
+                      .get('coordinates')[0])
+        end = Point(*response.get('geom').get('features')[-1].get('geometry')
+                    .get('coordinates')[-1])
+        self.assertTrue(points[0].distance(start) <= 0.001)
+        self.assertTrue(points[-1].distance(end) <= 0.001)
+
+    def test_routing_view_edge_case(self):
+        points = [self.points[0], self.points[0]]
+
+        geometry = LineString(*[Point(*point['coordinates'], srid=4326)
+                                for point in points])
+
+        response = self.client.post(
+          reverse('layer-route', args=[self.layer.pk]),
+          {'geom': geometry.geojson, }
+        )
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        response = response.json()
+
+        self.assertEqual(response.get('geom').get('type'), 'FeatureCollection')
+        self.assertTrue(len(response.get('geom').get('features')) >= 1)
+
+        # Ensure End Points are close to requested points
+        points = [Point(*p['coordinates'], srid=4326) for p in points]
+        start = Point(*response.get('geom').get('features')[0].get('geometry')
+                      .get('coordinates'))
+        end = Point(*response.get('geom').get('features')[-1].get('geometry')
+                    .get('coordinates'))
+        self.assertTrue(points[0].distance(start) <= 0.001)
+        self.assertTrue(points[-1].distance(end) <= 0.001)
 
     def test_routing_cache(self):
         geometry = LineString(*[Point(*point['coordinates'], srid=4326)

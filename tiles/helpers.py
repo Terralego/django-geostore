@@ -208,53 +208,42 @@ class Routing(object):
     def _get_raw_route(self, start_point, end_point):
             """Return raw route between two points from pgrouting's
             pgr_withPoints function that need to be transformed to
-            real geometry
-            The result of pgr_withPoints() looks like this, the result is not
-            edges but nodes. The reconstitution must be based on this.
-            p(-1)---node(1)---node(2)---node(3)...node(20)---node(21)---p(-2)
+            real geometry.
             """
 
             q = """
             WITH points AS (
                 -- This is a virtual table of points used for routing and
                 -- their position on the closest edge.
-                SELECT *,
-                    properties AS point_properties,
-                    ST_LineInterpolatePoint(
-                        terra_feature.geom, fraction
-                    ) AS point_geom,
-                    ST_Split(
-                        ST_Snap(
-                            terra_feature.geom,
-                            ST_LineInterpolatePoint(terra_feature.geom,
-                                                    fraction),
-                            0.0001),
-                            -- This tolerance seems to be enought, maybe it
-                            -- can be improved or come from a setting.
-                            -- It could depend of the topology and the
-                            -- precision of the geometries in the layer.
-                        ST_LineInterpolatePoint(terra_feature.geom, fraction)
-                    ) AS point_geoms
-
-                FROM (VALUES (1, %s, %s::float), (2, %s, %s::float))
-                    AS points (pid, edge_id, fraction)
-                LEFT OUTER JOIN terra_feature ON edge_id = terra_feature.id
+                SELECT
+                    points.pid,
+                    points.edge_id,
+                    ST_Line_Substring(terra_feature.geom,
+                                      points.fraction_start,
+                                      points.fraction_end) AS geom
+                FROM
+                    (VALUES
+                        (1, %s, 0, %s::float),
+                        (1, %s, %s::float, 1),
+                        (2, %s, 0, %s::float),
+                        (2, %s, %s::float, 1)
+                    ) AS points(pid, edge_id, fraction_start, fraction_end)
+                    JOIN terra_feature ON
+                        terra_feature.id = points.edge_id
             ),
             pgr AS (
                 -- Here we do the routing from point 1 to point 2 using
-                -- pgr_withPoints that uses the dijkstra algorythm. prev_geom
+                -- pgr_withPoints that uses the dijkstra algorythm. next_node
                 -- and next_geom are used later to reconstruct the final
                 -- geometry of the shortest path.
                 SELECT
                     pgr.path_seq,
                     pgr.node,
                     pgr.edge,
-                    points.point_geoms,
-                    points.point_properties,
                     terra_feature.geom AS edge_geom,
                     terra_feature.properties,
-                    (LAG(terra_feature.geom, 2) OVER (ORDER BY path_seq))
-                        AS prev_geom,
+                    (LEAD(pgr.node) OVER (ORDER BY path_seq))
+                        AS next_node,
                     (LEAD(terra_feature.geom) OVER (ORDER BY path_seq))
                         AS next_geom
                 FROM
@@ -272,67 +261,29 @@ class Routing(object):
                         -1, -2, details := true
                     ) AS pgr
                 LEFT OUTER JOIN terra_feature ON pgr.edge = terra_feature.id
-                LEFT OUTER JOIN points ON points.pid = -node
             ),
             route AS (
-                /* Finaly we reconstruct the geometry. Each edge, where the
-                   point 1 and 2 are, are splitted on the point, and here we
-                   find the closest part of the next edge for the first point
-                   and the previous edge for the last point. Then
-                   we merge all segments.
+                /* Finaly we reconstruct the geometry by collecting each edge.
+                   At point 1 and 2, we get the splited edge.
                 */
                 SELECT
-                    (
-                        CASE
-                        WHEN (LEAD(edge) OVER (ORDER BY path_seq)) = -1 THEN
-                        (
-                            /* Skip before last sequence that is useless.
-                               Why is it useless? Seems to be a pgrouting bug.
-                               In fact, the before last geometry is the edge
-                               where the last points it places, if we keep it,
-                               the final LineString go too far from the point.
-                            */
-                            NULL
-                        )
-                        WHEN edge = -1 THEN
-                        (
-                            /* Select from n-1 to previous vertice substring
-                               This is used to find the closest edge of the
-                               last point in the route.
-                            */
-                            SELECT
-                                geom
-                            FROM (
-                                SELECT (ST_Dump(point_geoms)).geom as geom
-                            ) AS point_lines
-                            ORDER BY ST_Distance(geom, prev_geom) ASC
-                            LIMIT 1
-                        )
-                        WHEN node < 0 THEN
-                        (
-                            -- Same as previously but for next_geometry
-                            SELECT
-                                geom
-                            FROM (
-                                SELECT (ST_Dump(point_geoms)).geom as geom
-                            ) AS point_lines
-                            ORDER BY ST_Distance(geom, next_geom) ASC
-                            LIMIT 1
-                        )
-                        ELSE
-                            -- It's an edge, so let's return the full edge
-                            -- geometry
-                            edge_geom
-                        END
-                    ) AS final_geometry,
-                    (
-                        CASE
-                        WHEN node < 0 THEN
-                            point_properties
-                        ELSE
-                            properties
-                        END
-                    ) AS properties
+                    CASE
+                    WHEN node = -1 THEN  -- Start Point
+                        (SELECT points.geom
+                         FROM points
+                         WHERE points.pid = -pgr.node AND
+                               points.geom && pgr.next_geom
+                         LIMIT 1)
+                    WHEN next_node = -2 THEN  -- Going to End Point
+                        (SELECT points.geom
+                         FROM points
+                         WHERE points.pid = -pgr.next_node AND
+                               points.geom && pgr.edge_geom
+                         LIMIT 1)
+                    ELSE
+                        edge_geom  -- Let's return the full edge geometry
+                    END AS final_geometry,
+                    properties
                 FROM pgr
             )
             SELECT
@@ -347,6 +298,8 @@ class Routing(object):
             with connection.cursor() as cursor:
                 cursor.execute(q, [
                                    start_point.pk, float(start_point.fraction),
+                                   start_point.pk, float(start_point.fraction),
+                                   end_point.pk, float(end_point.fraction),
                                    end_point.pk, float(end_point.fraction),
                                    self.layer.pk,
                                    start_point.pk, float(start_point.fraction),
