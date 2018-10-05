@@ -189,6 +189,16 @@ class Layer(models.Model):
                     geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
                 )
 
+    @transaction.atomic
+    def update_geometries(self, features):
+        for new_feature in features:
+            geometry = GEOSGeometry(json.dumps(new_feature['geometry']))
+            self.features.filter(
+                geom=geometry
+            ).update(
+                properties=new_feature.get('properties', {})
+            )
+
     @cached_property
     def layer_projection(self):
         feature = self.features.annotate(srid=ST_SRID(F('geom'))).first()
@@ -220,6 +230,12 @@ class Layer(models.Model):
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
+
+    class Meta:
+        permissions = (
+            ('can_update_features_properties', 'Is able update geometries '
+                                               'properties'),
+        )
 
 
 class Feature(models.Model):

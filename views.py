@@ -8,6 +8,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from rest_framework import status, viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 
@@ -31,7 +32,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     def shapefile(self, request, pk=None):
         layer = self.get_object()
 
-        if request.method == 'POST':
+        if request.method not in SAFE_METHODS:
 
             shapefile = request.data['shapefile']
             try:
@@ -116,6 +117,24 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         }
 
         return Response(response)
+
+    def partial_update(self, request, *args, **kwargs):
+
+        if not request.user.has_perm('terra.can_update_features_properties'):
+            self.permission_denied(request, 'Operation not allowed')
+
+        layer = self.get_object()
+
+        if 'features' in request.data:
+            try:
+                layer.update_geometries(request.data['features'])
+            except (ValueError, KeyError):
+                return HttpResponseBadRequest('An error occured parsing '
+                                              'GeoJSON, verify your data')
+        else:
+            return HttpResponseBadRequest('Features are missing in GeoJSON')
+
+        return self.to_geojson(request)
 
 
 class FeatureViewSet(viewsets.ModelViewSet):
