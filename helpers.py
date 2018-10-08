@@ -1,5 +1,4 @@
 import io
-import mimetypes
 
 from django.conf import settings
 from django.contrib.gis.geos.point import Point
@@ -9,22 +8,18 @@ from django.http import HttpResponse, HttpResponseForbidden
 
 def get_media_response(request, data, permissions=None, headers=None):
     # For compatibility purpose
-    content, url, file_type = None, None, None
-
+    content, url = None, None
     if isinstance(data, (io.IOBase, File)):
         content, url = data, data.url
-        file_type = mimetypes.guess_type(data.url)
     else:
         # https://docs.djangoproject.com/fr/2.1/ref/request-response/#passing-iterators # noqa
-        content, url = open(data['path']), data['url']
-        file_type = mimetypes.guess_type(data['url'])
+        content, url = open(data['path'], mode='rb'), data['url']
     if isinstance(permissions, list):
         if not set(permissions).intersection(
                 request.user.get_all_permissions()):
             return HttpResponseForbidden()
 
     response = HttpResponse(content_type='application/octet-stream')
-
     if isinstance(headers, dict):
         for header, value in headers.items():
             response[header] = value
@@ -32,8 +27,7 @@ def get_media_response(request, data, permissions=None, headers=None):
     if settings.MEDIA_ACCEL_REDIRECT:
         response['X-Accel-Redirect'] = f'{url}'
     else:
-        response.content = content
-        response['Content-Type'] = f'{file_type}'
+        response.content = content.read()
 
     return response
 
