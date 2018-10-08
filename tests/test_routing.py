@@ -77,10 +77,10 @@ class RoutingTestCase(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_routing_view(self):
-        points = self.points
+        points = [Point(*point['coordinates'], srid=4326) for point in
+                  self.points]
 
-        geometry = LineString(*[Point(*point['coordinates'], srid=4326)
-                                for point in points])
+        geometry = LineString(*points)
 
         response = self.client.post(
           reverse('layer-route', args=[self.layer.pk]),
@@ -94,7 +94,6 @@ class RoutingTestCase(TestCase):
         self.assertTrue(len(response.get('geom').get('features')) >= 2)
 
         # Ensure End Points are close to requested points
-        points = [Point(*p['coordinates'], srid=4326) for p in points]
         start = Point(*response.get('geom').get('features')[0].get('geometry')
                       .get('coordinates')[0])
         end = Point(*response.get('geom').get('features')[-1].get('geometry')
@@ -103,10 +102,10 @@ class RoutingTestCase(TestCase):
         self.assertTrue(points[-1].distance(end) <= 0.001)
 
     def test_routing_view_edge_case(self):
-        points = [self.points[0], self.points[0]]
+        points = [Point(*p['coordinates'], srid=4326) for p in
+                  [self.points[0], self.points[0]]]
 
-        geometry = LineString(*[Point(*point['coordinates'], srid=4326)
-                                for point in points])
+        geometry = LineString(*points)
 
         response = self.client.post(
           reverse('layer-route', args=[self.layer.pk]),
@@ -120,7 +119,6 @@ class RoutingTestCase(TestCase):
         self.assertTrue(len(response.get('geom').get('features')) >= 1)
 
         # Ensure End Points are close to requested points
-        points = [Point(*p['coordinates'], srid=4326) for p in points]
         start = Point(*response.get('geom').get('features')[0].get('geometry')
                       .get('coordinates'))
         end = Point(*response.get('geom').get('features')[-1].get('geometry')
