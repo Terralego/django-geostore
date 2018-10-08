@@ -35,7 +35,6 @@ def get_media_response(request, data, permissions=None, headers=None):
         response.content = content
         response['Content-Type'] = f'{file_type}'
 
-
     return response
 
 
