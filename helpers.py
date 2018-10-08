@@ -1,6 +1,6 @@
 import io
-import magic
 
+import magic
 from django.conf import settings
 from django.contrib.gis.geos.point import Point
 from django.core.files import File
@@ -12,11 +12,13 @@ def get_media_response(request, data, permissions=None, headers=None):
     content, url = None, None
     if isinstance(data, (io.IOBase, File)):
         content, url = data, data.url
-        filetype = magic.from_file(url, mime=True)
     else:
         # https://docs.djangoproject.com/fr/2.1/ref/request-response/#passing-iterators # noqa
         content, url = open(data['path'], mode='rb'), data['url']
-        filetype = magic.from_file(url, mime=True)
+
+    filetype = magic.from_buffer(content.read(1024), mime=True)
+    content.seek(0)
+
     if isinstance(permissions, list):
         if not set(permissions).intersection(
                 request.user.get_all_permissions()):
