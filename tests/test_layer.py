@@ -80,7 +80,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         layer = LayerFactory()
         shapefile_path = os.path.join(os.path.dirname(__file__),
                                       'files',
-                                      'shapefile.zip')
+                                      'shapefile-WGS84.zip')
 
         with open(shapefile_path, 'rb') as shapefile:
             layer.from_shapefile(shapefile.read())
@@ -92,10 +92,10 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
 
         shapefile_path = os.path.join(os.path.dirname(__file__),
                                       'files',
-                                      'shapefile.zip')
+                                      'shapefile-WGS84.zip')
 
         with open(shapefile_path, 'rb') as fd:
-            shapefile = SimpleUploadedFile('shapefile.zip',
+            shapefile = SimpleUploadedFile('shapefile-WGS84.zip',
                                            fd.read())
 
             response = self.client.post(
@@ -107,7 +107,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual(8, layer.features.all().count())
 
     def test_shapefile_import_view_error(self):
-        shapefile = SimpleUploadedFile('shapefile.zip',
+        shapefile = SimpleUploadedFile('shapefile-WGS84.zip',
                                        b'bad bad data')
 
         response = self.client.post(
