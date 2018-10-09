@@ -2,7 +2,6 @@ import json
 import os
 from tempfile import NamedTemporaryFile
 
-from django.contrib.gis.geos import GEOSException
 from django.core.management import call_command
 from django.test import TestCase
 
@@ -36,7 +35,7 @@ class ImportshapefileTest(TestCase):
         layer = Layer.objects.all()[0]
         self.assertEqual('__nogroup__', layer.group)
 
-    def test_projection_error(self):
+    def test_reprojection(self):
         # Sample ShapeFile
         shapefile_path = os.path.join(
                     os.path.dirname(__file__),
@@ -51,12 +50,20 @@ class ImportshapefileTest(TestCase):
         json.dump({}, tmp_schema)
         tmp_schema.close()
 
-        with self.assertRaises(GEOSException):
-            call_command(
-                'import_shapefile',
-                f'-g{sample_shapefile.name}',
-                f'-s{tmp_schema.name}')
+        call_command(
+            'import_shapefile',
+            f'-g{sample_shapefile.name}',
+            f'-s{tmp_schema.name}')
 
         os.remove(tmp_schema.name)
 
-        self.assertEqual(0, Layer.objects.count())
+        # Retrieve the layer
+        layer = Layer.objects.all()[0]
+        self.assertEqual('__nogroup__', layer.group)
+
+        # assert data was reprojected
+        bbox = layer.features.first().get_bounding_box()
+        self.assertTrue(-180 <= bbox[0])
+        self.assertTrue(-90 <= bbox[1])
+        self.assertTrue(bbox[2] <= 180)
+        self.assertTrue(bbox[3] <= 90)

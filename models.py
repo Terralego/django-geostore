@@ -5,6 +5,7 @@ import uuid
 from tempfile import TemporaryDirectory
 
 import fiona
+import fiona.transform
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
@@ -24,6 +25,8 @@ from .tiles.funcs import ST_SRID
 from .tiles.helpers import VectorTile
 
 logger = logging.getLogger(__name__)
+
+PROJECT_CRS = 'EPSG:4326'
 
 ACCEPTED_PROJECTIONS = [
     'urn:ogc:def:crs:OGC:1.3:CRS84',
@@ -184,6 +187,9 @@ class Layer(models.Model):
         with fiona.BytesCollection(shapebytes) as shape:
 
             projection = shape.crs
+
+            # Extract source projection and compute if reprojection is required
+            reproject = False
             if projection and (len(projection) == 1 or
                (len(projection) == 2 and projection.get('no_defs') is True)):
                 projection = projection.get('init')
@@ -191,16 +197,19 @@ class Layer(models.Model):
                 projection = fiona.crs.to_string(projection)
             if projection and \
                not self.is_projection_allowed(projection.upper()):
-                raise GEOSException(
-                    f'ShapeFile projection {projection} must be in '
-                    f'{ACCEPTED_PROJECTIONS}')
+                reproject = True
 
             for feature in shape:
                 properties = feature.get('properties', {})
+                geometry = feature.get('geometry')
+                if reproject:
+                    geometry = fiona.transform.transform_geom(shape.crs,
+                                                              PROJECT_CRS,
+                                                              geometry)
                 Feature.objects.create(
                     layer=self,
                     properties=properties,
-                    geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
+                    geom=GEOSGeometry(json.dumps(geometry)),
                 )
 
     @cached_property
