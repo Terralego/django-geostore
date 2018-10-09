@@ -2,6 +2,7 @@ import json
 import os
 from tempfile import NamedTemporaryFile
 
+from django.contrib.gis.geos import GEOSException
 from django.core.management import call_command
 from django.test import TestCase
 
@@ -34,3 +35,28 @@ class ImportshapefileTest(TestCase):
         # Retrieve the layer
         layer = Layer.objects.all()[0]
         self.assertEqual('__nogroup__', layer.group)
+
+    def test_projection_error(self):
+        # Sample ShapeFile
+        shapefile_path = os.path.join(
+                    os.path.dirname(__file__),
+                    'files',
+                    'shapefile-RFG93.zip')
+        sample_shapefile = open(shapefile_path, 'rb')
+
+        # Create a fake json schema
+        tmp_schema = NamedTemporaryFile(mode='w',
+                                        suffix='.json',
+                                        delete=False)
+        json.dump({}, tmp_schema)
+        tmp_schema.close()
+
+        with self.assertRaises(GEOSException):
+            call_command(
+                'import_shapefile',
+                f'-g{sample_shapefile.name}',
+                f'-s{tmp_schema.name}')
+
+        os.remove(tmp_schema.name)
+
+        self.assertEqual(0, Layer.objects.count())

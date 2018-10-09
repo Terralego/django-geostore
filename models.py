@@ -134,7 +134,8 @@ class Layer(models.Model):
             'properties', {}).get('name', None)
         if projection and not self.is_projection_allowed(projection):
             raise GEOSException(
-                f'GeoJSON projection must be in {ACCEPTED_PROJECTIONS}')
+                f'GeoJSON projection {projection} must be in '
+                f'{ACCEPTED_PROJECTIONS}')
 
         if update:
             self.features.all().delete()
@@ -181,6 +182,19 @@ class Layer(models.Model):
 
     def from_shapefile(self, shapebytes):
         with fiona.BytesCollection(shapebytes) as shape:
+
+            projection = shape.crs
+            if projection and (len(projection) == 1 or
+               (len(projection) == 2 and projection.get('no_defs') is True)):
+                projection = projection.get('init')
+            else:
+                projection = fiona.crs.to_string(projection)
+            if projection and \
+               not self.is_projection_allowed(projection.upper()):
+                raise GEOSException(
+                    f'ShapeFile projection {projection} must be in '
+                    f'{ACCEPTED_PROJECTIONS}')
+
             for feature in shape:
                 properties = feature.get('properties', {})
                 Feature.objects.create(
