@@ -52,13 +52,12 @@ class Command(BaseCommand):
 
     @transaction.atomic()
     def handle(self, *args, **options):
-        layer_pk = options.get('layer_pk', None)
-        layer_name = options.get('layer') if \
-            options.get('layer', None) else uuid.uuid4()
+        layer_pk = options.get('layer_pk')
+        layer_name = options.get('layer') or uuid.uuid4()
         geojson_files = options.get('geojson')
         dryrun = options.get('dry_run')
         group = options.get('group')
-        identifier = options.get('identifier', None)
+        identifier = options.get('identifier')
 
         sp = transaction.savepoint()
 
