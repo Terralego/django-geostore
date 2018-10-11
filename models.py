@@ -26,8 +26,6 @@ from .tiles.helpers import VectorTile
 
 logger = logging.getLogger(__name__)
 
-PROJECT_CRS = 'EPSG:4326'
-
 ACCEPTED_PROJECTIONS = [
     'urn:ogc:def:crs:OGC:1.3:CRS84',
     'EPSG:4326',
@@ -205,9 +203,10 @@ class Layer(models.Model):
                 properties = feature.get('properties', {})
                 geometry = feature.get('geometry')
                 if reproject:
-                    geometry = fiona.transform.transform_geom(shape.crs,
-                                                              PROJECT_CRS,
-                                                              geometry)
+                    geometry = fiona.transform.transform_geom(
+                        shape.crs,
+                        f'EPSG:{settings.INTERNAL_GEOMETRY_SRID}',
+                        geometry)
                 identifier = properties.get(id_field, uuid.uuid4())
                 Feature.objects.create(
                     layer=self,

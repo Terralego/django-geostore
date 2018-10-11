@@ -5,6 +5,7 @@ import uuid
 import django.contrib.gis.db.models.fields
 import django.contrib.postgres.fields.jsonb
 import django.db.models.deletion
+from django.conf import settings
 from django.db import migrations, models
 
 import terracommon.terra.fields
@@ -22,7 +23,7 @@ class Migration(migrations.Migration):
             name='Feature',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('geom', django.contrib.gis.db.models.fields.GeometryField(srid=4326)),
+                ('geom', django.contrib.gis.db.models.fields.GeometryField(srid=settings.INTERNAL_GEOMETRY_SRID)),
                 ('identifier', models.CharField(default=uuid.uuid4, max_length=255)),
                 ('properties', django.contrib.postgres.fields.jsonb.JSONField()),
                 ('from_date', terracommon.terra.fields.DateFieldYearLess(default='01-01', help_text='Layer validity period start')),

@@ -1,5 +1,6 @@
 import os
 
+from django.conf import settings
 from django.contrib.gis.geos import LineString, Point
 from django.db import connection
 from django.test import TestCase
@@ -58,7 +59,9 @@ class RoutingTestCase(TestCase):
 
     def test_points_in_line(self):
         routing = Routing(
-          [Point(*p['coordinates'], srid=4326) for p in self.points],
+          [Point(
+            *p['coordinates'],
+            srid=settings.INTERNAL_GEOMETRY_SRID) for p in self.points],
           self.layer)
 
         self.assertIsInstance(routing.get_route(), dict)
@@ -77,8 +80,9 @@ class RoutingTestCase(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_routing_view(self):
-        points = [Point(*point['coordinates'], srid=4326) for point in
-                  self.points]
+        points = [Point(
+            *point['coordinates'],
+            srid=settings.INTERNAL_GEOMETRY_SRID) for point in self.points]
 
         geometry = LineString(*points)
 
@@ -102,8 +106,10 @@ class RoutingTestCase(TestCase):
         self.assertTrue(points[-1].distance(end) <= 0.001)
 
     def test_routing_view_edge_case(self):
-        points = [Point(*p['coordinates'], srid=4326) for p in
-                  [self.points[0], self.points[0]]]
+        points = [Point(
+            *p['coordinates'],
+            srid=settings.INTERNAL_GEOMETRY_SRID) for p in
+            [self.points[0], self.points[0]]]
 
         geometry = LineString(*points)
 
@@ -127,8 +133,9 @@ class RoutingTestCase(TestCase):
         self.assertTrue(points[-1].distance(end) <= 0.001)
 
     def test_routing_cache(self):
-        geometry = LineString(*[Point(*point['coordinates'], srid=4326)
-                                for point in self.points])
+        geometry = LineString(*[Point(
+            *point['coordinates'],
+            srid=settings.INTERNAL_GEOMETRY_SRID) for point in self.points])
 
         with self.settings(DEBUG=True,
                            CACHES={
