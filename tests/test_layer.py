@@ -83,7 +83,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
                                       'shapefile-WGS84.zip')
 
         with open(shapefile_path, 'rb') as shapefile:
-            layer.from_shapefile(shapefile.read())
+            layer.from_shapefile(shapefile)
 
         self.assertEqual(8, layer.features.all().count())
 

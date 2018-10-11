@@ -37,7 +37,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
             try:
                 with transaction.atomic():
                     layer.features.all().delete()
-                    layer.from_shapefile(shapefile.read())
+                    layer.from_shapefile(shapefile)
                     response = Response(status=status.HTTP_200_OK)
             except ValueError:
                 response = Response(status=status.HTTP_400_BAD_REQUEST)

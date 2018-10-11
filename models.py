@@ -192,8 +192,13 @@ class Layer(models.Model):
         else:
             return fiona.crs.to_string(projection)
 
-    def from_shapefile(self, shapebytes, id_field=None):
-        with fiona.BytesCollection(shapebytes) as shape:
+    def from_shapefile(self, zipped_shapefile_file, id_field=None):
+        ''' Load ShapeFile content provided into a zipped archive.
+
+        zipped_shapefile_file -- a file-like object on the zipped content
+        id_field -- the field name used a identifier
+        '''
+        with fiona.BytesCollection(zipped_shapefile_file.read()) as shape:
             # Extract source projection and compute if reprojection is required
             projection = self._fiona_shape_projection(shape)
             reproject = projection and \

@@ -83,6 +83,5 @@ class Command(BaseCommand):
             transaction.savepoint_commit(sp)
 
     def import_datas(self, layer, shapefile_files, identifier):
-        for file_in in shapefile_files:
-            shapefile = file_in.read()
-            layer.from_shapefile(shapefile, identifier)
+        for shapefile_file in shapefile_files:
+            layer.from_shapefile(shapefile_file, identifier)
