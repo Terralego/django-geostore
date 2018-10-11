@@ -183,21 +183,23 @@ class Layer(models.Model):
                         })
             return make_zipfile_bytesio(shape_folder)
 
+    def _fiona_shape_projection(self, shape):
+        ''' Return projection in EPSG format or raw Proj format extracted from
+            shape
+        '''
+        projection = shape.crs
+        if projection and (len(projection) == 1 or
+           (len(projection) == 2 and projection.get('no_defs') is True)):
+            return projection.get('init')
+        else:
+            return fiona.crs.to_string(projection)
+
     def from_shapefile(self, shapebytes):
         with fiona.BytesCollection(shapebytes) as shape:
-
-            projection = shape.crs
-
             # Extract source projection and compute if reprojection is required
-            reproject = False
-            if projection and (len(projection) == 1 or
-               (len(projection) == 2 and projection.get('no_defs') is True)):
-                projection = projection.get('init')
-            else:
-                projection = fiona.crs.to_string(projection)
-            if projection and \
-               not self.is_projection_allowed(projection.upper()):
-                reproject = True
+            projection = self._fiona_shape_projection(shape)
+            reproject = projection and \
+                not self.is_projection_allowed(projection.upper())
 
             for feature in shape:
                 properties = feature.get('properties', {})
