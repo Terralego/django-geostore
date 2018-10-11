@@ -194,7 +194,7 @@ class Layer(models.Model):
         else:
             return fiona.crs.to_string(projection)
 
-    def from_shapefile(self, shapebytes):
+    def from_shapefile(self, shapebytes, id_field=None):
         with fiona.BytesCollection(shapebytes) as shape:
             # Extract source projection and compute if reprojection is required
             projection = self._fiona_shape_projection(shape)
@@ -208,8 +208,10 @@ class Layer(models.Model):
                     geometry = fiona.transform.transform_geom(shape.crs,
                                                               PROJECT_CRS,
                                                               geometry)
+                identifier = properties.get(id_field, uuid.uuid4())
                 Feature.objects.create(
                     layer=self,
+                    identifier=identifier,
                     properties=properties,
                     geom=GEOSGeometry(json.dumps(geometry)),
                 )

@@ -26,6 +26,7 @@ class ImportshapefileTest(TestCase):
 
         call_command(
             'import_shapefile',
+            f'-iID_PG',
             f'-g{sample_shapefile.name}',
             f'-s{tmp_schema.name}')
 
@@ -34,6 +35,9 @@ class ImportshapefileTest(TestCase):
         # Retrieve the layer
         layer = Layer.objects.all()[0]
         self.assertEqual('__nogroup__', layer.group)
+
+        # Assert the identifier is not an UUID4
+        self.assertTrue(len(str(layer.features.first().identifier)) < 32)
 
     def test_reprojection(self):
         # Sample ShapeFile

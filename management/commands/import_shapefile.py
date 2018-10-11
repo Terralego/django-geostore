@@ -85,4 +85,4 @@ class Command(BaseCommand):
     def import_datas(self, layer, shapefile_files, identifier):
         for file_in in shapefile_files:
             shapefile = file_in.read()
-            layer.from_shapefile(shapefile)
+            layer.from_shapefile(shapefile, identifier)
