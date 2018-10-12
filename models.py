@@ -5,6 +5,7 @@ import uuid
 from tempfile import TemporaryDirectory
 
 import fiona
+import fiona.transform
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
@@ -134,7 +135,8 @@ class Layer(models.Model):
             'properties', {}).get('name', None)
         if projection and not self.is_projection_allowed(projection):
             raise GEOSException(
-                f'GeoJSON projection must be in {ACCEPTED_PROJECTIONS}')
+                f'GeoJSON projection {projection} must be in '
+                f'{ACCEPTED_PROJECTIONS}')
 
         if update:
             self.features.all().delete()
@@ -179,14 +181,43 @@ class Layer(models.Model):
                         })
             return make_zipfile_bytesio(shape_folder)
 
-    def from_shapefile(self, shapebytes):
-        with fiona.BytesCollection(shapebytes) as shape:
+    def _fiona_shape_projection(self, shape):
+        ''' Return projection in EPSG format or raw Proj format extracted from
+            shape
+        '''
+        projection = shape.crs
+        if projection and (len(projection) == 1 or
+           (len(projection) == 2 and projection.get('no_defs') is True)):
+            return projection.get('init')
+        else:
+            return fiona.crs.to_string(projection)
+
+    def from_shapefile(self, zipped_shapefile_file, id_field=None):
+        ''' Load ShapeFile content provided into a zipped archive.
+
+        zipped_shapefile_file -- a file-like object on the zipped content
+        id_field -- the field name used a identifier
+        '''
+        with fiona.BytesCollection(zipped_shapefile_file.read()) as shape:
+            # Extract source projection and compute if reprojection is required
+            projection = self._fiona_shape_projection(shape)
+            reproject = projection and \
+                not self.is_projection_allowed(projection.upper())
+
             for feature in shape:
                 properties = feature.get('properties', {})
+                geometry = feature.get('geometry')
+                if reproject:
+                    geometry = fiona.transform.transform_geom(
+                        shape.crs,
+                        f'EPSG:{settings.INTERNAL_GEOMETRY_SRID}',
+                        geometry)
+                identifier = properties.get(id_field, uuid.uuid4())
                 Feature.objects.create(
                     layer=self,
+                    identifier=identifier,
                     properties=properties,
-                    geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
+                    geom=GEOSGeometry(json.dumps(geometry)),
                 )
 
     @transaction.atomic
