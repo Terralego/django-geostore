@@ -270,7 +270,7 @@ class Layer(models.Model):
 
 
 class Feature(models.Model):
-    geom = models.GeometryField()
+    geom = models.GeometryField(srid=settings.INTERNAL_GEOMETRY_SRID)
     identifier = models.CharField(max_length=255,
                                   blank=False,
                                   null=False,
