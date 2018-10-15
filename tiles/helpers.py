@@ -244,6 +244,8 @@ class Routing(object):
                     terra_feature.properties,
                     (LEAD(pgr.node) OVER (ORDER BY path_seq))
                         AS next_node,
+                    (LAG(terra_feature.geom) OVER (ORDER BY path_seq))
+                        AS prev_geom,
                     (LEAD(terra_feature.geom) OVER (ORDER BY path_seq))
                         AS next_geom
                 FROM
@@ -278,7 +280,7 @@ class Routing(object):
                         (SELECT points.geom
                          FROM points
                          WHERE points.pid = -pgr.next_node AND
-                               points.geom && pgr.edge_geom
+                               points.geom && pgr.prev_geom
                          LIMIT 1)
                     ELSE
                         edge_geom  -- Let's return the full edge geometry
