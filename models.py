@@ -67,36 +67,36 @@ class Layer(models.Model):
             if fast:
                 sp = transaction.savepoint()
             for row in chunk:
-                feature_args = {
-                    "geom": None,
-                    "properties": row,
-                    "layer": self
-                }
-
-                for operation in operations:
-                    operation(feature_args, options)
-
-                filter_kwargs = {
-                    f'properties__{p}': feature_args["properties"].get(p, '')
-                    for p in pk_properties}
-                filter_kwargs['layer'] = feature_args.get("layer", self)
-
-                if feature_args.get("geom"):
-                    Feature.objects.update_or_create(
-                        defaults=feature_args,
-                        **filter_kwargs
-                    )
-                else:
-                    try:
-                        Feature.objects.filter(**filter_kwargs).update(
-                            **{'properties': feature_args["properties"]})
-                    except Feature.DoesNotExist:
-                        logger.warning('feature does not exist,'
-                                       ' empty geometry,'
-                                       f' row skipped : {row}')
-                        continue
+                self._import_row_from_csv(row, pk_properties, operations,
+                                          options)
             if sp:
                 transaction.savepoint_commit(sp)
+
+    def _import_row_from_csv(self, row, pk_properties, operations, options):
+        feature_args = {
+            "geom": None,
+            "properties": row,
+            "layer": self
+        }
+        for operation in operations:
+            operation(feature_args, options)
+        filter_kwargs = {
+            f'properties__{p}': feature_args["properties"].get(p, '')
+            for p in pk_properties}
+        filter_kwargs['layer'] = feature_args.get("layer", self)
+        if feature_args.get("geom"):
+            Feature.objects.update_or_create(
+                defaults=feature_args,
+                **filter_kwargs
+            )
+        else:
+            try:
+                Feature.objects.filter(**filter_kwargs).update(
+                    **{'properties': feature_args["properties"]})
+            except Feature.DoesNotExist:
+                logger.warning('feature does not exist,'
+                               ' empty geometry,'
+                               f' row skipped : {row}')
 
     def from_csv_dictreader(self, reader, pk_properties, options, operations,
                             init=False, chunk_size=1000, fast=False):
