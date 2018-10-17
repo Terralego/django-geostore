@@ -11,7 +11,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import F, Manager
 from django.utils.functional import cached_property
 from fiona.crs import from_epsg
@@ -239,13 +239,25 @@ class Layer(models.Model):
     def layer_properties(self):
         ''' Return properties of first feature of the layer
         '''
-        feature = self.features.first()
-        if not feature:
-            return {}
+        feature_table = Feature._meta.db_table
+
+        layer_field = Feature._meta.get_field('layer').get_attname_column()[1]
+
+        cursor = connection.cursor()
+        raw_query = f"""
+                    SELECT
+                        jsonb_object_keys(properties) AS key
+                    FROM {feature_table}
+                    WHERE
+                        {layer_field} = %s
+                    GROUP BY key;
+                    """
+
+        cursor.execute(raw_query, [self.pk, ])
 
         return {
             prop: 'str'
-            for prop in feature.properties
+            for prop in cursor.fetchall()
         }
 
     @cached_property
