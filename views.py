@@ -5,6 +5,7 @@ from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
 from django.core.serializers import serialize
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
@@ -34,13 +35,13 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
         if request.method not in SAFE_METHODS:
 
-            shapefile = request.data['shapefile']
             try:
+                shapefile = request.data['shapefile']
                 with transaction.atomic():
                     layer.features.all().delete()
                     layer.from_shapefile(shapefile)
                     response = Response(status=status.HTTP_200_OK)
-            except ValueError:
+            except (ValueError, MultiValueDictKeyError):
                 response = Response(status=status.HTTP_400_BAD_REQUEST)
 
         else:

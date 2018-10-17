@@ -79,6 +79,14 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
             HTTP_403_FORBIDDEN
         )
 
+    def test_no_shapefile_import(self):
+        layer = LayerFactory()
+
+        response = self.client.post(
+            reverse('layer-shapefile', args=[layer.pk, ]),)
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
     def test_shapefile_import(self):
         layer = LayerFactory()
         shapefile_path = os.path.join(os.path.dirname(__file__),
