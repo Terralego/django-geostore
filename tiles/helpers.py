@@ -16,7 +16,7 @@ def cached_segment(func, expiration=3600*24):
     def wrapper(self, from_point, to_point, *args, **kwargs):
         cache_key = (f'route_{self.layer.pk}'
                      f'_segment_{from_point.pk}_{from_point.fraction}'
-                     '_{to_point.pk}_{to_point.fraction}')
+                     f'_{to_point.pk}_{to_point.fraction}')
 
         def build_segment():
             return func(self, from_point, to_point, *args, **kwargs)
@@ -274,14 +274,18 @@ class Routing(object):
                     WHEN node = -1 THEN  -- Start Point
                         (SELECT points.geom
                          FROM points
-                         WHERE points.pid = -pgr.node AND
-                               points.geom && pgr.next_geom
+                         WHERE points.pid = -pgr.node
+                         -- Non topologic graph,
+                         -- get the closest to the next egde
+                         ORDER BY ST_Distance(points.geom, pgr.next_geom) ASC
                          LIMIT 1)
                     WHEN next_node = -2 THEN  -- Going to End Point
                         (SELECT points.geom
                          FROM points
-                         WHERE points.pid = -pgr.next_node AND
-                               points.geom && pgr.prev_geom
+                         WHERE points.pid = -pgr.next_node
+                         -- Non topologic graph,
+                         -- get the closest to the previous egde
+                         ORDER BY ST_Distance(points.geom, pgr.prev_geom) ASC
                          LIMIT 1)
                     ELSE
                         edge_geom  -- Let's return the full edge geometry
