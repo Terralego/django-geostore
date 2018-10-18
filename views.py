@@ -12,7 +12,8 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 
-from terracommon.accounts.permissions import IsPostOrToken
+from terracommon.accounts.permissions import (IsPostOrToken,
+                                              TokenBasedPermission)
 from terracommon.core.mixins import MultipleFieldLookupMixin
 
 from .models import FeatureRelation, Layer, LayerRelation
@@ -58,7 +59,8 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
         return response
 
-    @detail_route(methods=['get'], url_path='geojson')
+    @detail_route(methods=['get'], url_path='geojson',
+                  permission_classes=(TokenBasedPermission,))
     def to_geojson(self, request, pk=None):
         layer = self.get_object()
         return Response(layer.to_geojson())
