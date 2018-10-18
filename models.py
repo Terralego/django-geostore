@@ -177,7 +177,10 @@ class Layer(models.Model):
                 for feature in self.features.all():
                     shapefile.write({
                         'geometry': json.loads(feature.geom.json),
-                        'properties': feature.properties
+                        'properties': {
+                                prop: feature.properties.get(prop)
+                                for prop in self.layer_properties
+                            }
                         })
             return make_zipfile_bytesio(shape_folder)
 
@@ -257,7 +260,7 @@ class Layer(models.Model):
 
         return {
             prop: 'str'
-            for prop in cursor.fetchall()
+            for (prop, ) in cursor.fetchall()
         }
 
     @cached_property
