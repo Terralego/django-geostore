@@ -16,7 +16,7 @@ def cached_segment(func, expiration=3600*24):
     def wrapper(self, from_point, to_point, *args, **kwargs):
         cache_key = (f'route_{self.layer.pk}'
                      f'_segment_{from_point.pk}_{from_point.fraction}'
-                     '_{to_point.pk}_{to_point.fraction}')
+                     f'_{to_point.pk}_{to_point.fraction}')
 
         def build_segment():
             return func(self, from_point, to_point, *args, **kwargs)
