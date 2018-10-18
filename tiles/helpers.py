@@ -274,14 +274,18 @@ class Routing(object):
                     WHEN node = -1 THEN  -- Start Point
                         (SELECT points.geom
                          FROM points
-                         WHERE points.pid = -pgr.node AND
-                               points.geom && pgr.next_geom
+                         WHERE points.pid = -pgr.node
+                         -- Non topologic graph,
+                         -- get the closest to the next egde
+                         ORDER BY ST_Distance(points.geom, pgr.next_geom) ASC
                          LIMIT 1)
                     WHEN next_node = -2 THEN  -- Going to End Point
                         (SELECT points.geom
                          FROM points
-                         WHERE points.pid = -pgr.next_node AND
-                               points.geom && pgr.prev_geom
+                         WHERE points.pid = -pgr.next_node
+                         -- Non topologic graph,
+                         -- get the closest to the previous egde
+                         ORDER BY ST_Distance(points.geom, pgr.prev_geom) ASC
                          LIMIT 1)
                     ELSE
                         edge_geom  -- Let's return the full edge geometry
