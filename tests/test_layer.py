@@ -189,6 +189,11 @@ class TestLayerFeaturesUpdate(TestCase):
             }, format='json')
 
         self.assertEqual(HTTP_200_OK, response.status_code)
+        response = response.json()
+        self.assertEqual(
+            response['features'][0]['properties'],
+            updated_properties
+            )
 
         feature.refresh_from_db()
         self.assertDictEqual(feature.properties, updated_properties)
