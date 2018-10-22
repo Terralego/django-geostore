@@ -1,8 +1,8 @@
 import os
 import shutil
+import subprocess
 import tempfile
 import uuid
-from subprocess import call
 
 import requests
 from django.core.management.base import BaseCommand, CommandError
@@ -63,8 +63,11 @@ class Command(BaseCommand):
         with tempfile.NamedTemporaryFile(mode='wb', dir=dirpath) as tmp_osm:
             tmp_osm.write(response.content)
             tmp_geojson_path = os.path.join(dirpath, 'geojson')
-            call(['ogr2ogr', '-f', 'GeoJSON', tmp_geojson_path,
-                  tmp_osm.name, type_features])
+            cmd = 'ogr2ogr -f GeoJSON {} {} {}'.format(
+                tmp_geojson_path, tmp_osm.name, type_features
+            )
+            with open(os.devnull, 'w') as FNULL:
+                subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)
             try:
                 tmp_geojson = open(tmp_geojson_path, 'rb')
             except FileNotFoundError:
