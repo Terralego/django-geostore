@@ -67,7 +67,8 @@ class Command(BaseCommand):
                 tmp_geojson_path, tmp_osm.name, type_features
             )
             with open(os.devnull, 'w') as FNULL:
-                subprocess.call(cmd, shell=True, stdout=FNULL, stderr=subprocess.STDOUT)
+                subprocess.call(cmd, shell=True, stdout=FNULL,
+                                stderr=subprocess.STDOUT)
             try:
                 tmp_geojson = open(tmp_geojson_path, 'rb')
             except FileNotFoundError:
