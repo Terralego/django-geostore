@@ -119,6 +119,19 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
             )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
+    def test_to_geojson(self):
+        uidb64, token = self.get_uidb64_token_for_user()
+        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
+        response = self.client.get(
+            f'{geojson_url}?token={token}&uidb64={uidb64}')
+
+        self.assertEqual(200, response.status_code)
+
+        response = response.json()
+        self.assertEqual('FeatureCollection', response.get('type'))
+        self.assertEqual(self.layer.features.all().count(),
+                         len(response.get('features')))
+
     def get_uidb64_token_for_user(self):
         return (urlsafe_base64_encode(force_bytes(self.user.pk)).decode(),
                 default_token_generator.make_token(self.user))
