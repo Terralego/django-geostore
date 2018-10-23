@@ -1,5 +1,3 @@
-import os
-import shutil
 import subprocess
 import tempfile
 import uuid
@@ -59,27 +57,17 @@ class Command(BaseCommand):
 
         response = requests.get(self.overpass_url,
                                 params={'data': query})
-        dirpath = tempfile.mkdtemp()
-        with tempfile.NamedTemporaryFile(mode='wb', dir=dirpath) as tmp_osm:
+        with tempfile.NamedTemporaryFile(mode='wb') as tmp_osm:
             tmp_osm.write(response.content)
-            tmp_geojson_path = os.path.join(dirpath, 'geojson')
-            cmd = 'ogr2ogr -f GeoJSON {} {} {}'.format(
-                tmp_geojson_path, tmp_osm.name, type_features
-            )
-            with open(os.devnull, 'w') as FNULL:
-                subprocess.call(cmd, shell=True, stdout=FNULL,
-                                stderr=subprocess.STDOUT)
-            try:
-                tmp_geojson = open(tmp_geojson_path, 'rb')
-            except FileNotFoundError:
+            value = subprocess.check_output(
+                ['ogr2ogr', '-f', 'GeoJSON', '/vsistdout/',
+                 tmp_osm.name, type_features])
+            if not value:
                 msg = 'Ogr2ogr failed to create the geojson'
-                shutil.rmtree(dirpath)
                 raise CommandError(msg)
-
             if layer_pk:
                 layer = Layer.objects.get(pk=layer_pk)
             else:
                 layer = Layer.objects.create(name=layer_name)
 
-            layer.from_geojson(tmp_geojson.read(), identifier)
-        shutil.rmtree(dirpath)
+            layer.from_geojson(value, identifier)
