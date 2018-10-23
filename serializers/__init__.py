@@ -56,6 +56,7 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     group_tiles = serializers.SerializerMethodField()
     routing_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
+    geojson_url = serializers.SerializerMethodField()
 
     def get_group_intersect(self, obj):
         return reverse('layer-intersects', args=[obj.name, ])
@@ -66,16 +67,21 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     def get_routing_url(self, obj):
         return reverse('layer-route', args=[obj.pk, ])
 
-    def get_shapefile_url(self, obj):
+    def get_token(self, obj, type):
         if self.current_user.is_anonymous:
             return None
 
         uidb64, token = self.get_uidb64_token_for_user(self.current_user)
-
         return "{}?uidb64={}&token={}".format(
-            reverse('layer-shapefile', args=[obj.pk, ]),
+            reverse('layer-%s' % type, args=[obj.pk, ]),
             uidb64,
             token)
+
+    def get_shapefile_url(self, obj):
+        return self.get_token(obj, "shapefile")
+
+    def get_geojson_url(self, obj):
+        return self.get_token(obj, "geojson")
 
     class Meta:
         model = Layer

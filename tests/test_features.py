@@ -77,16 +77,6 @@ class FeaturesTestCase(TestCase):
         self.user = TerraUserFactory()
         self.client.force_login(self.user)
 
-    def test_to_geojson(self):
-        response = self.client.get(reverse('layer-geojson',
-                                           args=[self.layer.pk]))
-        self.assertEqual(200, response.status_code)
-
-        response = response.json()
-        self.assertEqual('FeatureCollection', response.get('type'))
-        self.assertEqual(self.layer.features.all().count(),
-                         len(response.get('features')))
-
     def test_features_intersections(self):
         layer = LayerFactory(group=self.group_name)
         FeatureFactory(
