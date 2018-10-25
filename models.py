@@ -231,6 +231,8 @@ class Layer(models.Model):
             feature = self.features.filter(geom=geometry)
             feature.update(properties=new_feature.get('properties', {}))
             modified |= feature
+        # clean cache of updated features
+        [feature.clean_vect_tile_cache() for feature in modified]
         return modified
 
     @cached_property
