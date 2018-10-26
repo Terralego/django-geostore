@@ -61,7 +61,11 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
             )
 
     def test_shapefile_same_import_export(self):
-        FeatureFactory(layer=self.layer)
+        FeatureFactory(layer=self.layer, properties={
+            'key1': [{
+                'key3': 'hello world',
+            }]
+        })
 
         uidb64, token = self.get_uidb64_token_for_user()
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])

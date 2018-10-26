@@ -178,7 +178,7 @@ class Layer(models.Model):
                     shapefile.write({
                         'geometry': json.loads(feature.geom.json),
                         'properties': {
-                                prop: feature.properties.get(prop)
+                                prop: json.dumps(feature.properties.get(prop))
                                 for prop in self.layer_properties
                             }
                         })
@@ -208,14 +208,22 @@ class Layer(models.Model):
                 not self.is_projection_allowed(projection.upper())
 
             for feature in shape:
-                properties = feature.get('properties', {})
+                properties = {}
+                for prop, value in feature.get('properties', {}).items():
+                    try:
+                        properties[prop] = json.loads(value)
+                    except (json.JSONDecodeError, TypeError):
+                        properties[prop] = value
+
                 geometry = feature.get('geometry')
+
                 if reproject:
                     geometry = fiona.transform.transform_geom(
                         shape.crs,
                         f'EPSG:{settings.INTERNAL_GEOMETRY_SRID}',
                         geometry)
                 identifier = properties.get(id_field, uuid.uuid4())
+
                 Feature.objects.create(
                     layer=self,
                     identifier=identifier,
