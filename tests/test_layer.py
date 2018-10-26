@@ -60,6 +60,27 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
             sorted([f.split('.')[1] for f in zip.namelist()])
             )
 
+    def test_shapefile_same_import_export(self):
+        FeatureFactory(layer=self.layer)
+
+        uidb64, token = self.get_uidb64_token_for_user()
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        response = self.client.get(
+            f'{shape_url}?token={token}&uidb64={uidb64}')
+        self.assertEqual(HTTP_200_OK, response.status_code)
+
+        shapefile = SimpleUploadedFile('shapefile-WGS84.zip',
+                                       response.content)
+        new_layer = LayerFactory()
+        response = self.client.post(
+                reverse('layer-shapefile', args=[new_layer.pk, ]),
+                {'shapefile': shapefile, }
+                )
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual(self.layer.features.first().properties,
+                         new_layer.features.first().properties)
+
     def test_empty_shapefile_export(self):
         # Create en ampty layer to test its behavior
         LayerFactory()
