@@ -1,21 +1,52 @@
+import os
 from unittest import mock
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 
-from terracommon.terra.management.commands import import_osm
+from terracommon.terra.models import Feature
 
 
-class ImportgeojsonTest(TestCase):
-    def test_import_osm(self):
-        query = ("area[name='Toulouse']->.b;"
-                 "(node['amenity'='bar'](area.b);way['amenity'='bar']"
-                 "(area.b);relation['amenity'='bar'](area.b););out center;"
-                 )
+class ImportGeojsonTest(TestCase):
+
+    def get_good_data(self):
+        overpass_path = os.path.join(os.path.dirname(__file__),
+                                     'files',
+                                     'overpass.osm')
+        overpass_file = open(overpass_path, 'rb')
+        overpass_data = overpass_file.read()
+        return overpass_data
+
+    @mock.patch('requests.get')
+    def test_bad_query(self, mocked_get):
         type_feature = 'points'
-        with mock.patch.object(import_osm, 'Command') as mocked:
-            call_command(
-                'import_osm',
-                f'{query}',
-                f'-t{type_feature}')
-            self.assertEquals(mocked.call_count, 1)
+        mocked_get.return_value.status_code = 400
+        mocked_get.return_value.content = b"test"
+
+        query = "bad query"
+        self.assertRaises(CommandError, call_command,
+                          'import_osm', f'{query}', f'-t{type_feature}')
+
+    @mock.patch('requests.get')
+    def test_overpass_down(self, mocked_get):
+        type_feature = 'points'
+        mocked_get.return_value.status_code = 404
+        mocked_get.return_value.content = b""
+
+        query = "good query"
+        self.assertRaises(CommandError, call_command,
+                          'import_osm', f'{query}', f'-t{type_feature}')
+
+    @mock.patch('requests.get')
+    def test_good_query(self, mocked_get):
+        type_feature = 'points'
+        mocked_get.return_value.status_code = 200
+        mocked_get.return_value.content = self.get_good_data()
+        query = 'good query'
+        call_command(
+            'import_osm',
+            f'{query}',
+            f'-t{type_feature}',
+            '-v 0')
+        self.assertEqual(Feature.objects.count(), 2)

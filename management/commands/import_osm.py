@@ -1,6 +1,8 @@
+import os
 import subprocess
 import tempfile
 import uuid
+from xml.etree import ElementTree as ET
 
 import requests
 from django.core.management.base import BaseCommand, CommandError
@@ -54,20 +56,43 @@ class Command(BaseCommand):
         type_features = options.get('type')
         layer_pk = options.get('layer_pk')
         identifier = options.get('identifier')
-
+        verbosity = options.get('verbosity')
         response = requests.get(self.overpass_url,
                                 params={'data': query})
-        with tempfile.NamedTemporaryFile(mode='wb') as tmp_osm:
-            tmp_osm.write(response.content)
-            value = subprocess.check_output(
-                ['ogr2ogr', '-f', 'GeoJSON', '/vsistdout/',
-                 tmp_osm.name, type_features])
-            if not value:
-                msg = 'Ogr2ogr failed to create the geojson'
-                raise CommandError(msg)
-            if layer_pk:
-                layer = Layer.objects.get(pk=layer_pk)
-            else:
-                layer = Layer.objects.create(name=layer_name)
+        try:
+            ET.fromstring(response.content)
+        except ET.ParseError:
+            if response.status_code != 400:
+                raise CommandError("Overpass didn't give any information")
+            raise CommandError('The query is not valid')
 
-            layer.from_geojson(value, identifier)
+        value, log_error = self.launch_cmd_ogr2ogr(response.content,
+                                                   type_features)
+
+        if verbosity >= 1:
+            self.stdout.write(f'{log_error}')
+        if not value:
+            msg = 'Ogr2ogr failed to create the geojson'
+            raise CommandError(msg)
+        if layer_pk:
+            layer = Layer.objects.get(pk=layer_pk)
+        else:
+            layer = Layer.objects.create(name=layer_name)
+
+        layer.from_geojson(value, identifier)
+
+    def launch_cmd_ogr2ogr(self, content, type_features):
+        tmp_osm = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
+        tmp_osm.write(content)
+        tmp_osm.close()
+        try:
+            proc = subprocess.run(
+                args=['ogr2ogr', '-f', 'GeoJSON', '/vsistdout/',
+                      tmp_osm.name, type_features],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            value = proc.stdout
+            log_error = proc.stderr
+        finally:
+            os.unlink(tmp_osm.name)
+        return value, log_error
