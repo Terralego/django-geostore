@@ -54,3 +54,8 @@ class ST_LineSubstring(Func):
 class ST_SRID(Func):
     function = 'ST_SRID'
     output_field = IntegerField()
+
+
+class ST_HausdorffDistance(Func):
+    function = 'ST_HausdorffDistance'
+    output_field = FloatField()

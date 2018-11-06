@@ -21,7 +21,7 @@ from terracommon.core.helpers import make_zipfile_bytesio
 
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet
-from .tiles.funcs import ST_SRID
+from .tiles.funcs import ST_SRID, ST_HausdorffDistance
 from .tiles.helpers import VectorTile
 
 logger = logging.getLogger(__name__)
@@ -236,7 +236,15 @@ class Layer(models.Model):
         modified = self.features.none()
         for new_feature in features:
             geometry = GEOSGeometry(json.dumps(new_feature['geometry']))
-            feature = self.features.filter(geom=geometry)
+            nearest_feature = (
+                self.features
+                    .filter(geom__bboverlaps=geometry)  # Bounding Box Overlap
+                    .annotate(hausdorff=ST_HausdorffDistance('geom',
+                                                             geometry.ewkb))
+                    .order_by('hausdorff')
+                    .first()
+            )
+            feature = self.features.filter(pk=nearest_feature.pk)
             feature.update(properties=new_feature.get('properties', {}))
             modified |= feature
         # clean cache of updated features
