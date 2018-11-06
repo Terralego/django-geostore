@@ -52,9 +52,6 @@ class RoutingTestCase(TestCase):
                   encoding="utf-8") as geojson:
             self.layer.from_geojson(geojson.read())
 
-        Routing.create_topology(self.layer)
-
-    def test_topology(self):
         self.assertTrue(Routing.create_topology(self.layer))
 
     def test_points_in_line(self):
