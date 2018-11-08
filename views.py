@@ -19,9 +19,9 @@ from terracommon.core.mixins import MultipleFieldLookupMixin
 
 from .filters import JSONFieldFilterBackend
 from .models import FeatureRelation, Layer, LayerRelation
+from .routing.helpers import Routing
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
-from .tiles.helpers import Routing
 
 
 class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):

@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from terracommon.terra.models import Layer
-from terracommon.terra.tiles.helpers import Routing
+from terracommon.terra.routing.helpers import Routing
 
 
 class Command(BaseCommand):
