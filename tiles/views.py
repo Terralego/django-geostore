@@ -15,9 +15,10 @@ class MVTView(APIView):
         big_tile = b''
 
         for layer in self.layers:
-            feature_count, tile = self.get_tile_for_layer(layer)
-            if feature_count:
-                big_tile += tile
+            if self.z >= layer.tiles_minzoom and self.z <= layer.tiles_maxzoom:
+                feature_count, tile = self.get_tile_for_layer(layer)
+                if feature_count:
+                    big_tile += tile
         return big_tile
 
     def get_tile_for_layer(self, layer):
@@ -32,7 +33,7 @@ class MVTView(APIView):
             }
     )
     def get(self, request, group, z, x, y):
-        if not settings.MAX_TILE_ZOOM > z > settings.MIN_TILE_ZOOM:
+        if z > settings.MAX_TILE_ZOOM or z < settings.MIN_TILE_ZOOM:
             return HttpResponse(status=204)
         self.z = z
         self.x = x

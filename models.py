@@ -36,6 +36,9 @@ class Layer(models.Model):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
+    # Tilesets attributes
+    tiles_minzoom = models.PositiveIntegerField(default=0)
+    tiles_maxzoom = models.PositiveIntegerField(default=22)
 
     def _initial_import_from_csv(self, chunks, options, operations):
         for chunk in chunks:
@@ -326,7 +329,7 @@ class Feature(models.Model):
         vtile.clean_tiles(self.get_intersected_tiles())
 
     def get_intersected_tiles(self):
-        zoom_range = range(settings.MIN_TILE_ZOOM, settings.MAX_TILE_ZOOM)
+        zoom_range = range(settings.MIN_TILE_ZOOM, settings.MAX_TILE_ZOOM + 1)
         try:
             return [(tile.x, tile.y, tile.z)
                     for tile in tiles(*self.get_bounding_box(), zoom_range)]
