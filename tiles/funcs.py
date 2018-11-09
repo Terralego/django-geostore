@@ -59,3 +59,8 @@ class ST_SRID(Func):
 class ST_HausdorffDistance(Func):
     function = 'ST_HausdorffDistance'
     output_field = FloatField()
+
+
+class ST_SnapToGrid(Func):
+    function = 'ST_SnapToGrid'
+    output_field = RawGeometryField()

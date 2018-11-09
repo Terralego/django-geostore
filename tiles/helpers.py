@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.db import connection
 from django.db.models import F
 
-from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_Transform
+from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_SnapToGrid, ST_Transform
 
 EPSG_3857 = 3857
 
@@ -55,15 +55,20 @@ class VectorTile(object):
                     self.xmax + pixel_width_x * pixel_buffer,
                     self.ymax + pixel_width_y * pixel_buffer,
                     EPSG_3857), settings.INTERNAL_GEOMETRY_SRID),
-                geom3857=ST_Transform('geom', EPSG_3857)
+                geom3857=ST_Transform('geom', EPSG_3857),
+                geom3857snap=ST_SnapToGrid(
+                    'geom3857',
+                    pixel_width_x / self.EXTENT_RATIO,
+                    pixel_width_y / self.EXTENT_RATIO)
             ).filter(
-                bbox_select__intersects=F('geom')
+                bbox_select__intersects=F('geom'),
+                geom3857snap__isnull=False
             ).annotate(
                 geometry=ST_AsMvtGeom(
-                    F('geom3857'),
+                    F('geom3857snap'),
                     'bbox',
-                    256 * 16,
-                    pixel_buffer * 16,
+                    256 * self.EXTENT_RATIO,
+                    pixel_buffer * self.EXTENT_RATIO,
                     True
                 )
             )
@@ -84,7 +89,7 @@ class VectorTile(object):
                     ST_AsMVT(
                         tilegeom,
                         CAST(%s AS text),
-                        256 * 16,
+                        256 * {self.EXTENT_RATIO},
                         'geometry'
                     ) AS mvt
                 FROM (
