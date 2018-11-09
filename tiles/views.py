@@ -24,8 +24,12 @@ class MVTView(APIView):
     def get_tile_for_layer(self, layer):
         tile = VectorTile(layer)
         features = layer.features.all()
-        return tile.get_tile(self.x, self.y, self.z, layer.tiles_pixel_buffer,
-                             layer.tiles_properties_filter, features)
+        return tile.get_tile(
+            self.x, self.y, self.z,
+            layer.tiles_pixel_buffer,
+            layer.tiles_properties_filter,
+            layer.tiles_features_limit,
+            features)
 
     @swagger_auto_schema(
         responses={

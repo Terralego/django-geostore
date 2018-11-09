@@ -44,6 +44,8 @@ class Layer(models.Model):
         models.CharField(max_length=256),
         null=True,
     )
+    tiles_features_limit = models.PositiveIntegerField(
+        default=10000, null=True)
 
     def _initial_import_from_csv(self, chunks, options, operations):
         for chunk in chunks:
@@ -334,7 +336,8 @@ class Feature(models.Model):
         vtile.clean_tiles(
             self.get_intersected_tiles(),
             self.layer.tiles_pixel_buffer,
-            self.layer.tiles_properties_filter
+            self.layer.tiles_properties_filter,
+            self.layer.tiles_features_limit
         )
 
     def get_intersected_tiles(self):

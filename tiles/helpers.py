@@ -6,21 +6,25 @@ from django.core.cache import cache
 from django.db import connection
 from django.db.models import F
 
-from .funcs import (ST_Area, ST_AsMvtGeom, ST_Length, ST_MakeEnvelope,
-                    ST_SnapToGrid, ST_Transform)
+from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope, ST_SnapToGrid,
+                    ST_Transform)
 
 EPSG_3857 = 3857
 
 
 def cached_tile(func, expiration=3600*24):
-    def wrapper(self, x, y, z, pixel_buffer, properties_filter, *args,
-                **kwargs):
-        cache_key = self.get_tile_cache_key(x, y, z, pixel_buffer,
-                                            properties_filter)
+    def wrapper(self, x, y, z,
+                pixel_buffer, properties_filter, features_limit,
+                *args, **kwargs):
+        cache_key = self.get_tile_cache_key(
+            x, y, z,
+            pixel_buffer, properties_filter, features_limit)
 
         def build_tile():
-            (a, b) = func(self, x, y, z, pixel_buffer, properties_filter,
-                          *args, **kwargs)
+            (a, b) = func(
+                self, x, y, z,
+                pixel_buffer, properties_filter, features_limit,
+                *args, **kwargs)
             return (a, b.tobytes())
         return cache.get_or_set(cache_key, build_tile, expiration)
     return wrapper
@@ -34,7 +38,9 @@ class VectorTile(object):
     EXTENT_RATIO = 16
 
     @cached_tile
-    def get_tile(self, x, y, z, pixel_buffer, properties_filter, features):
+    def get_tile(self, x, y, z,
+                 pixel_buffer, properties_filter, features_limit,
+                 features):
 
         bounds = mercantile.bounds(x, y, z)
         self.xmin, self.ymin = mercantile.xy(bounds.west, bounds.south)
@@ -64,14 +70,6 @@ class VectorTile(object):
             ).filter(
                 bbox_select__intersects=F('geom'),
                 geom3857snap__isnull=False
-            ).annotate(
-                geometry=ST_AsMvtGeom(
-                    F('geom3857snap'),
-                    'bbox',
-                    256 * self.EXTENT_RATIO,
-                    pixel_buffer * self.EXTENT_RATIO,
-                    True
-                )
             )
 
         if self.layer.layer_geometry in ('LineString', 'MultiLineString'):
@@ -89,6 +87,9 @@ class VectorTile(object):
                 area3857__ge=pixel_width_x * pixel_width_y / 4
             )
 
+        if features_limit is not None:
+            layer_query = layer_query[:features_limit]
+
         layer_raw_query, args = layer_query.query.sql_with_params()
 
         filter = 'ARRAY[]::text[]'
@@ -100,20 +101,29 @@ class VectorTile(object):
                 WHERE k NOT IN ({filter})'''
         with connection.cursor() as cursor:
             sql_query = f'''
-                WITH tilegeom as ({layer_raw_query})
+                WITH
+                fullgeom AS ({layer_raw_query}),
+                tilegeom AS (
+                    SELECT
+                        properties - ({filter}) AS properties,
+                        ST_AsMvtGeom(
+                            geom3857snap,
+                            bbox,
+                            {256 * self.EXTENT_RATIO},
+                            {pixel_buffer * self.EXTENT_RATIO},
+                            true) AS geometry
+                    FROM
+                        fullgeom)
                 SELECT
                     count(*) AS count,
                     ST_AsMVT(
                         tilegeom,
                         CAST(%s AS text),
-                        256 * {self.EXTENT_RATIO},
+                        {256 * self.EXTENT_RATIO},
                         'geometry'
                     ) AS mvt
-                FROM (
-                    SELECT
-                        geometry,
-                        properties - ({filter}) AS properties
-                    FROM tilegeom) AS tilegeom
+                FROM
+                    tilegeom
             '''
 
             cursor.execute(sql_query, args + (self.layer.name, ))
@@ -121,7 +131,8 @@ class VectorTile(object):
 
             return row[0], row[1]
 
-    def get_tile_cache_key(self, x, y, z, pixel_buffer, properties_filter):
+    def get_tile_cache_key(self, x, y, z,
+                           pixel_buffer, properties_filter, features_limit):
         if self.cache_key:
             cache_key = self.cache_key
         else:
@@ -131,12 +142,15 @@ class VectorTile(object):
             properties_filter_hash = \
                 hashlib.sha224(','.join(properties_filter)).hexdigest()
         return (
-            f'tile_cache_{cache_key}_{x}_{y}_{z}_'
-            f'{pixel_buffer}_{properties_filter_hash}'
+            f'tile_cache_{cache_key}_{x}_{y}_{z}'
+            f'_{pixel_buffer}_{properties_filter_hash}'
+            f'_{features_limit}'
         )
 
-    def clean_tiles(self, tiles, pixel_buffer, properties_filter):
+    def clean_tiles(self, tiles, pixel_buffer, properties_filter,
+                    features_limit):
         return cache.delete_many([
-            self.get_tile_cache_key(*tile, pixel_buffer, properties_filter)
+            self.get_tile_cache_key(
+                *tile, pixel_buffer, properties_filter, features_limit)
             for tile in tiles
         ])
