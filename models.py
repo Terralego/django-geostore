@@ -9,7 +9,7 @@ import fiona.transform
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import F, Manager
@@ -39,6 +39,11 @@ class Layer(models.Model):
     # Tilesets attributes
     tiles_minzoom = models.PositiveIntegerField(default=0)
     tiles_maxzoom = models.PositiveIntegerField(default=22)
+    tiles_pixel_buffer = models.PositiveIntegerField(default=4)
+    tiles_properties_filter = ArrayField(
+        models.CharField(max_length=256),
+        null=True,
+    )
 
     def _initial_import_from_csv(self, chunks, options, operations):
         for chunk in chunks:
@@ -326,7 +331,11 @@ class Feature(models.Model):
 
     def clean_vect_tile_cache(self):
         vtile = VectorTile(self.layer)
-        vtile.clean_tiles(self.get_intersected_tiles())
+        vtile.clean_tiles(
+            self.get_intersected_tiles(),
+            self.layer.tiles_pixel_buffer,
+            self.layer.tiles_properties_filter
+        )
 
     def get_intersected_tiles(self):
         zoom_range = range(settings.MIN_TILE_ZOOM, settings.MAX_TILE_ZOOM + 1)

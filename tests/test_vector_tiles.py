@@ -76,19 +76,28 @@ class VectorTilesTestCase(TestCase):
     def test_caching_geometry(self):
         features = self.layer.features.all()
         tile = VectorTile(self.layer)
-        x, y, z = 16506, 11966, 15
+        x, y, z, pixel_buffer, properties_filter = 16506, 11966, 15, 4, None
 
-        cached_tile = tile.get_tile(x, y, z, features)
-        self.assertEqual(cached_tile,
-                         cache.get(tile.get_tile_cache_key(x, y, z)))
+        cached_tile = tile.get_tile(x, y, z, pixel_buffer, properties_filter,
+                                    features)
+        self.assertEqual(cached_tile, cache.get(tile.get_tile_cache_key(
+            x, y, z,
+            pixel_buffer,
+            properties_filter)))
         features[0].clean_vect_tile_cache()
-        self.assertIsNone(cache.get(tile.get_tile_cache_key(x, y, z)))
+        self.assertIsNone(cache.get(tile.get_tile_cache_key(
+            x, y, z,
+            pixel_buffer,
+            properties_filter)))
 
     def test_caching_key(self):
         features = self.layer.features.all()
         tile = VectorTile(self.layer, "CACHINGCACHE")
-        x, y, z = 16506, 11966, 15
+        x, y, z, pixel_buffer, properties_filter = 16506, 11966, 15, 4, None
 
-        cached_tile = tile.get_tile(x, y, z, features)
-        self.assertEqual(cached_tile,
-                         cache.get(tile.get_tile_cache_key(x, y, z)))
+        cached_tile = tile.get_tile(x, y, z, pixel_buffer, properties_filter,
+                                    features)
+        self.assertEqual(cached_tile, cache.get(tile.get_tile_cache_key(
+            x, y, z,
+            pixel_buffer,
+            properties_filter)))
