@@ -6,7 +6,8 @@ from django.core.cache import cache
 from django.db import connection
 from django.db.models import F
 
-from .funcs import ST_AsMvtGeom, ST_MakeEnvelope, ST_SnapToGrid, ST_Transform
+from .funcs import (ST_Area, ST_AsMvtGeom, ST_Length, ST_MakeEnvelope,
+                    ST_SnapToGrid, ST_Transform)
 
 EPSG_3857 = 3857
 
@@ -72,6 +73,22 @@ class VectorTile(object):
                     True
                 )
             )
+
+        if self.layer.layer_geometry in ('LineString', 'MultiLineString'):
+            # Larger then a half of pixel
+            layer_query = layer_query.annotate(
+                length3857=ST_Length('geom3857snap')
+            ).filter(
+                length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2
+            )
+        elif self.layer.layer_geometry in ('Polygon', 'MultiPolygon'):
+            # Larger than a quarter of pixel
+            layer_query = layer_query.annotate(
+                area3857=ST_Area('geom3857snap')
+            ).filter(
+                area3857__ge=pixel_width_x * pixel_width_y / 4
+            )
+
         layer_raw_query, args = layer_query.query.sql_with_params()
 
         filter = 'ARRAY[]::text[]'

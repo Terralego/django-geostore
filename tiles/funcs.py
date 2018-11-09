@@ -64,3 +64,13 @@ class ST_HausdorffDistance(Func):
 class ST_SnapToGrid(Func):
     function = 'ST_SnapToGrid'
     output_field = RawGeometryField()
+
+
+class ST_Length(Func):
+    function = 'ST_Length'
+    output_field = FloatField()
+
+
+class ST_Area(Func):
+    function = 'ST_Area'
+    output_field = FloatField()

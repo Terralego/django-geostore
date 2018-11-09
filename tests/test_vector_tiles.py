@@ -59,7 +59,7 @@ class VectorTilesTestCase(TestCase):
             reverse('group-tiles', args=[self.group_name, 13, 4126, 2991]))
         self.assertEqual(
             len(connection.queries),
-            query_count - 1
+            query_count - 2
         )
         self.assertEqual(
             original_content,
