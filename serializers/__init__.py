@@ -53,6 +53,7 @@ class FeatureInLayerSerializer(serializers.ModelSerializer):
 
 class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     group_intersect = serializers.SerializerMethodField()
+    group_tilejson = serializers.SerializerMethodField()
     group_tiles = serializers.SerializerMethodField()
     routing_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
@@ -60,6 +61,9 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
 
     def get_group_intersect(self, obj):
         return reverse('layer-intersects', args=[obj.name, ])
+
+    def get_group_tilejson(self, obj):
+        return unquote(reverse('group-tilejson', args=[obj.group]))
 
     def get_group_tiles(self, obj):
         return unquote(reverse('group-tiles-pattern', args=[obj.group]))

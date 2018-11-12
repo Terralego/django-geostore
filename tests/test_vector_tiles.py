@@ -1,3 +1,5 @@
+import json
+
 from django.core.cache import cache
 from django.db import connection
 from django.test import TestCase, override_settings
@@ -26,7 +28,9 @@ class VectorTilesTestCase(TestCase):
             "features": [
                 {
                 "type": "Feature",
-                "properties": {},
+                "properties": {
+                    "foo": "bar"
+                },
                 "geometry": {
                     "type": "LineString",
                     "coordinates": [
@@ -44,6 +48,19 @@ class VectorTilesTestCase(TestCase):
             ]
             }
         ''')
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    def test_tilejson(self):
+        response = self.client.get(
+            reverse('group-tilejson', args=[self.group_name]),
+            # HTTP_HOST required to build the tilejson descriptor
+            HTTP_HOST='localhost')
+        self.assertEqual(200, response.status_code)
+        self.assertGreater(len(response.content), 0)
+
+        tilejson = json.loads(response.content)
+        self.assertGreater(len(tilejson['vector_layers']), 0)
+        self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
 
     def test_vector_tiles_view(self):
         # first query that generate the cache

@@ -1,10 +1,72 @@
+import json
+from urllib.parse import unquote
+
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotFound
+from django.urls import reverse
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 
 from ..models import Layer
 from .helpers import VectorTile
+
+
+class TilejsonView(APIView):
+
+    permission_classes = ()
+
+    def get_tilejson(self, base_url, group):
+        minzoom = max(
+            settings.MIN_TILE_ZOOM,
+            min(self.layers, key=lambda l: l.tiles_minzoom).tiles_minzoom)
+        maxzoom = min(
+            settings.MAX_TILE_ZOOM,
+            max(self.layers, key=lambda l: l.tiles_maxzoom).tiles_maxzoom)
+        tile_path = unquote(reverse("group-tiles-pattern", args=[group]))
+
+        # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
+        return {
+            'tilejson': '3.0.0',
+            'name': group,
+            'tiles': [
+                f'{base_url}{tile_path}'
+            ],
+            'minzoom': minzoom,
+            'maxzoom': maxzoom,
+            # bounds
+            # center
+            'vector_layers': [{
+                'id': layer.name,
+                'fields': self.layer_fields(layer),
+                'minzoom': layer.tiles_minzoom,
+                'maxzoom': layer.tiles_maxzoom,
+            } for layer in self.layers]
+        }
+
+    def layer_fields(self, layer):
+        if layer.tiles_properties_filter is not None:
+            fileds = layer.tiles_properties_filter
+        else:
+            fileds = layer.layer_properties.keys()
+
+        return {f: '' for f in fileds}
+
+    @swagger_auto_schema(
+        responses={
+            200: 'Returns a protobuf mapbox vector tile',
+            404: 'The layer group does not exist'
+            }
+    )
+    def get(self, request, group):
+        self.layers = Layer.objects.filter(group=group)
+
+        if self.layers.count() == 0:
+            return HttpResponseNotFound()
+
+        base_url = f'{request.scheme}://{request.META["HTTP_HOST"]}'
+        return HttpResponse(
+            json.dumps(self.get_tilejson(base_url, group)),
+            content_type='application/json')
 
 
 class MVTView(APIView):
