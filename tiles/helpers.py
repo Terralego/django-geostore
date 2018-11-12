@@ -37,6 +37,9 @@ class VectorTile(object):
     # Number of tile units per pixel
     EXTENT_RATIO = 16
 
+    LINESTRING = ('LineString', 'MultiLineString')
+    POLYGON = ('Polygon', 'MultiPolygon')
+
     @cached_tile
     def get_tile(self, x, y, z,
                  pixel_buffer, properties_filter, features_limit,
@@ -72,14 +75,14 @@ class VectorTile(object):
                 geom3857snap__isnull=False
             )
 
-        if self.layer.layer_geometry in ('LineString', 'MultiLineString'):
+        if self.layer.layer_geometry in self.LINESTRING:
             # Larger then a half of pixel
             layer_query = layer_query.annotate(
                 length3857=ST_Length('geom3857snap')
             ).filter(
                 length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2
             )
-        elif self.layer.layer_geometry in ('Polygon', 'MultiPolygon'):
+        elif self.layer.layer_geometry in self.POLYGON:
             # Larger than a quarter of pixel
             layer_query = layer_query.annotate(
                 area3857=ST_Area('geom3857snap')
@@ -88,6 +91,12 @@ class VectorTile(object):
             )
 
         if features_limit is not None:
+            # Order by feature size before limit
+            if self.layer.layer_geometry in self.LINESTRING:
+                layer_query = layer_query.order_by('length3857')
+            elif self.layer.layer_geometry in self.POLYGON:
+                layer_query = layer_query.order_by('area3857')
+
             layer_query = layer_query[:features_limit]
 
         layer_raw_query, args = layer_query.query.sql_with_params()
