@@ -331,6 +331,19 @@ class Layer(models.Model):
                 json_path,
                 self.SETTINGS_DEFAULT)
 
+    def set_layer_settings(self, *json_path_value):
+        '''Set last parameter as value at the path place into settings
+        '''
+        json_path, value = json_path_value[:-1], json_path_value[-1]
+        # Dive into settings until the last key of path,
+        # the set the value
+        settings = self.settings
+        for key in json_path[:-1]:
+            s = settings.get(key, {})
+            settings[key] = s
+            settings = s
+        settings[json_path[-1]] = value
+
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
 

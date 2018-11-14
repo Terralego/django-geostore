@@ -247,3 +247,19 @@ class TestLayerFeaturesUpdate(TestCase):
             self.layer.layer_settings_with_default('tiles', 'minzoom'),
             0
         )
+
+    def test_set_layer_settings(self):
+        with self.assertRaises(KeyError):
+            self.layer.layer_settings('foo', 'bar')
+
+        self.layer.set_layer_settings('foo', 'bar', 123)
+
+        self.assertEqual(
+            self.layer.layer_settings('foo', 'bar'),
+            123
+        )
+
+        self.assertEqual(
+            self.layer.layer_settings_with_default('foo', 'bar'),
+            123
+        )
