@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import uuid
+from functools import reduce
 from tempfile import TemporaryDirectory
 
 import fiona
@@ -9,7 +10,7 @@ import fiona.transform
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import F, Manager
@@ -36,16 +37,19 @@ class Layer(models.Model):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True)
-    # Tilesets attributes
-    tiles_minzoom = models.PositiveIntegerField(default=0)
-    tiles_maxzoom = models.PositiveIntegerField(default=22)
-    tiles_pixel_buffer = models.PositiveIntegerField(default=4)
-    tiles_properties_filter = ArrayField(
-        models.CharField(max_length=256),
-        null=True,
-    )
-    tiles_features_limit = models.PositiveIntegerField(
-        default=10000, null=True)
+
+    # Settings scheam
+    SETTINGS_DEFAULT = {
+        # Tilesets attributes
+        'tiles': {
+            'minzoom': 0,
+            'maxzoom': 22,
+            'pixel_buffer': 4,
+            'properties_filter': None,  # Array of string
+            'features_limit': 10000,
+        }
+    }
+    settings = JSONField(default=dict, blank=True)
 
     def _initial_import_from_csv(self, chunks, options, operations):
         for chunk in chunks:
@@ -302,6 +306,31 @@ class Layer(models.Model):
 
         return None
 
+    def layer_settings(self, *json_path):
+        ''' Return the neested value of settings at path json_path.
+            Raise an KeyError if not defined.
+        '''
+        # Dives into settings using args
+        return reduce(
+            lambda a, v: a[v],  # Let raise KeyError on missing key
+            json_path,
+            self.settings) if self.settings is not None else None
+
+    def layer_settings_with_default(self, *json_path):
+        ''' Return the neested value of settings at path json_path.
+            Return the default value if not defined in custom settings.
+            Return None if not defined at all.
+        '''
+        # Dives into settings using args
+        try:
+            return self.layer_settings(*json_path)
+        except KeyError:
+            # Fall back to the default
+            return reduce(
+                lambda a, v: None if a is None else a.get(v),
+                json_path,
+                self.SETTINGS_DEFAULT)
+
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
 
@@ -335,9 +364,12 @@ class Feature(models.Model):
         vtile = VectorTile(self.layer)
         vtile.clean_tiles(
             self.get_intersected_tiles(),
-            self.layer.tiles_pixel_buffer,
-            self.layer.tiles_properties_filter,
-            self.layer.tiles_features_limit
+            self.layer.layer_settings_with_default(
+                'tiles', 'pixel_buffer'),
+            self.layer.layer_settings_with_default(
+                'tiles', 'properties_filter'),
+            self.layer.layer_settings_with_default(
+                'tiles', 'features_limit')
         )
 
     def get_intersected_tiles(self):

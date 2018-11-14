@@ -235,3 +235,15 @@ class TestLayerFeaturesUpdate(TestCase):
 
         feature.refresh_from_db()
         self.assertDictEqual(feature.properties, updated_properties)
+
+    def test_layer_settings(self):
+        with self.assertRaises(KeyError):
+            self.layer.layer_settings('foo', 'bar', '666')
+
+        with self.assertRaises(KeyError):
+            self.layer.layer_settings('tiles', 'minzoom')
+
+        self.assertEqual(
+            self.layer.layer_settings_with_default('tiles', 'minzoom'),
+            0
+        )

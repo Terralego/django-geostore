@@ -18,10 +18,14 @@ class TilejsonView(APIView):
     def get_tilejson(self, base_url, group):
         minzoom = max(
             settings.MIN_TILE_ZOOM,
-            min(self.layers, key=lambda l: l.tiles_minzoom).tiles_minzoom)
+            min(map(
+                lambda l: l.layer_settings_with_default('tiles', 'minzoom'),
+                self.layers)))
         maxzoom = min(
             settings.MAX_TILE_ZOOM,
-            max(self.layers, key=lambda l: l.tiles_maxzoom).tiles_maxzoom)
+            max(map(
+                lambda l: l.layer_settings_with_default('tiles', 'maxzoom'),
+                self.layers)))
         tile_path = unquote(reverse("group-tiles-pattern", args=[group]))
 
         # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
@@ -38,14 +42,18 @@ class TilejsonView(APIView):
             'vector_layers': [{
                 'id': layer.name,
                 'fields': self.layer_fields(layer),
-                'minzoom': layer.tiles_minzoom,
-                'maxzoom': layer.tiles_maxzoom,
+                'minzoom': layer.layer_settings_with_default(
+                    'tiles', 'minzoom'),
+                'maxzoom': layer.layer_settings_with_default(
+                    'tiles', 'maxzoom'),
             } for layer in self.layers]
         }
 
     def layer_fields(self, layer):
-        if layer.tiles_properties_filter is not None:
-            fileds = layer.tiles_properties_filter
+        properties_filter = layer.layer_settings_with_default(
+            'tiles', 'properties_filter')
+        if properties_filter is not None:
+            fileds = properties_filter
         else:
             fileds = layer.layer_properties.keys()
 
@@ -77,7 +85,9 @@ class MVTView(APIView):
         big_tile = b''
 
         for layer in self.layers:
-            if self.z >= layer.tiles_minzoom and self.z <= layer.tiles_maxzoom:
+            minzoom = layer.layer_settings_with_default('tiles', 'minzoom')
+            maxzoom = layer.layer_settings_with_default('tiles', 'maxzoom')
+            if self.z >= minzoom and self.z <= maxzoom:
                 feature_count, tile = self.get_tile_for_layer(layer)
                 if feature_count:
                     big_tile += tile
@@ -88,9 +98,9 @@ class MVTView(APIView):
         features = layer.features.all()
         return tile.get_tile(
             self.x, self.y, self.z,
-            layer.tiles_pixel_buffer,
-            layer.tiles_properties_filter,
-            layer.tiles_features_limit,
+            layer.layer_settings_with_default('tiles', 'pixel_buffer'),
+            layer.layer_settings_with_default('tiles', 'properties_filter'),
+            layer.layer_settings_with_default('tiles', 'features_limit'),
             features)
 
     @swagger_auto_schema(
