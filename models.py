@@ -23,7 +23,7 @@ from terracommon.core.helpers import make_zipfile_bytesio
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet
 from .tiles.funcs import ST_SRID, ST_HausdorffDistance
-from .tiles.helpers import VectorTile
+from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +138,8 @@ class Layer(models.Model):
                 fast=fast
             )
 
+        self.zoom_update()
+
     def from_geojson(self, geojson_data, id_field=None, update=False):
         """
         Import geojson raw data in a layer
@@ -163,6 +165,8 @@ class Layer(models.Model):
                 properties=properties,
                 geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
             )
+
+        self.zoom_update()
 
     def to_geojson(self):
         return json.loads(serialize('geojson',
@@ -244,6 +248,8 @@ class Layer(models.Model):
                     properties=properties,
                     geom=GEOSGeometry(json.dumps(geometry)),
                 )
+
+        self.zoom_update()
 
     @transaction.atomic
     def update_geometries(self, features):
@@ -343,6 +349,19 @@ class Layer(models.Model):
             settings[key] = s
             settings = s
         settings[json_path[-1]] = value
+
+    def zoom_update(self):
+        try:
+            self.layer_settings('tiles', 'minzoom')
+        except KeyError:
+            self.set_layer_settings(
+                'tiles', 'minzoom', guess_minzoom(self))
+
+        try:
+            self.layer_settings('tiles', 'maxzoom')
+        except KeyError:
+            self.set_layer_settings(
+                'tiles', 'maxzoom', guess_maxzoom(self))
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS

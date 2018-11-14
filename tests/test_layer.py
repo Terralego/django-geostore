@@ -263,3 +263,13 @@ class TestLayerFeaturesUpdate(TestCase):
             self.layer.layer_settings_with_default('foo', 'bar'),
             123
         )
+
+    def test_zoom_update(self):
+        with self.assertRaises(KeyError):
+            self.layer.layer_settings('tiles', 'maxzoom')
+
+        self.layer.zoom_update()
+
+        self.assertEqual(
+            self.layer.layer_settings('tiles', 'maxzoom') is not None,
+            True)

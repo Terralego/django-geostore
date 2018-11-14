@@ -163,3 +163,11 @@ class VectorTile(object):
                 *tile, pixel_buffer, properties_filter, features_limit)
             for tile in tiles
         ])
+
+
+def guess_minzoom(layer):
+    return 0
+
+
+def guess_maxzoom(layer):
+    return 22
