@@ -99,6 +99,7 @@ class MVTView(APIView):
         return tile.get_tile(
             self.x, self.y, self.z,
             layer.layer_settings_with_default('tiles', 'pixel_buffer'),
+            layer.layer_settings_with_default('tiles', 'features_filter'),
             layer.layer_settings_with_default('tiles', 'properties_filter'),
             layer.layer_settings_with_default('tiles', 'features_limit'),
             features)

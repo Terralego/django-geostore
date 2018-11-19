@@ -29,7 +29,8 @@ class VectorTilesTestCase(TestCase):
                 {
                 "type": "Feature",
                 "properties": {
-                    "foo": "bar"
+                    "foo": "bar",
+                    "baba": "fifi"
                 },
                 "geometry": {
                     "type": "LineString",
@@ -94,30 +95,45 @@ class VectorTilesTestCase(TestCase):
         features = self.layer.features.all()
         tile = VectorTile(self.layer)
         x, y, z = 16506, 11966, 15
-        pixel_buffer, properties_filter, features_limit = 4, None, 10000
+        pixel_buffer, features_filter, properties_filter, features_limit = \
+            4, None, None, 10000
 
         cached_tile = tile.get_tile(
             x, y, z,
-            pixel_buffer, properties_filter, features_limit,
+            pixel_buffer, features_filter, properties_filter, features_limit,
             features)
         self.assertEqual(cached_tile, cache.get(tile.get_tile_cache_key(
             x, y, z,
-            pixel_buffer, properties_filter, features_limit)))
+            pixel_buffer, features_filter, properties_filter, features_limit)))
         features[0].clean_vect_tile_cache()
         self.assertIsNone(cache.get(tile.get_tile_cache_key(
             x, y, z,
-            pixel_buffer, properties_filter, features_limit)))
+            pixel_buffer, features_filter, properties_filter, features_limit)))
 
     def test_caching_key(self):
         features = self.layer.features.all()
         tile = VectorTile(self.layer, "CACHINGCACHE")
         x, y, z = 16506, 11966, 15
-        pixel_buffer, properties_filter, features_limit = 4, None, 10000
+        pixel_buffer, features_filter, properties_filter, features_limit = \
+            4, None, None, 10000
 
         cached_tile = tile.get_tile(
             x, y, z,
-            pixel_buffer, properties_filter, features_limit,
+            pixel_buffer, features_filter, properties_filter, features_limit,
             features)
         self.assertEqual(cached_tile, cache.get(tile.get_tile_cache_key(
             x, y, z,
-            pixel_buffer, properties_filter, features_limit)))
+            pixel_buffer, features_filter, properties_filter, features_limit)))
+
+    def test_filtering(self):
+        features = self.layer.features.all()
+        tile = VectorTile(self.layer, "CACHINGCACHE")
+        x, y, z = 16506, 11966, 15
+        pixel_buffer, features_filter, properties_filter, features_limit = \
+            4, {'baba': 'fifi2'}, ['foo'], 10000
+
+        tile = tile.get_tile(
+            x, y, z,
+            pixel_buffer, features_filter, properties_filter, features_limit,
+            features)
+        self.assertGreater(len(tile), 0)

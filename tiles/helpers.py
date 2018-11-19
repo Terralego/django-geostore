@@ -14,17 +14,18 @@ EPSG_3857 = 3857
 
 def cached_tile(func, expiration=3600*24):
     def wrapper(self, x, y, z,
-                pixel_buffer, properties_filter, features_limit,
-                *args, **kwargs):
+                pixel_buffer, features_filter, properties_filter,
+                features_limit, *args, **kwargs):
         cache_key = self.get_tile_cache_key(
             x, y, z,
-            pixel_buffer, properties_filter, features_limit)
+            pixel_buffer, features_filter, properties_filter,
+            features_limit)
 
         def build_tile():
             (a, b) = func(
                 self, x, y, z,
-                pixel_buffer, properties_filter, features_limit,
-                *args, **kwargs)
+                pixel_buffer, features_filter, properties_filter,
+                features_limit, *args, **kwargs)
             return (a, b.tobytes())
         return cache.get_or_set(cache_key, build_tile, expiration)
     return wrapper
@@ -42,8 +43,8 @@ class VectorTile(object):
 
     @cached_tile
     def get_tile(self, x, y, z,
-                 pixel_buffer, properties_filter, features_limit,
-                 features):
+                 pixel_buffer, features_filter, properties_filter,
+                 features_limit, features):
 
         bounds = mercantile.bounds(x, y, z)
         self.xmin, self.ymin = mercantile.xy(bounds.west, bounds.south)
@@ -73,6 +74,11 @@ class VectorTile(object):
             ).filter(
                 bbox_select__intersects=F('geom'),
                 geom3857snap__isnull=False
+            )
+
+        if features_filter is not None:
+            layer_query = layer_query.filter(
+                properties__contains=features_filter
             )
 
         if self.layer.layer_geometry in self.LINESTRING:
@@ -141,26 +147,36 @@ class VectorTile(object):
             return row[0], row[1]
 
     def get_tile_cache_key(self, x, y, z,
-                           pixel_buffer, properties_filter, features_limit):
+                           pixel_buffer, features_filter, properties_filter,
+                           features_limit):
         if self.cache_key:
             cache_key = self.cache_key
         else:
             cache_key = self.layer.pk
+        features_filter = ''
+        if features_filter is not None:
+            features_filter_hash = \
+                hashlib.sha224(
+                    str(features_filter).encode('utf-8')
+                ).hexdigest()
         properties_filter_hash = ''
         if properties_filter is not None:
             properties_filter_hash = \
-                hashlib.sha224(','.join(properties_filter)).hexdigest()
+                hashlib.sha224(
+                    ','.join(properties_filter).encode('utf-8')
+                ).hexdigest()
         return (
             f'tile_cache_{cache_key}_{x}_{y}_{z}'
-            f'_{pixel_buffer}_{properties_filter_hash}'
+            f'_{pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
             f'_{features_limit}'
         )
 
-    def clean_tiles(self, tiles, pixel_buffer, properties_filter,
-                    features_limit):
+    def clean_tiles(self, tiles, pixel_buffer, features_filter,
+                    properties_filter, features_limit):
         return cache.delete_many([
             self.get_tile_cache_key(
-                *tile, pixel_buffer, properties_filter, features_limit)
+                *tile, pixel_buffer, features_filter, properties_filter,
+                features_limit)
             for tile in tiles
         ])
 

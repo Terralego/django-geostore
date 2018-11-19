@@ -45,6 +45,7 @@ class Layer(models.Model):
             'minzoom': 0,
             'maxzoom': 22,
             'pixel_buffer': 4,
+            'features_filter': None,  # Json
             'properties_filter': None,  # Array of string
             'features_limit': 10000,
         }
@@ -398,6 +399,8 @@ class Feature(models.Model):
             self.get_intersected_tiles(),
             self.layer.layer_settings_with_default(
                 'tiles', 'pixel_buffer'),
+            self.layer.layer_settings_with_default(
+                'tiles', 'features_filter'),
             self.layer.layer_settings_with_default(
                 'tiles', 'properties_filter'),
             self.layer.layer_settings_with_default(
