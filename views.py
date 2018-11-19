@@ -17,6 +17,7 @@ from terracommon.accounts.permissions import (IsPostOrToken,
                                               TokenBasedPermission)
 from terracommon.core.mixins import MultipleFieldLookupMixin
 
+from .filters import JSONFieldFilterBackend
 from .models import FeatureRelation, Layer, LayerRelation
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
@@ -150,6 +151,8 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 class FeatureViewSet(viewsets.ModelViewSet):
     serializer_class = FeatureSerializer
     swagger_schema = None  # FIXME: Temporary disable schema generation
+    filter_backends = (JSONFieldFilterBackend, )
+    filter_fields = ('properties', )
 
     def get_queryset(self):
         self.layer = get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
