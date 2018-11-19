@@ -152,21 +152,21 @@ class FeaturesTestCase(TestCase):
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 1},
+            properties={'number': 1, 'text': 'bar'},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 1},
+            properties={'number': 1, 'text': 'foo'},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 2},
+            properties={'number': 2, 'text': 'foo'},
         )
         response = self.client.get(
             reverse('feature-list', kwargs={'layer_pk': layer.pk}),
-            {'properties__number': 2},
+            {'properties__number': 1, 'properties__text': 'foo'},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
