@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields.jsonb import JSONField
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend
@@ -8,13 +9,16 @@ class JSONFieldFilterBackend(BaseFilterBackend):
         query = Q()
         for param_name, param_value in request.query_params.items():
             try:
-                queryset.model._meta.get_field(param_name.split('__')[0])
+                field = (queryset.model
+                                 ._meta
+                                 .get_field(param_name.split('__')[0]))
             except FieldDoesNotExist:
                 pass
             else:
-                try:
-                    query |= (Q(**{param_name: int(param_value)})
-                              | Q(**{param_name: param_value}))
-                except ValueError:
-                    query |= Q(**{param_name: param_value})
+                if isinstance(field, JSONField):
+                    query &= Q(**{param_name: param_value})
+                    try:
+                        query |= Q(**{param_name: int(param_value)})
+                    except ValueError:
+                        pass
         return queryset.filter(query)
