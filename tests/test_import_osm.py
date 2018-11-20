@@ -16,6 +16,7 @@ class ImportGeojsonTest(TestCase):
                                      'overpass.osm')
         overpass_file = open(overpass_path, 'rb')
         overpass_data = overpass_file.read()
+        overpass_file.close()
         return overpass_data
 
     @mock.patch('requests.get')
