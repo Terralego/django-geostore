@@ -16,9 +16,10 @@ class JSONFieldFilterBackend(BaseFilterBackend):
                 pass
             else:
                 if isinstance(field, JSONField):
-                    query &= Q(**{param_name: param_value})
+                    sub_query = Q(**{param_name: param_value})
                     try:
-                        query |= Q(**{param_name: int(param_value)})
+                        sub_query |= Q(**{param_name: int(param_value)})
                     except ValueError:
                         pass
+                    query &= sub_query
         return queryset.filter(query)
