@@ -34,10 +34,10 @@ class SchemaValidationTestCase(TestCase):
                                 "geom": "POINT(0 0)",
                                 "layer": self.layer.id,
                                 "name": "valid tree",
-                                "age": 10
+                                "age": 10,
+                                "properties": {},
                         },
                         format='json',)
-
         features = Feature.objects.all()
 
         self.assertEqual(response.status_code, 201)

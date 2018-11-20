@@ -3,6 +3,7 @@ import json
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.status import HTTP_200_OK
 
 from terracommon.accounts.tests.factories import TerraUserFactory
 
@@ -145,3 +146,106 @@ class FeaturesTestCase(TestCase):
         )
 
         self.assertEqual(400, response.status_code)
+
+    def test_features_filter_by_properties(self):
+        layer = LayerFactory(group=self.group_name)
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 1, 'text': 'bar'},
+        )
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 1, 'text': 'foo'},
+        )
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 2, 'text': 'foo'},
+        )
+        response = self.client.get(
+            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            {'properties__number': 1, 'properties__text': 'foo'},
+        )
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        json_response = response.json()
+        self.assertEqual(json_response['count'], 1)
+        self.assertEqual(len(json_response['results']), 1)
+
+    def test_features_filter_by_properties_with_wrong_field(self):
+        layer = LayerFactory(group=self.group_name)
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 1},
+        )
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 2},
+        )
+        response = self.client.get(
+            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            {'properties__wrongfield': 'wrong value'},
+        )
+        self.assertEqual(response.status_code, HTTP_200_OK)
+
+        json_response = response.json()
+        self.assertEqual(json_response['count'], 0)
+        self.assertEqual(len(json_response['results']), 0)
+
+    def test_features_filter_by_properties_with_several_int_field(self):
+        layer = LayerFactory()
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 2, 'digit': 42},
+        )
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 1, 'digit': 42},
+        )
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 1, 'digit': 34},
+        )
+        response = self.client.get(
+            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            {'properties__number': 1, 'properties__digit': 42},
+        )
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        json_response = response.json()
+        self.assertEqual(json_response['count'], 1)
+        self.assertEqual(len(json_response['results']), 1)
+
+    def test_features_filter_by_properties_with_several_string_field(self):
+        layer = LayerFactory()
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+        )
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'text': 'foo', 'sentence': 'foobar is missing'},
+        )
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+        )
+        response = self.client.get(
+            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            {
+                'properties__text': 'foobar',
+                'properties__sentence': 'foobar is here'
+            }
+        )
+        self.assertEqual(response.status_code, HTTP_200_OK)
+        json_response = response.json()
+        self.assertEqual(json_response['count'], 2)
+        self.assertEqual(len(json_response['results']), 2)
