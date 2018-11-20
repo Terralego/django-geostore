@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="Overpass API 0.7.55.4 3079d8ea">
+
+  <node id="1" lat="0.1" lon="1.2">
+    <tag k="name" v="test"/>
+  </node>
+    <node id="2" lat="0.0" lon="1.1">
+    <tag k="name" v="test2"/>
+    </node>
+</osm>
