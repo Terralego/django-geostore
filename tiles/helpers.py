@@ -72,7 +72,9 @@ class VectorTile(object):
             sql_query = f'''
                 WITH tilegeom as ({layer_raw_query})
                    SELECT count(*) AS count,
-                          ST_AsMVT(tilegeom, '{self.layer.name}', 4096, 'geometry') AS mvt
+                          ST_AsMVT(tilegeom,
+                                   '{self.layer.name}',
+                                   4096, 'geometry') AS mvt
                    FROM tilegeom
             '''
 
