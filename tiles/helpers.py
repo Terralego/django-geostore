@@ -68,17 +68,18 @@ class VectorTile(object):
             )
         layer_raw_query, args = layer_query.query.sql_with_params()
 
-        mvt_query = features.model.objects.raw(
-            f'''
-            WITH tilegeom as ({layer_raw_query})
-            SELECT %s AS id, count(*) AS count,
-                ST_AsMVT(tilegeom, CAST(%s AS text), 4096, 'geometry') AS mvt
-            FROM tilegeom
-            ''',
-            args + (self.layer.pk, self.layer.name)
-        )[0]
+        with connection.cursor() as cursor:
+            sql_query = f'''
+                WITH tilegeom as ({layer_raw_query})
+                   SELECT count(*) AS count,
+                          ST_AsMVT(tilegeom, '{self.layer.name}', 4096, 'geometry') AS mvt
+                   FROM tilegeom
+            '''
 
-        return (mvt_query.count, mvt_query.mvt)
+            cursor.execute(sql_query, args)
+            row = cursor.fetchone()
+
+            return row[0], row[1]
 
     def get_tile_cache_key(self, x, y, z):
         if self.cache_key:
