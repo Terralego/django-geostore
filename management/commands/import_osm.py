@@ -70,10 +70,9 @@ class Command(BaseCommand):
                                                    type_features)
 
         if verbosity >= 1:
-            self.stdout.write(f'{log_error}')
+            self.stdout.write(log_error)
         if not value:
-            msg = 'Ogr2ogr failed to create the geojson'
-            raise CommandError(msg)
+            raise CommandError('Ogr2ogr failed to create the geojson')
         if layer_pk:
             layer = Layer.objects.get(pk=layer_pk)
         else:
@@ -93,6 +92,8 @@ class Command(BaseCommand):
                 stderr=subprocess.PIPE)
             value = proc.stdout
             log_error = proc.stderr
+        except subprocess.CalledProcessError:
+            raise CommandError("Command ogr2ogr failed")
         finally:
             os.unlink(tmp_osm.name)
         return value, log_error
