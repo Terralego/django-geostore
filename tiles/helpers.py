@@ -109,7 +109,7 @@ class VectorTile(object):
 
         filter = 'ARRAY[]::text[]'
         if properties_filter is not None:
-            filter = '\'' + '\', \''.join(properties_filter) + '\''
+            filter = ', '.join([f"'{f}'" for f in properties_filter])
             filter = f'''
                 SELECT array_agg(k)
                 FROM jsonb_object_keys(properties) AS t(k)
