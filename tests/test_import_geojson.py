@@ -15,7 +15,8 @@ class ImportgeojsonTest(TestCase):
         call_command(
             'import_geojson',
             f'-g{empty_geojson}',
-            f'-s{empty_geojson}')
+            f'-s{empty_geojson}',
+            verbosity=0)
 
         # Retrieve the layer
         layer = Layer.objects.all()[0]

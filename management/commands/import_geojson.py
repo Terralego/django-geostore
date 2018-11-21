@@ -71,9 +71,11 @@ class Command(BaseCommand):
             layer = Layer.objects.create(name=layer_name,
                                          schema=schema,
                                          group=group)
-            print(f"The created layer pk is {layer.pk}, it can be used to "
-                  "import more features in the same layer with different "
-                  "options")
+            if options['verbosity'] >= 1:
+                self.stdout.write(f"The created layer pk is {layer.pk}, "
+                                  "it can be used to import more features"
+                                  " in the same layer with different "
+                                  "options")
 
         self.import_datas(layer, geojson_files, identifier)
 

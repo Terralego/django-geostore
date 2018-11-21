@@ -296,6 +296,7 @@ class Layer(models.Model):
         return projection in ACCEPTED_PROJECTIONS
 
     class Meta:
+        ordering = ['id']
         permissions = (
             ('can_update_features_properties', 'Is able update geometries '
                                                'properties'),
@@ -340,6 +341,9 @@ class Feature(models.Model):
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
 
+    class Meta:
+        ordering = ['id']
+
 
 class LayerRelation(models.Model):
     origin = models.ForeignKey(Layer,
@@ -350,6 +354,9 @@ class LayerRelation(models.Model):
                                     related_name='relations_as_destination')
     schema = JSONField(default=dict, blank=True)
 
+    class Meta:
+        ordering = ['id']
+
 
 class FeatureRelation(models.Model):
     origin = models.ForeignKey(Feature,
@@ -359,3 +366,6 @@ class FeatureRelation(models.Model):
                                     on_delete=models.PROTECT,
                                     related_name='relations_as_destination')
     properties = JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ['id']

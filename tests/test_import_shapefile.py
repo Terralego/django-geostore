@@ -24,7 +24,8 @@ class ImportshapefileTest(TestCase):
             'import_shapefile',
             f'-iID_PG',
             f'-g{sample_shapefile.name}',
-            f'-s{empty_geojson}')
+            f'-s{empty_geojson}',
+            verbosity=0)
 
         # Retrieve the layer
         layer = Layer.objects.all()[0]
@@ -49,7 +50,8 @@ class ImportshapefileTest(TestCase):
         call_command(
             'import_shapefile',
             f'-g{sample_shapefile.name}',
-            f'-s{empty_geojson}')
+            f'-s{empty_geojson}',
+            verbosity=0)
 
         # Retrieve the layer
         layer = Layer.objects.all()[0]
