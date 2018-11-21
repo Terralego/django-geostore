@@ -314,7 +314,7 @@ class Layer(models.Model):
         return None
 
     def layer_settings(self, *json_path):
-        ''' Return the neested value of settings at path json_path.
+        ''' Return the nested value of settings at path json_path.
             Raise an KeyError if not defined.
         '''
         # Dives into settings using args
@@ -324,7 +324,7 @@ class Layer(models.Model):
             self.settings) if self.settings is not None else None
 
     def layer_settings_with_default(self, *json_path):
-        ''' Return the neested value of settings at path json_path.
+        ''' Return the nested value of settings at path json_path.
             Return the default value if not defined in custom settings.
             Return None if not defined at all.
         '''
