@@ -5,7 +5,7 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from terracommon.terra.tiles.helpers import VectorTile
+from terracommon.terra.tiles.helpers import VectorTile, guess_maxzoom
 
 from .factories import LayerFactory
 
@@ -19,7 +19,7 @@ class VectorTilesTestCase(TestCase):
     group_name = 'mygroup'
 
     def setUp(self):
-        self.layer = LayerFactory(group=self.group_name)
+        self.layer = LayerFactory(group=self.group_name, name="layerLine")
 
         self.layer.from_geojson(
             geojson_data='''
@@ -43,6 +43,31 @@ class VectorTilesTestCase(TestCase):
                         1.2984466552734375,
                         43.57902295875415
                     ]
+                    ]
+                }
+                }
+            ]
+            }
+        ''')
+
+        self.layerPoint = LayerFactory(group="yourgroup", name="layerPoint")
+
+        self.layerPoint.from_geojson(
+
+            geojson_data='''
+            {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                "type": "Feature",
+                "properties": {
+                    "foo": "bar"
+                },
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [
+                        1.3700294494628906,
+                        43.603640347220924
                     ]
                 }
                 }
@@ -137,3 +162,15 @@ class VectorTilesTestCase(TestCase):
             pixel_buffer, features_filter, properties_filter, features_limit,
             features)
         self.assertGreater(len(tile), 0)
+            pixel_buffer, properties_filter, features_limit)))
+
+    def test_guess_maxzoom(self):
+
+        # guess_maxzoom returning -1 when TypeError is raised
+        self.assertEqual(
+            guess_maxzoom(self.layerPoint),
+            -1)
+
+        self.assertEqual(
+            guess_maxzoom(self.layer) is not None,
+            True)

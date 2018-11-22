@@ -1,4 +1,5 @@
 import hashlib
+from math import ceil, log, pi
 
 import mercantile
 from django.conf import settings
@@ -10,6 +11,7 @@ from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope, ST_SnapToGrid,
                     ST_Transform)
 
 EPSG_3857 = 3857
+EARTH_RADIUS = 6371008
 
 
 def cached_tile(func, expiration=3600*24):
@@ -186,4 +188,41 @@ def guess_minzoom(layer):
 
 
 def guess_maxzoom(layer):
-    return 22
+    # TODO: layer_query=layer_query[:features_limit] -> set limit?
+
+    max_zoom = int(22)
+
+    features = layer.features.all()
+    layer_query = features.annotate(
+        geom3857=ST_Transform('geom', EPSG_3857)
+        )
+
+    layer_raw_query, args = layer_query.query.sql_with_params()
+
+    try:
+        avg_query = features.model.objects.raw(
+            f'''
+            WITH q1 AS
+            (SELECT * FROM ({layer_raw_query}) as foo),
+            q2 AS
+            (select ST_X((ST_DumpPoints(geom)).geom) AS x from q1 order by x),
+            q3 AS
+            (select x - lag(x) over () AS dst from q2),
+            q4 AS
+            (SELECT * FROM q3 WHERE dst > 0)
+            select  %s AS id, CAST(%s AS text) AS layer_name,
+            exp( sum(ln(dst))/count(dst) ) AS avg
+            FROM q4
+            ''', args + (layer.pk, layer.name)
+        )[0]
+
+        # geometric mean of the |x_{i+1}-x_i| for all points (x,y) in layer.pk
+        avg = avg_query.avg
+
+        # zoom (ceil(zoom)) corresponding to this distance
+        max_zoom = ceil(log((2*pi*EARTH_RADIUS/avg), 2))
+
+    except TypeError:
+        return -1
+
+    return max_zoom
