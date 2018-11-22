@@ -162,7 +162,6 @@ class VectorTilesTestCase(TestCase):
             pixel_buffer, features_filter, properties_filter, features_limit,
             features)
         self.assertGreater(len(tile), 0)
-            pixel_buffer, properties_filter, features_limit)))
 
     def test_guess_maxzoom(self):
 
