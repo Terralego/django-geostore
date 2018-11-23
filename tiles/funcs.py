@@ -1,6 +1,6 @@
 from django.contrib.gis.db.models import (FloatField, GeometryField,
                                           IntegerField)
-from django.db.models import Func
+from django.db.models import Aggregate, Func
 
 
 class RawGeometryField(GeometryField):
@@ -29,6 +29,11 @@ class ST_MakeEnvelope(Func):
 class ST_Distance(Func):
     function = 'ST_Distance'
     output_field = FloatField()
+
+
+class ST_Extent(Aggregate):
+    function = 'ST_Extent'
+    output_field = RawGeometryField()
 
 
 class ST_LineLocatePoint(Func):

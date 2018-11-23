@@ -5,7 +5,8 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from terracommon.terra.tiles.helpers import VectorTile, guess_maxzoom
+from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
+                                             guess_minzoom)
 
 from .factories import LayerFactory
 
@@ -173,3 +174,14 @@ class VectorTilesTestCase(TestCase):
         self.assertEqual(
             guess_maxzoom(self.layer) is not None,
             True)
+
+    def test_guess_minzoom(self):
+
+        self.assertEqual(
+            guess_minzoom(self.layerPoint),
+            0)
+
+        self.assertTrue(isinstance(
+            guess_minzoom(self.layer),
+            int)
+        )

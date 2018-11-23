@@ -7,11 +7,10 @@ from django.core.cache import cache
 from django.db import connection
 from django.db.models import F
 
+from . import EARTH_RADIUS, EPSG_3857
 from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope, ST_SnapToGrid,
                     ST_Transform)
-
-EPSG_3857 = 3857
-EARTH_RADIUS = 6371008
+from .sigtools import SIGTools
 
 
 def cached_tile(func, expiration=3600*24):
@@ -183,10 +182,6 @@ class VectorTile(object):
         ])
 
 
-def guess_minzoom(layer):
-    return 0
-
-
 def guess_maxzoom(layer):
     # TODO: layer_query=layer_query[:features_limit] -> set limit?
 
@@ -226,3 +221,44 @@ def guess_maxzoom(layer):
         return -1
 
     return max_zoom
+
+
+def guess_minzoom(layer):
+        """
+        Procedure that uses DB output to guess a min zoom level.
+
+        Criteria: zoom satisfying the following condition:
+        tile_lenght / tile_fraction <= BBox(features).smallerSide
+        If extent_features = 0, returns 0
+
+        Explanation about the tile_fraction = 8 just above:
+        -------------------------------------
+        It's purpose is to give an idea of when a dataset becomes to small
+        to be shown in the map, so when doing:
+        SIGTools.get_tile_length(i)/tile_fraction <= extent_features,
+        each time, we do the following:
+        - Start with maximal zoom = 0,
+        - if 1/tile_fraction part of the tile for a given zoom is smaller
+        than the features, we keep that as minimal zoom.
+        - Otherwise we go check a higher zoom level
+        - If no zoom level from 0 to 29 satisfies the condition, returns 30
+
+        """
+
+        extent_features = SIGTools.get_extent_of_layer(layer)
+
+        if extent_features == 0:
+            return 0
+
+        min_zoom = int(0)
+
+        tile_fraction = 8
+        fraction_length = SIGTools.get_tile_length(0)/tile_fraction
+
+        while min_zoom < 30:
+            if (fraction_length <= extent_features):
+                return min_zoom
+            fraction_length = fraction_length/2
+            min_zoom += 1
+
+        return 30  # will likely never happen
