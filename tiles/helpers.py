@@ -1,5 +1,5 @@
 import hashlib
-from math import ceil, log, pi
+from math import ceil, floor, log, pi
 
 import mercantile
 from django.conf import settings
@@ -229,13 +229,13 @@ def guess_minzoom(layer):
 
         Criteria: zoom satisfying the following condition:
         tile_lenght / tile_fraction <= BBox(features).smallerSide
-        If extent_features = 0, returns 0
+        If extent = 0, returns 0
 
         Explanation about the tile_fraction = 8 just above:
         -------------------------------------
         It's purpose is to give an idea of when a dataset becomes to small
         to be shown in the map, so when doing:
-        SIGTools.get_tile_length(i)/tile_fraction <= extent_features,
+        SIGTools.get_tile_length(i)/tile_fraction <= extent,
         each time, we do the following:
         - Start with maximal zoom = 0,
         - if 1/tile_fraction part of the tile for a given zoom is smaller
@@ -245,20 +245,17 @@ def guess_minzoom(layer):
 
         """
 
-        extent_features = SIGTools.get_extent_of_layer(layer)
+        extent = SIGTools.get_extent_of_layer(layer)
 
-        if extent_features == 0:
+        if extent == 0:
             return 0
 
         min_zoom = int(0)
-
         tile_fraction = 8
-        fraction_length = SIGTools.get_tile_length(0)/tile_fraction
 
-        while min_zoom < 30:
-            if (fraction_length <= extent_features):
-                return min_zoom
-            fraction_length = fraction_length/2
-            min_zoom += 1
+        min_zoom = floor(log((2*pi*EARTH_RADIUS)/(extent*tile_fraction), 2))
 
-        return 30  # will likely never happen
+        if min_zoom < 30:
+            return min_zoom
+        else:
+            return 30
