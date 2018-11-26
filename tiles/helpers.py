@@ -183,12 +183,10 @@ class VectorTile(object):
 
 
 def guess_maxzoom(layer):
-    max_zoom = int(22)
-
     features = layer.features.all()
     layer_query = features.annotate(
         geom3857=ST_Transform('geom', EPSG_3857)
-        )
+    )
 
     layer_raw_query, args = layer_query.query.sql_with_params()
 
@@ -214,10 +212,9 @@ def guess_maxzoom(layer):
         # zoom (ceil(zoom)) corresponding to this distance
         max_zoom = ceil(log((2*pi*EARTH_RADIUS/avg), 2))
 
+        return min(max_zoom, 22)
     except TypeError:
-        return -1
-
-    return max_zoom
+        return 14  # Arbitrary zoom value
 
 
 def guess_minzoom(layer):
@@ -229,17 +226,9 @@ def guess_minzoom(layer):
         If extent = 0, returns 0
 
         Explanation about the tile_fraction = 8 just above:
-        -------------------------------------
+        ---------------------------------------------------
         It's purpose is to give an idea of when a dataset becomes to small
-        to be shown in the map, so when doing:
-        SIGTools.get_tile_length(i)/tile_fraction <= extent,
-        each time, we do the following:
-        - Start with maximal zoom = 0,
-        - if 1/tile_fraction part of the tile for a given zoom is smaller
-        than the features, we keep that as minimal zoom.
-        - Otherwise we go check a higher zoom level
-        - If no zoom level from 0 to 29 satisfies the condition, returns 30
-
+        to be shown in the map, so when doing.
         """
 
         extent = SIGTools.get_extent_of_layer(layer)
@@ -247,12 +236,6 @@ def guess_minzoom(layer):
         if extent == 0:
             return 0
 
-        min_zoom = int(0)
         tile_fraction = 8
-
         min_zoom = floor(log((2*pi*EARTH_RADIUS)/(extent*tile_fraction), 2))
-
-        if min_zoom < 30:
-            return min_zoom
-        else:
-            return 30
+        return min(min_zoom, 22)

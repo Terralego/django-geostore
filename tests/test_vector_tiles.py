@@ -169,7 +169,7 @@ class VectorTilesTestCase(TestCase):
         # guess_maxzoom returning -1 when TypeError is raised
         self.assertEqual(
             guess_maxzoom(self.layerPoint),
-            -1)
+            14)
 
         self.assertEqual(
             guess_maxzoom(self.layer) is not None,
