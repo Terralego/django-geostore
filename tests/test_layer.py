@@ -50,7 +50,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         FeatureFactory(layer=self.layer)
 
         uidb64, token = self.get_uidb64_token_for_user()
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('terra:layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(
             f'{shape_url}?token={token}&uidb64={uidb64}')
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -69,7 +69,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         })
 
         uidb64, token = self.get_uidb64_token_for_user()
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('terra:layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(
             f'{shape_url}?token={token}&uidb64={uidb64}')
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -78,7 +78,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
                                        response.content)
         new_layer = LayerFactory()
         response = self.client.post(
-                reverse('layer-shapefile', args=[new_layer.pk, ]),
+                reverse('terra:layer-shapefile', args=[new_layer.pk, ]),
                 {'shapefile': shapefile, }
                 )
 
@@ -91,14 +91,14 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         LayerFactory()
 
         uidb64, token = self.get_uidb64_token_for_user()
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('terra:layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(
             f'{shape_url}?token={token}&uidb64={uidb64}')
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
     def test_shapefile_fake_token(self):
         url = "{}?token=aaa&uidb64=zzzzz".format(
-            reverse('layer-shapefile', args=[self.layer.pk, ]))
+            reverse('terra:layer-shapefile', args=[self.layer.pk, ]))
 
         self.assertEqual(
             self.client.get(url).status_code,
@@ -109,7 +109,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         layer = LayerFactory()
 
         response = self.client.post(
-            reverse('layer-shapefile', args=[layer.pk, ]),)
+            reverse('terra:layer-shapefile', args=[layer.pk, ]),)
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
@@ -136,7 +136,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
                                            fd.read())
 
             response = self.client.post(
-                reverse('layer-shapefile', args=[layer.pk, ]),
+                reverse('terra:layer-shapefile', args=[layer.pk, ]),
                 {'shapefile': shapefile, }
                 )
 
@@ -148,7 +148,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
                                        b'bad bad data')
 
         response = self.client.post(
-            reverse('layer-shapefile', args=[self.layer.pk, ]),
+            reverse('terra:layer-shapefile', args=[self.layer.pk, ]),
             {'shapefile': shapefile, }
             )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
@@ -158,7 +158,7 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         FeatureFactory(layer=self.layer)
 
         uidb64, token = self.get_uidb64_token_for_user()
-        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
+        geojson_url = reverse('terra:layer-geojson', args=[self.layer.pk, ])
         response = self.client.get(
             f'{geojson_url}?token={token}&uidb64={uidb64}')
 
@@ -199,7 +199,7 @@ class TestLayerFeaturesUpdate(TestCase):
         FeatureFactory(layer=self.layer, properties={'a': 'b'})
 
         response = self.client.patch(
-            reverse('layer-detail', args=[self.layer.name, ]), {})
+            reverse('terra:layer-detail', args=[self.layer.name, ]), {})
 
         self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
 
@@ -218,7 +218,7 @@ class TestLayerFeaturesUpdate(TestCase):
             }
 
         response = self.client.patch(
-            reverse('layer-detail', args=[self.layer.name, ]),
+            reverse('terra:layer-detail', args=[self.layer.name, ]),
             {
                 "type": "FeatureCollection",
                 "features": [

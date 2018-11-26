@@ -29,7 +29,7 @@ class SchemaValidationTestCase(TestCase):
     def test_feature_with_valid_properties_is_posted(self):
         """Feature with valid properties is successfully POSTed"""
         response = self.client.post(
-                        reverse('feature-list', args=[self.layer.id, ]),
+                        reverse('terra:feature-list', args=[self.layer.id, ]),
                         {
                                 "geom": "POINT(0 0)",
                                 "layer": self.layer.id,
@@ -47,7 +47,7 @@ class SchemaValidationTestCase(TestCase):
     def test_feature_with_missing_property_type_is_not_posted(self):
         """Feature with missing property type is not successfully POSTed"""
         response = self.client.post(
-                        reverse('feature-list', args=[self.layer.id, ]),
+                        reverse('terra:feature-list', args=[self.layer.id, ]),
                         {
                             "geom": "POINT(0 0)",
                             "layer": self.layer.id,

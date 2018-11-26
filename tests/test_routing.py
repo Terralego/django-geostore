@@ -65,13 +65,13 @@ class RoutingTestCase(TestCase):
 
     def test_routing_view_bad_geometry(self):
         response = self.client.post(
-          reverse('layer-route', args=[self.layer.pk]))
+          reverse('terra:layer-route', args=[self.layer.pk]))
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
         bad_geometry = Point((1, 1))
         response = self.client.post(
-          reverse('layer-route', args=[self.layer.pk]),
+          reverse('terra:layer-route', args=[self.layer.pk]),
           {'geom': bad_geometry.geojson, }
         )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
@@ -84,7 +84,7 @@ class RoutingTestCase(TestCase):
         geometry = LineString(*points)
 
         response = self.client.post(
-          reverse('layer-route', args=[self.layer.pk]),
+          reverse('terra:layer-route', args=[self.layer.pk]),
           {'geom': geometry.geojson, }
         )
 
@@ -111,7 +111,7 @@ class RoutingTestCase(TestCase):
         geometry = LineString(*points)
 
         response = self.client.post(
-          reverse('layer-route', args=[self.layer.pk]),
+          reverse('terra:layer-route', args=[self.layer.pk]),
           {'geom': geometry.geojson, }
         )
 
@@ -142,7 +142,7 @@ class RoutingTestCase(TestCase):
                                 }}):
 
             self.client.post(
-                reverse('layer-route', args=[self.layer.pk]),
+                reverse('terra:layer-route', args=[self.layer.pk]),
                 {'geom': geometry.geojson, }
             )
 
@@ -150,7 +150,7 @@ class RoutingTestCase(TestCase):
             counts = []
             for x in range(2):
                 self.client.post(
-                    reverse('layer-route', args=[self.layer.pk]),
+                    reverse('terra:layer-route', args=[self.layer.pk]),
                     {'geom': geometry.geojson, }
                 )
 

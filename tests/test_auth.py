@@ -17,7 +17,7 @@ class AuthenticationTestCase(TestCase):
 
     def test_authentication_jwt(self):
         """Feature with valid properties is successfully POSTed"""
-        response = self.client.post(reverse('token-obtain'),
+        response = self.client.post(reverse('terra:token-obtain'),
                                     {
                                         'email': self.user.email,
                                         'password': self.USER_PASSWORD
@@ -28,7 +28,7 @@ class AuthenticationTestCase(TestCase):
 
         token = response.data.get('token', False)
 
-        response = self.client.post(reverse('token-verify'),
+        response = self.client.post(reverse('terra:token-verify'),
                                     {
                                         'token': token,
                                     },)
@@ -37,7 +37,7 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(token, response.data.get('token'))
 
     def test_fail_authentication(self):
-        response = self.client.post(reverse('token-obtain'),
+        response = self.client.post(reverse('terra:token-obtain'),
                                     {
                                         'email': 'invalid@user.com',
                                         'password': self.USER_PASSWORD

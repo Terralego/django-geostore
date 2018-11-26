@@ -86,7 +86,7 @@ class FeaturesTestCase(TestCase):
 
         """The layer below must intersect"""
         response = self.client.post(
-            reverse('layer-intersects', args=[layer.pk, ]),
+            reverse('terra:layer-intersects', args=[layer.pk, ]),
             {
                 'geom': json.dumps(self.intersect_geometry)
             }
@@ -105,7 +105,7 @@ class FeaturesTestCase(TestCase):
 
         """The layer below must NOT intersect"""
         response = self.client.post(
-            reverse('layer-intersects', args=[layer.name, ]),
+            reverse('terra:layer-intersects', args=[layer.name, ]),
             {
                 'geom': json.dumps(self.fake_geometry)
             }
@@ -120,7 +120,7 @@ class FeaturesTestCase(TestCase):
            invalid
         """
         response = self.client.post(
-            reverse('layer-intersects', args=[layer.pk, ]),
+            reverse('terra:layer-intersects', args=[layer.pk, ]),
             {
                 'geom': '''Invalid geometry'''
             }
@@ -129,7 +129,7 @@ class FeaturesTestCase(TestCase):
 
     def test_features_linestring_format(self):
         response = self.client.post(
-            reverse('layer-intersects', args=[self.layer.pk, ]),
+            reverse('terra:layer-intersects', args=[self.layer.pk, ]),
             {
                 'geom': json.dumps(self.fake_linestring)
             }
@@ -139,7 +139,7 @@ class FeaturesTestCase(TestCase):
 
     def test_features_polygon_format(self):
         response = self.client.post(
-            reverse('layer-intersects', args=[self.layer.pk, ]),
+            reverse('terra:layer-intersects', args=[self.layer.pk, ]),
             {
                 'geom': json.dumps(self.fake_polygon)
             }
@@ -165,7 +165,7 @@ class FeaturesTestCase(TestCase):
             properties={'number': 2, 'text': 'foo'},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
             {'properties__number': 1, 'properties__text': 'foo'},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -186,7 +186,7 @@ class FeaturesTestCase(TestCase):
             properties={'number': 2},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
             {'properties__wrongfield': 'wrong value'},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -213,7 +213,7 @@ class FeaturesTestCase(TestCase):
             properties={'number': 1, 'digit': 34},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
             {'properties__number': 1, 'properties__digit': 42},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -239,7 +239,7 @@ class FeaturesTestCase(TestCase):
             properties={'text': 'foobar', 'sentence': 'foobar is here'},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
             {
                 'properties__text': 'foobar',
                 'properties__sentence': 'foobar is here'

@@ -96,7 +96,8 @@ class VectorTilesTestCase(TestCase):
     def test_vector_tiles_view(self):
         # first query that generate the cache
         response = self.client.get(
-            reverse('group-tiles', args=[self.group_name, 13, 4126, 2991]))
+            reverse('terra:group-tiles',
+                    args=[self.group_name, 13, 4126, 2991]))
         self.assertEqual(200, response.status_code)
         self.assertGreater(len(response.content), 0)
         query_count = len(connection.queries)
@@ -104,7 +105,8 @@ class VectorTilesTestCase(TestCase):
 
         # verify data is cached
         response = self.client.get(
-            reverse('group-tiles', args=[self.group_name, 13, 4126, 2991]))
+            reverse('terra:group-tiles',
+                    args=[self.group_name, 13, 4126, 2991]))
         self.assertEqual(
             len(connection.queries),
             query_count - 2
@@ -115,7 +117,7 @@ class VectorTilesTestCase(TestCase):
         )
 
         response = self.client.get(
-            reverse('group-tiles',
+            reverse('terra:group-tiles',
                     args=[self.group_name, 13, 1, 1]))
 
         self.assertEqual(200, response.status_code)
