@@ -183,8 +183,6 @@ class VectorTile(object):
 
 
 def guess_maxzoom(layer):
-    # TODO: layer_query=layer_query[:features_limit] -> set limit?
-
     max_zoom = int(22)
 
     features = layer.features.all()
@@ -195,24 +193,23 @@ def guess_maxzoom(layer):
     layer_raw_query, args = layer_query.query.sql_with_params()
 
     try:
-        avg_query = features.model.objects.raw(
-            f'''
-            WITH q1 AS
-            (SELECT * FROM ({layer_raw_query}) as foo),
-            q2 AS
-            (select ST_X((ST_DumpPoints(geom)).geom) AS x from q1 order by x),
-            q3 AS
-            (select x - lag(x) over () AS dst from q2),
-            q4 AS
-            (SELECT * FROM q3 WHERE dst > 0)
-            select  %s AS id, CAST(%s AS text) AS layer_name,
-            exp( sum(ln(dst))/count(dst) ) AS avg
-            FROM q4
-            ''', args + (layer.pk, layer.name)
-        )[0]
+        with connection.cursor() as cursor:
+            sql_query = f'''
+                WITH
+                q1 AS ({layer_raw_query}),
+                q2 AS (SELECT ST_X((ST_DumpPoints(geom)).geom) AS x FROM q1),
+                q3 AS (SELECT x - lag(x) OVER (ORDER BY x) AS dst FROM q2),
+                q4 AS (SELECT * FROM q3 WHERE dst > 0)
+                SELECT
+                    exp(sum(ln(dst))/count(dst)) AS avg
+                FROM
+                    q4
+                '''
+            cursor.execute(sql_query, args)
+            row = cursor.fetchone()
 
         # geometric mean of the |x_{i+1}-x_i| for all points (x,y) in layer.pk
-        avg = avg_query.avg
+        avg = row[0]
 
         # zoom (ceil(zoom)) corresponding to this distance
         max_zoom = ceil(log((2*pi*EARTH_RADIUS/avg), 2))
