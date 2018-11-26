@@ -60,16 +60,16 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     geojson_url = serializers.SerializerMethodField()
 
     def get_group_intersect(self, obj):
-        return reverse('layer-intersects', args=[obj.name, ])
+        return reverse('terra:layer-intersects', args=[obj.name, ])
 
     def get_group_tilejson(self, obj):
         return unquote(reverse('group-tilejson', args=[obj.group]))
 
     def get_group_tiles(self, obj):
-        return unquote(reverse('group-tiles-pattern', args=[obj.group]))
+        return unquote(reverse('terra:group-tiles-pattern', args=[obj.group]))
 
     def get_routing_url(self, obj):
-        return reverse('layer-route', args=[obj.pk, ])
+        return reverse('terra:layer-route', args=[obj.pk, ])
 
     def get_token(self, obj, type):
         if self.current_user.is_anonymous:

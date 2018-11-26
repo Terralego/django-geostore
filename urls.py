@@ -10,6 +10,8 @@ from .tiles.views import MVTView, TilejsonView
 from .views import (FeatureRelationViewSet, FeatureViewSet,
                     LayerRelationViewSet, LayerViewSet)
 
+app_name = 'terra'
+
 schema_view = get_schema_view(
    openapi.Info(
       title="Terra PI",
