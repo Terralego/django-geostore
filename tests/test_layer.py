@@ -17,6 +17,7 @@ from rest_framework.test import APIClient
 
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.accounts.tests.factories import TerraUserFactory
+from terracommon.terra.models import zoom_update
 
 from .factories import FeatureFactory, LayerFactory
 
@@ -268,7 +269,9 @@ class TestLayerFeaturesUpdate(TestCase):
         with self.assertRaises(KeyError):
             self.layer.layer_settings('tiles', 'maxzoom')
 
-        self.layer.zoom_update()
+        # Call the decorator manualy on nop lambda
+        self.layer.beta_lambda = lambda *args, **kargs: False
+        zoom_update(self.layer.beta_lambda)(self.layer)
 
         self.assertEqual(
             self.layer.layer_settings('tiles', 'maxzoom') is not None,

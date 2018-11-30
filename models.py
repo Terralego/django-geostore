@@ -33,6 +33,27 @@ ACCEPTED_PROJECTIONS = [
 ]
 
 
+def zoom_update(func):
+    def wrapper(*args, **kargs):
+        layer = args[0]
+        response = func(*args, **kargs)
+
+        try:
+            layer.layer_settings('tiles', 'minzoom')
+        except KeyError:
+            layer.set_layer_settings(
+                'tiles', 'minzoom', guess_minzoom(layer))
+
+        try:
+            layer.layer_settings('tiles', 'maxzoom')
+        except KeyError:
+            layer.set_layer_settings(
+                'tiles', 'maxzoom', guess_maxzoom(layer))
+
+        return response
+    return wrapper
+
+
 class Layer(models.Model):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
@@ -113,6 +134,7 @@ class Layer(models.Model):
                                ' empty geometry,'
                                f' row skipped : {row}')
 
+    @zoom_update
     def from_csv_dictreader(self, reader, pk_properties, options, operations,
                             init=False, chunk_size=1000, fast=False):
         """Import (create or update) features from csv.DictReader object
@@ -139,8 +161,7 @@ class Layer(models.Model):
                 fast=fast
             )
 
-        self.zoom_update()
-
+    @zoom_update
     def from_geojson(self, geojson_data, id_field=None, update=False):
         """
         Import geojson raw data in a layer
@@ -166,8 +187,6 @@ class Layer(models.Model):
                 properties=properties,
                 geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
             )
-
-        self.zoom_update()
 
     def to_geojson(self):
         return json.loads(serialize('geojson',
@@ -214,6 +233,7 @@ class Layer(models.Model):
         else:
             return fiona.crs.to_string(projection)
 
+    @zoom_update
     def from_shapefile(self, zipped_shapefile_file, id_field=None):
         ''' Load ShapeFile content provided into a zipped archive.
 
@@ -249,8 +269,6 @@ class Layer(models.Model):
                     properties=properties,
                     geom=GEOSGeometry(json.dumps(geometry)),
                 )
-
-        self.zoom_update()
 
     @transaction.atomic
     def update_geometries(self, features):
@@ -350,19 +368,6 @@ class Layer(models.Model):
             settings[key] = s
             settings = s
         settings[json_path[-1]] = value
-
-    def zoom_update(self):
-        try:
-            self.layer_settings('tiles', 'minzoom')
-        except KeyError:
-            self.set_layer_settings(
-                'tiles', 'minzoom', guess_minzoom(self))
-
-        try:
-            self.layer_settings('tiles', 'maxzoom')
-        except KeyError:
-            self.set_layer_settings(
-                'tiles', 'maxzoom', guess_maxzoom(self))
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
