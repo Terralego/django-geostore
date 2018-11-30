@@ -7,6 +7,7 @@ from tempfile import TemporaryDirectory
 
 import fiona
 import fiona.transform
+from deepmerge import always_merger
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
@@ -333,6 +334,10 @@ class Layer(models.Model):
 
         return None
 
+    @cached_property
+    def settings_with_default(self):
+        return always_merger.merge(self.SETTINGS_DEFAULT, self.settings)
+
     def layer_settings(self, *json_path):
         ''' Return the nested value of settings at path json_path.
             Raise an KeyError if not defined.
@@ -344,19 +349,15 @@ class Layer(models.Model):
             self.settings) if self.settings is not None else None
 
     def layer_settings_with_default(self, *json_path):
-        ''' Return the nested value of settings at path json_path.
-            Return the default value if not defined in custom settings.
-            Return None if not defined at all.
+        ''' Return the nested value of settings with SETTINGS_DEFAULT as
+            falback at path json_path.
+            Raise an KeyError if not defined.
         '''
         # Dives into settings using args
-        try:
-            return self.layer_settings(*json_path)
-        except KeyError:
-            # Fall back to the default
-            return reduce(
-                lambda a, v: None if a is None else a.get(v),
-                json_path,
-                self.SETTINGS_DEFAULT)
+        return reduce(
+            lambda a, v: a[v],  # Let raise KeyError on missing key
+            json_path,
+            self.settings_with_default)
 
     def set_layer_settings(self, *json_path_value):
         '''Set last parameter as value at the path place into settings
@@ -370,6 +371,12 @@ class Layer(models.Model):
             settings[key] = s
             settings = s
         settings[json_path[-1]] = value
+
+        try:
+            # Delete the cached property
+            del self.settings_with_default
+        except AttributeError:
+            pass  # Let's continue, cache was not set
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
