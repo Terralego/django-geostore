@@ -70,7 +70,7 @@ class Command(BaseCommand):
                                                    type_features)
 
         if verbosity >= 1:
-            self.stdout.write(log_error)
+            self.stderr.write(log_error)
         if not value:
             raise CommandError('Ogr2ogr failed to create the geojson')
         if layer_pk:
