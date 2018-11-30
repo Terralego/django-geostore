@@ -108,20 +108,24 @@ class VectorTile(object):
 
         layer_raw_query, args = layer_query.query.sql_with_params()
 
-        filter = 'ARRAY[]::text[]'
-        if properties_filter is not None:
+        if properties_filter is None:
+            properties = 'properties'
+        elif properties_filter == []:
+            properties = 'NULL'
+        else:
             filter = ', '.join([f"'{f}'" for f in properties_filter])
-            filter = f'''
+            properties = f'''properties - (
                 SELECT array_agg(k)
                 FROM jsonb_object_keys(properties) AS t(k)
-                WHERE k NOT IN ({filter})'''
+                WHERE k NOT IN ({filter}))'''
+
         with connection.cursor() as cursor:
             sql_query = f'''
                 WITH
                 fullgeom AS ({layer_raw_query}),
                 tilegeom AS (
                     SELECT
-                        properties - ({filter}) AS properties,
+                        ({properties}) AS properties,
                         ST_AsMvtGeom(
                             geom3857snap,
                             bbox,
