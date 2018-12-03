@@ -39,49 +39,17 @@ class VectorTile(object):
     # Number of tile units per pixel
     EXTENT_RATIO = 16
 
-    LINESTRING = ('LineString', 'MultiLineString')
-    POLYGON = ('Polygon', 'MultiPolygon')
-
-    @cached_tile
-    def get_tile(self, x, y, z,
-                 pixel_buffer, features_filter, properties_filter,
-                 features_limit, features):
-
-        bounds = mercantile.bounds(x, y, z)
-        self.xmin, self.ymin = mercantile.xy(bounds.west, bounds.south)
-        self.xmax, self.ymax = mercantile.xy(bounds.east, bounds.north)
-        pixel_width_x = (self.xmax - self.xmin) / 256
-        pixel_width_y = (self.ymax - self.ymin) / 256
-
-        layer_query = features.annotate(
-                bbox=ST_MakeEnvelope(
-                    self.xmin,
-                    self.ymin,
-                    self.xmax,
-                    self.ymax,
-                    EPSG_3857),
-                # Intersects on internal data projection using pixel buffer
-                bbox_select=ST_Transform(ST_MakeEnvelope(
-                    self.xmin - pixel_width_x * pixel_buffer,
-                    self.ymin - pixel_width_y * pixel_buffer,
-                    self.xmax + pixel_width_x * pixel_buffer,
-                    self.ymax + pixel_width_y * pixel_buffer,
-                    EPSG_3857), settings.INTERNAL_GEOMETRY_SRID),
-                geom3857=ST_Transform('geom', EPSG_3857),
-                geom3857snap=ST_SnapToGrid(
-                    'geom3857',
-                    pixel_width_x / self.EXTENT_RATIO,
-                    pixel_width_y / self.EXTENT_RATIO)
-            ).filter(
-                bbox_select__intersects=F('geom'),
-                geom3857snap__isnull=False
-            )
-
+    def _filter_on_property(self, layer_query, features_filter):
         if features_filter is not None:
             layer_query = layer_query.filter(
                 properties__contains=features_filter
             )
+        return layer_query
 
+    LINESTRING = ('LineString', 'MultiLineString')
+    POLYGON = ('Polygon', 'MultiPolygon')
+
+    def _filter_on_geom_size(self, layer_query, layer_geometry, pixel_width_x, pixel_width_y):
         if self.layer.layer_geometry in self.LINESTRING:
             # Larger then a half of pixel
             layer_query = layer_query.annotate(
@@ -96,7 +64,9 @@ class VectorTile(object):
             ).filter(
                 area3857__ge=pixel_width_x * pixel_width_y / 4
             )
+        return layer_query
 
+    def _limit(self, layer_query, features_limit):
         if features_limit is not None:
             # Order by feature size before limit
             if self.layer.layer_geometry in self.LINESTRING:
@@ -105,6 +75,46 @@ class VectorTile(object):
                 layer_query = layer_query.order_by('area3857')
 
             layer_query = layer_query[:features_limit]
+        return layer_query
+
+    @cached_tile
+    def get_tile(self, x, y, z,
+                 pixel_buffer, features_filter, properties_filter,
+                 features_limit, features):
+
+        bounds = mercantile.bounds(x, y, z)
+        xmin, ymin = mercantile.xy(bounds.west, bounds.south)
+        xmax, ymax = mercantile.xy(bounds.east, bounds.north)
+        pixel_width_x = (xmax - xmin) / 256
+        pixel_width_y = (ymax - ymin) / 256
+
+        layer_query = features.annotate(
+                bbox=ST_MakeEnvelope(
+                    xmin,
+                    ymin,
+                    xmax,
+                    ymax,
+                    EPSG_3857),
+                # Intersects on internal data projection using pixel buffer
+                bbox_select=ST_Transform(ST_MakeEnvelope(
+                    xmin - pixel_width_x * pixel_buffer,
+                    ymin - pixel_width_y * pixel_buffer,
+                    xmax + pixel_width_x * pixel_buffer,
+                    ymax + pixel_width_y * pixel_buffer,
+                    EPSG_3857), settings.INTERNAL_GEOMETRY_SRID),
+                geom3857=ST_Transform('geom', EPSG_3857),
+                geom3857snap=ST_SnapToGrid(
+                    'geom3857',
+                    pixel_width_x / self.EXTENT_RATIO,
+                    pixel_width_y / self.EXTENT_RATIO)
+            ).filter(
+                bbox_select__intersects=F('geom'),
+                geom3857snap__isnull=False
+            )
+
+        layer_query = self._filter_on_property(layer_query, features_filter)
+        layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
+        layer_query = self._limit(layer_query, features_limit)
 
         layer_raw_query, args = layer_query.query.sql_with_params()
 
