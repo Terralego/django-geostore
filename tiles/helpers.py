@@ -8,8 +8,8 @@ from django.db import connection
 from django.db.models import F
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope, ST_SnapToGrid,
-                    ST_Transform)
+from .funcs import (ST_Area, ST_AsMvtGeom, ST_Length, ST_MakeEnvelope,
+                    ST_SnapToGrid, ST_Transform)
 from .sigtools import SIGTools
 
 
@@ -35,6 +35,47 @@ def cached_tile(func, expiration=3600*24):
 class VectorTile(object):
     def __init__(self, layer, cache_key=None):
         self.layer, self.cache_key = layer, cache_key
+
+    @cached_tile
+    def get_blob_tile(self, x, y, z, features):
+        bounds = mercantile.bounds(x, y, z)
+        self.xmin, self.ymin = mercantile.xy(bounds.west, bounds.south)
+        self.xmax, self.ymax = mercantile.xy(bounds.east, bounds.north)
+
+        layer_query = features.annotate(
+                bbox=ST_MakeEnvelope(self.xmin,
+                                     self.ymin,
+                                     self.xmax,
+                                     self.ymax,
+                                     EPSG_3857),
+                geom3857=ST_Transform('geom', EPSG_3857)
+            ).filter(
+                bbox__intersects=F('geom3857')
+            ).annotate(
+                geometry=ST_AsMvtGeom(
+                    F('geom3857'),
+                    'bbox',
+                    4096,
+                    256,
+                    True
+                )
+            )
+        layer_raw_query, args = layer_query.query.sql_with_params()
+
+        with connection.cursor() as cursor:
+            sql_query = f'''
+                WITH tilegeom as ({layer_raw_query})
+                   SELECT count(*) AS count,
+                          ST_AsMVT(tilegeom,
+                                   '{self.layer.name}',
+                                   4096, 'geometry') AS mvt
+                   FROM tilegeom
+            '''
+
+            cursor.execute(sql_query, args)
+            row = cursor.fetchone()
+
+            return row[0], row[1]
 
     # Number of tile units per pixel
     EXTENT_RATIO = 16
