@@ -37,7 +37,16 @@ class VectorTile(object):
         self.layer, self.cache_key = layer, cache_key
 
     @cached_tile
-    def get_blob_tile(self, x, y, z, features):
+    def get_tile(self, *args):
+        if settings.TILE_FLAVOR == 'blob':
+            return self.get_blob_tile(*args)
+        else:
+            return self.get_smart_tile(*args)
+
+    def get_blob_tile(self, x, y, z,
+                      pixel_buffer, features_filter, properties_filter,
+                      features_limit, features):
+
         bounds = mercantile.bounds(x, y, z)
         self.xmin, self.ymin = mercantile.xy(bounds.west, bounds.south)
         self.xmax, self.ymax = mercantile.xy(bounds.east, bounds.north)
@@ -118,10 +127,9 @@ class VectorTile(object):
             layer_query = layer_query[:features_limit]
         return layer_query
 
-    @cached_tile
-    def get_tile(self, x, y, z,
-                 pixel_buffer, features_filter, properties_filter,
-                 features_limit, features):
+    def get_smart_tile(self, x, y, z,
+                       pixel_buffer, features_filter, properties_filter,
+                       features_limit, features):
 
         bounds = mercantile.bounds(x, y, z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
