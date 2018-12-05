@@ -154,6 +154,9 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_to_geojson(self):
+        # Create at least one feature in the layer, so it's not empty
+        FeatureFactory(layer=self.layer)
+
         uidb64, token = self.get_uidb64_token_for_user()
         geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
         response = self.client.get(

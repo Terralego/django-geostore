@@ -4,7 +4,7 @@ from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
                                      Point)
 from django.core.serializers import serialize
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import detail_route
@@ -65,7 +65,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
                   permission_classes=(TokenBasedPermission,))
     def to_geojson(self, request, pk=None):
         layer = self.get_object()
-        return Response(layer.to_geojson())
+        return JsonResponse(layer.to_geojson())
 
     @detail_route(methods=['post'])
     def route(self, request, pk=None):
