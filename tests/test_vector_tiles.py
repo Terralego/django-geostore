@@ -20,7 +20,9 @@ class VectorTilesTestCase(TestCase):
     group_name = 'mygroup'
 
     def setUp(self):
-        self.layer = LayerFactory(group=self.group_name, name="layerLine")
+        settings = {'metadata': {'attribution': 'plop'}}
+
+        self.layer = LayerFactory(group=self.group_name, name="layerLine", settings=settings)
 
         self.layer.from_geojson(
             geojson_data='''
@@ -51,7 +53,7 @@ class VectorTilesTestCase(TestCase):
             }
         ''')
 
-        self.layerPoint = LayerFactory(group="yourgroup", name="layerPoint")
+        self.layerPoint = LayerFactory(group="yourgroup", name="layerPoint", settings=settings)
 
         self.layerPoint.from_geojson(
 
@@ -86,6 +88,8 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(response.content), 0)
 
         tilejson = json.loads(response.content)
+        self.assertTrue(tilejson['attribution'])
+        self.assertTrue(tilejson['description'] is None)
         self.assertGreater(len(tilejson['vector_layers']), 0)
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
 

@@ -64,6 +64,11 @@ class Layer(models.Model):
 
     # Settings scheam
     SETTINGS_DEFAULT = {
+        'metadata': {
+            'attribution': None,  # Authors, eg. "<a href='http://openstreetmap.org'>OSM contributors</a>"
+            'licence': None,  # eg. "ODbL"
+            'description': None,
+        },
         # Tilesets attributes
         'tiles': {
             'minzoom': 0,
