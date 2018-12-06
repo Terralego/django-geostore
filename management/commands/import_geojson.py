@@ -31,6 +31,10 @@ class Command(BaseCommand):
                             help=("JSON schema file that describe "
                                   "GeoJSON properties.\n"
                                   "Only needed if -l option is provided"))
+        parser.add_argument('-ls', '--layer_settings', nargs='?',
+                            type=argparse.FileType('r'),
+                            action="store",
+                            help=("JSON settings file to override default"))
         parser.add_argument('-g', '--geojson',
                             nargs='+',
                             type=argparse.FileType('r', encoding='UTF-8'),
@@ -68,8 +72,14 @@ class Command(BaseCommand):
                 schema = json.loads(options.get('schema').read())
             except AttributeError:
                 raise CommandError("Please provide a valid schema file")
+            try:
+                layer_settings = options.get('layer_settings')
+                settings = json.loads(layer_settings.read()) if options.get('layer_settings') else {}
+            except AttributeError:
+                raise CommandError("Please provide a valid layer settings file")
             layer = Layer.objects.create(name=layer_name,
                                          schema=schema,
+                                         settings=settings,
                                          group=group)
             if options['verbosity'] >= 1:
                 self.stdout.write(f"The created layer pk is {layer.pk}, "

@@ -76,7 +76,13 @@ class Command(BaseCommand):
         if layer_pk:
             layer = Layer.objects.get(pk=layer_pk)
         else:
-            layer = Layer.objects.create(name=layer_name)
+            settings = {
+                'metadata': {
+                    'attribution': '<a href=\'http://openstreetmap.org\'>OSM contributors</a>',
+                    'licence': 'ODbL',
+                }
+            }
+            layer = Layer.objects.create(name=layer_name, settings=settings)
 
         layer.from_geojson(value, identifier)
 
