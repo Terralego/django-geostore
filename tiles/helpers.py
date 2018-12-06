@@ -112,7 +112,7 @@ class VectorTile(object):
             layer_query = layer_query.annotate(
                 area3857=ST_Area('geom3857snap')
             ).filter(
-                area3857__ge=pixel_width_x * pixel_width_y / 4
+                area3857__gt=pixel_width_x * pixel_width_y / 4
             )
         return layer_query
 
