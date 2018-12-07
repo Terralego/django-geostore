@@ -1,6 +1,7 @@
 import argparse
 import json
 import uuid
+from json.decoder import JSONDecodeError
 
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -75,7 +76,7 @@ class Command(BaseCommand):
             try:
                 layer_settings = options.get('layer_settings')
                 settings = json.loads(layer_settings.read()) if layer_settings else {}
-            except AttributeError:
+            except JSONDecodeError:
                 raise CommandError("Please provide a valid layer settings file")
             layer = Layer.objects.create(name=layer_name,
                                          schema=schema,
