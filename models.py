@@ -65,9 +65,9 @@ class Layer(models.Model):
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {
-            'attribution': None,  # Authors, eg. "<a href='http://openstreetmap.org'>OSM contributors</a>"
-            'licence': None,  # eg. "ODbL"
-            'description': None,
+            'attribution': None,  # Json, eg. {'name': 'OSM contributors', href='http://openstreetmap.org'}
+            'licence': None,  # String, eg. 'ODbL'
+            'description': None,  # String
         },
         # Tilesets attributes
         'tiles': {

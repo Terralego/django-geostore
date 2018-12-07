@@ -1,6 +1,9 @@
 {
     "metadata": {
-        "attribution": "<a href='http://openstreetmap.org'>OSM contributors</a>",
+        "attribution": {
+            "name": "OSM contributors",
+            "href": "http://openstreetmap.org"
+        },
         "licence": "ODbL"
     }
 }

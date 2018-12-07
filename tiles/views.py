@@ -15,7 +15,15 @@ class TilejsonView(APIView):
 
     permission_classes = ()
 
-    def _join_group_settings(self, layers, *args):
+    def _join_group_settings_link(self, layers, *args):
+        return ','.join(set([
+            a if 'link' not in a else
+            '<a href="{0}"/>{1}</a>'.format(a['link'].replace('"', '&quot;'), a['name'].replace('"', '&quot;'))
+            for a in [layer.layer_settings_with_default(*args) for layer in self.layers]
+            if a
+        ])) or None
+
+    def _join_group_settings_string(self, layers, *args):
         return ','.join(set([
             a
             for a in [layer.layer_settings_with_default(*args) for layer in self.layers]
@@ -46,8 +54,8 @@ class TilejsonView(APIView):
             'maxzoom': maxzoom,
             # bounds
             # center
-            "attribution": self._join_group_settings(self.layers, 'metadata', 'attribution'),
-            "description": self._join_group_settings(self.layers, 'metadata', 'description'),
+            "attribution": self._join_group_settings_link(self.layers, 'metadata', 'attribution'),
+            "description": self._join_group_settings_string(self.layers, 'metadata', 'description'),
             'vector_layers': [{
                 'id': layer.name,
                 'fields': self.layer_fields(layer),

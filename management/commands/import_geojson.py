@@ -74,7 +74,7 @@ class Command(BaseCommand):
                 raise CommandError("Please provide a valid schema file")
             try:
                 layer_settings = options.get('layer_settings')
-                settings = json.loads(layer_settings.read()) if options.get('layer_settings') else {}
+                settings = json.loads(layer_settings.read()) if layer_settings else {}
             except AttributeError:
                 raise CommandError("Please provide a valid layer settings file")
             layer = Layer.objects.create(name=layer_name,
