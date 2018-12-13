@@ -1,5 +1,5 @@
 import json
-from urllib.parse import unquote
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotFound
@@ -30,7 +30,7 @@ class TilejsonView(APIView):
             if a
         ])) or None
 
-    def get_tilejson(self, base_url, group):
+    def get_tilejson(self, group):
         minzoom = max(
             settings.MIN_TILE_ZOOM,
             min(map(
@@ -41,14 +41,15 @@ class TilejsonView(APIView):
             max(map(
                 lambda l: l.layer_settings_with_default('tiles', 'maxzoom'),
                 self.layers)))
-        tile_path = unquote(reverse("group-tiles-pattern", args=[group]))
+        tile_path = reverse("group-tiles-pattern", args=[group])
 
         # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
         return {
             'tilejson': '3.0.0',
             'name': group,
             'tiles': [
-                f'{base_url}{tile_path}'
+                urljoin(hostname, tile_path)
+                for hostname in settings.TERRA_TILES_HOSTNAMES
             ],
             'minzoom': minzoom,
             'maxzoom': maxzoom,
@@ -88,9 +89,8 @@ class TilejsonView(APIView):
         if self.layers.count() == 0:
             return HttpResponseNotFound()
 
-        base_url = f'{request.scheme}://{request.META["HTTP_HOST"]}'
         return HttpResponse(
-            json.dumps(self.get_tilejson(base_url, group)),
+            json.dumps(self.get_tilejson(group)),
             content_type='application/json')
 
 
