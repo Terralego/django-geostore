@@ -1,5 +1,5 @@
 import json
-from urllib.parse import urljoin
+from urllib.parse import unquote, urljoin
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotFound
@@ -48,7 +48,7 @@ class TilejsonView(APIView):
             'tilejson': '3.0.0',
             'name': group,
             'tiles': [
-                urljoin(hostname, tile_path)
+                unquote(urljoin(hostname, tile_path))
                 for hostname in settings.TERRA_TILES_HOSTNAMES
             ],
             'minzoom': minzoom,
