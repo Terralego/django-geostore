@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import uuid
+from copy import deepcopy
 from functools import reduce
 from tempfile import TemporaryDirectory
 
@@ -341,7 +342,7 @@ class Layer(models.Model):
 
     @cached_property
     def settings_with_default(self):
-        return always_merger.merge(self.SETTINGS_DEFAULT, self.settings)
+        return always_merger.merge(deepcopy(self.SETTINGS_DEFAULT), self.settings)
 
     def layer_settings(self, *json_path):
         ''' Return the nested value of settings at path json_path.
