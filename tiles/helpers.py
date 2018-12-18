@@ -39,6 +39,13 @@ class VectorTile(object):
     # Number of tile units per pixel
     EXTENT_RATIO = 16
 
+    def _sanitize_polygon(self, layer_query):
+        if self.layer.layer_geometry in self.POLYGON:
+            layer_query = layer_query.annotate(
+                outgeom3857=ST_Buffer('outgeom3857', 0)
+            )
+        return layer_query
+
     def _filter_on_property(self, layer_query, features_filter):
         if features_filter is not None:
             layer_query = layer_query.filter(
@@ -112,6 +119,7 @@ class VectorTile(object):
                 outgeom3857__isnull=False
             )
 
+        layer_query = self._sanitize_polygon(layer_query)
         layer_query = self._filter_on_property(layer_query, features_filter)
         layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
         layer_query = self._limit(layer_query, features_limit)
