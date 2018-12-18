@@ -39,6 +39,20 @@ class VectorTile(object):
     # Number of tile units per pixel
     EXTENT_RATIO = 16
 
+    def _lower_precision(self, layer_query, xmin, ymin, pixel_width_x, pixel_width_y):
+        if self.layer.layer_geometry in self.LINESTRING or self.layer.layer_geometry in self.POLYGON:
+            layer_query = layer_query.annotate(
+                outgeom3857=ST_SnapToGrid(
+                    ST_SetEffectiveArea('outgeom3857', pixel_width_x * pixel_width_y / 4 / 128),
+                    xmin,
+                    ymin,
+                    pixel_width_x / self.EXTENT_RATIO,
+                    pixel_width_y / self.EXTENT_RATIO)
+            ).filter(
+                outgeom3857__isnull=False
+            )
+        return layer_query
+
     def _sanitize_polygon(self, layer_query):
         if self.layer.layer_geometry in self.POLYGON:
             layer_query = layer_query.annotate(
@@ -109,18 +123,12 @@ class VectorTile(object):
                     xmax + pixel_width_x * pixel_buffer,
                     ymax + pixel_width_y * pixel_buffer,
                     EPSG_3857), settings.INTERNAL_GEOMETRY_SRID),
-                geom3857=ST_Transform('geom', EPSG_3857),
-                outgeom3857=ST_SnapToGrid(
-                    ST_SetEffectiveArea('geom3857', pixel_width_x * pixel_width_y / 4 / 128),
-                    xmin,
-                    ymin,
-                    pixel_width_x / self.EXTENT_RATIO,
-                    pixel_width_y / self.EXTENT_RATIO)
+                outgeom3857=ST_Transform('geom', EPSG_3857),
             ).filter(
-                bbox_select__intersects=F('geom'),
-                outgeom3857__isnull=False
+                bbox_select__intersects=F('geom')
             )
 
+        layer_query = self._lower_precision(layer_query, xmin, ymin, pixel_width_x, pixel_width_y)
         layer_query = self._sanitize_polygon(layer_query)
         layer_query = self._filter_on_property(layer_query, features_filter)
         layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
