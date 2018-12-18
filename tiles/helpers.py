@@ -8,8 +8,8 @@ from django.db import connection
 from django.db.models import F
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope, ST_SnapToGrid,
-                    ST_Transform)
+from .funcs import (ST_Area, ST_Buffer, ST_Length, ST_MakeEnvelope,
+                    ST_SetEffectiveArea, ST_SnapToGrid, ST_Transform)
 from .sigtools import SIGTools
 
 
@@ -111,7 +111,9 @@ class VectorTile(object):
                     EPSG_3857), settings.INTERNAL_GEOMETRY_SRID),
                 geom3857=ST_Transform('geom', EPSG_3857),
                 outgeom3857=ST_SnapToGrid(
-                    'geom3857',
+                    ST_SetEffectiveArea('geom3857', pixel_width_x * pixel_width_y / 4 / 128),
+                    xmin,
+                    ymin,
                     pixel_width_x / self.EXTENT_RATIO,
                     pixel_width_y / self.EXTENT_RATIO)
             ).filter(
