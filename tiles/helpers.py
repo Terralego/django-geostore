@@ -53,14 +53,14 @@ class VectorTile(object):
         if self.layer.layer_geometry in self.LINESTRING:
             # Larger then a half of pixel
             layer_query = layer_query.annotate(
-                length3857=ST_Length('geom3857snap')
+                length3857=ST_Length('outgeom3857')
             ).filter(
                 length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2
             )
         elif self.layer.layer_geometry in self.POLYGON:
             # Larger than a quarter of pixel
             layer_query = layer_query.annotate(
-                area3857=ST_Area('geom3857snap')
+                area3857=ST_Area('outgeom3857')
             ).filter(
                 area3857__gt=pixel_width_x * pixel_width_y / 4
             )
@@ -103,13 +103,13 @@ class VectorTile(object):
                     ymax + pixel_width_y * pixel_buffer,
                     EPSG_3857), settings.INTERNAL_GEOMETRY_SRID),
                 geom3857=ST_Transform('geom', EPSG_3857),
-                geom3857snap=ST_SnapToGrid(
+                outgeom3857=ST_SnapToGrid(
                     'geom3857',
                     pixel_width_x / self.EXTENT_RATIO,
                     pixel_width_y / self.EXTENT_RATIO)
             ).filter(
                 bbox_select__intersects=F('geom'),
-                geom3857snap__isnull=False
+                outgeom3857__isnull=False
             )
 
         layer_query = self._filter_on_property(layer_query, features_filter)
@@ -137,7 +137,7 @@ class VectorTile(object):
                     SELECT
                         ({properties}) AS properties,
                         ST_AsMvtGeom(
-                            geom3857snap,
+                            outgeom3857,
                             bbox,
                             {256 * self.EXTENT_RATIO},
                             {pixel_buffer * self.EXTENT_RATIO},
