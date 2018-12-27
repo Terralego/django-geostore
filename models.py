@@ -314,13 +314,13 @@ class Layer(models.Model):
 
         cursor = connection.cursor()
         raw_query = f"""
-                    SELECT
-                        jsonb_object_keys(properties) AS key
-                    FROM {feature_table}
-                    WHERE
-                        {layer_field} = %s
-                    GROUP BY key;
-                    """
+            SELECT
+                jsonb_object_keys(properties) AS key
+            FROM
+                (SELECT properties FROM {feature_table} WHERE {layer_field} = %s LIMIT 1) AS t
+            GROUP BY
+                key;
+            """
 
         cursor.execute(raw_query, [self.pk, ])
 
