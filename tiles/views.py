@@ -71,11 +71,11 @@ class TilejsonView(APIView):
         properties_filter = layer.layer_settings_with_default(
             'tiles', 'properties_filter')
         if properties_filter is not None:
-            fileds = properties_filter
+            fields = properties_filter
         else:
-            fileds = layer.layer_properties.keys()
+            fields = layer.layer_properties.keys()
 
-        return {f: '' for f in fileds}
+        return {f: '' for f in fields}
 
     @swagger_auto_schema(
         responses={
