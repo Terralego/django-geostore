@@ -227,7 +227,7 @@ def guess_maxzoom(layer):
             sql_query = f'''
                 WITH
                 q1 AS ({layer_raw_query}),
-                q2 AS (SELECT ST_X((ST_DumpPoints(geom)).geom) AS x FROM q1),
+                q2 AS (SELECT ST_X((ST_DumpPoints(geom3857)).geom) AS x FROM q1),
                 q3 AS (SELECT x - lag(x) OVER (ORDER BY x) AS dst FROM q2),
                 q4 AS (SELECT * FROM q3 WHERE dst > 0)
                 SELECT
@@ -241,8 +241,13 @@ def guess_maxzoom(layer):
         # geometric mean of the |x_{i+1}-x_i| for all points (x,y) in layer.pk
         avg = row[0]
 
-        # zoom (ceil(zoom)) corresponding to this distance
-        max_zoom = ceil(log((2*pi*EARTH_RADIUS/avg), 2))
+        # total number of pixels to represent length `avg` (equator)
+        nb_pixels_total = 2*pi*EARTH_RADIUS/avg
+
+        tile_resolution = 256*VectorTile.EXTENT_RATIO
+
+        # zoom (ceil) to fit those pixels at `tile_resolution`
+        max_zoom = ceil(log(nb_pixels_total/tile_resolution, 2))
 
         return min(max_zoom, 22)
     except TypeError:
