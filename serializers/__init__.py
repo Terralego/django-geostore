@@ -77,7 +77,7 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
 
         uidb64, token = self.get_uidb64_token_for_user(self.current_user)
         return "{}?uidb64={}&token={}".format(
-            reverse('layer-%s' % type, args=[obj.pk, ]),
+            reverse('terra:layer-%s' % type, args=[obj.pk, ]),
             uidb64,
             token)
 
