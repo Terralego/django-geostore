@@ -81,7 +81,7 @@ class VectorTilesTestCase(TestCase):
     @override_settings(ALLOWED_HOSTS=['localhost'])
     def test_tilejson(self):
         response = self.client.get(
-            reverse('group-tilejson', args=[self.group_name]),
+            reverse('terra:group-tilejson', args=[self.group_name]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
         self.assertEqual(200, response.status_code)

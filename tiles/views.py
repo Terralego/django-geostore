@@ -41,7 +41,7 @@ class TilejsonView(APIView):
             max(map(
                 lambda l: l.layer_settings_with_default('tiles', 'maxzoom'),
                 self.layers)))
-        tile_path = reverse("group-tiles-pattern", args=[group])
+        tile_path = reverse("terra:group-tiles-pattern", args=[group])
 
         # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
         return {

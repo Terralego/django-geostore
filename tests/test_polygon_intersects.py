@@ -64,7 +64,7 @@ class PolygonIntersectTestCase(TestCase):
         )
 
         response = self.client.post(
-            reverse('layer-intersects', kwargs={'pk': layer.pk}),
+            reverse('terra:layer-intersects', kwargs={'pk': layer.pk}),
             {'geom': json.dumps(self.polygon)},
             format='json',
         )

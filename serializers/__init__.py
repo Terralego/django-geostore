@@ -63,7 +63,7 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
         return reverse('terra:layer-intersects', args=[obj.name, ])
 
     def get_group_tilejson(self, obj):
-        return unquote(reverse('group-tilejson', args=[obj.group]))
+        return unquote(reverse('terra:group-tilejson', args=[obj.group]))
 
     def get_group_tiles(self, obj):
         return unquote(reverse('terra:group-tiles-pattern', args=[obj.group]))
