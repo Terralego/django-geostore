@@ -197,7 +197,7 @@ class VectorTilesTestCase(TestCase):
             '-lchunk_fontainebleau',
             verbosity=0)
 
-        layer_chunk_fontainebleau = Layer.objects.all().get(name='chunk_fontainebleau')
+        layer_chunk_fontainebleau = Layer.objects.get(name='chunk_fontainebleau')
 
         self.assertEqual(guess_maxzoom(layer_chunk_fontainebleau), 13)
 
