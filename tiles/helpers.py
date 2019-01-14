@@ -53,7 +53,7 @@ class VectorTile(object):
             )
         return layer_query
 
-    def _sanitize_polygon(self, layer_query):
+    def _sanitize(self, layer_query):
         if self.layer.layer_geometry in self.POLYGON:
             layer_query = layer_query.annotate(
                 outgeom3857=ST_Buffer('outgeom3857', 0)
@@ -129,7 +129,7 @@ class VectorTile(object):
             )
 
         layer_query = self._lower_precision(layer_query, xmin, ymin, pixel_width_x, pixel_width_y)
-        layer_query = self._sanitize_polygon(layer_query)
+        layer_query = self._sanitize(layer_query)
         layer_query = self._filter_on_property(layer_query, features_filter)
         layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
         layer_query = self._limit(layer_query, features_limit)
