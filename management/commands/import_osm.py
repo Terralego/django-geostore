@@ -66,8 +66,7 @@ class Command(BaseCommand):
                 raise CommandError("Overpass didn't give any information")
             raise CommandError('The query is not valid')
 
-        value, log_error = self.launch_cmd_ogr2ogr(response.content,
-                                                   type_features)
+        value, log_error = self.launch_cmd_ogr2ogr(response.content, type_features)
 
         if verbosity >= 1:
             self.stderr.write(log_error)
@@ -92,8 +91,13 @@ class Command(BaseCommand):
         tmp_osm.close()
         try:
             proc = subprocess.run(
-                args=['ogr2ogr', '-f', 'GeoJSON', '/vsistdout/',
-                      tmp_osm.name, type_features],
+                args=[
+                    'ogr2ogr',
+                    '-f', 'GeoJSON', '/vsistdout/',
+                    tmp_osm.name,
+                    type_features,
+                    '--config', 'OSM_USE_CUSTOM_INDEXING', 'NO',
+                ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
             value = proc.stdout
