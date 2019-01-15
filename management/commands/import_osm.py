@@ -99,7 +99,8 @@ class Command(BaseCommand):
                     '--config', 'OSM_USE_CUSTOM_INDEXING', 'NO',
                 ],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+                stderr=subprocess.PIPE,
+                encoding='utf8',)
             value = proc.stdout
             log_error = proc.stderr
         except subprocess.CalledProcessError:
