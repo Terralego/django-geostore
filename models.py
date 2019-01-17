@@ -41,7 +41,7 @@ def zoom_update(func):
         response = func(*args, **kargs)
 
         try:
-            layer.layer_settings('tiles', 'minzoom')
+            minzoom = layer.layer_settings('tiles', 'minzoom')
         except KeyError:
             minzoom = guess_minzoom(layer)
             layer.set_layer_settings('tiles', 'minzoom', minzoom)
@@ -50,7 +50,7 @@ def zoom_update(func):
         try:
             layer.layer_settings('tiles', 'maxzoom')
         except KeyError:
-            maxzoom = max(guess_maxzoom(layer), layer.layer_settings('tiles', 'minzoom'))
+            maxzoom = max(guess_maxzoom(layer), minzoom)
             layer.set_layer_settings('tiles', 'maxzoom', maxzoom)
             layer.save(update_fields=["settings"])
 
