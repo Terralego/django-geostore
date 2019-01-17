@@ -56,7 +56,7 @@ router.register(r'layer_relation/(?P<layerrelation_pk>\d+)/feature_relation',
 
 urlpatterns += router.urls
 
-if settings.DEBUG:
+if settings.DEBUG or settings.SWAGGER_ENABLED:
     urlpatterns += [
         # schemas
         path('swagger/',
