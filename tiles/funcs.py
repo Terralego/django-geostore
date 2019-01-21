@@ -89,3 +89,13 @@ class ST_Length(Func):
 class ST_Area(Func):
     function = 'ST_Area'
     output_field = FloatField()
+
+
+class ST_MakeValid(Func):
+    function = 'ST_MakeValid'
+    output_field = RawGeometryField()
+
+
+class ST_CollectionExtract(Func):
+    function = 'ST_CollectionExtract'
+    output_field = RawGeometryField()
