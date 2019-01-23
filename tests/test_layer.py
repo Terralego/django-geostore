@@ -61,6 +61,21 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
             sorted([f.split('.')[1] for f in zip.namelist()])
             )
 
+    def test_properties_serializations(self):
+        layer = LayerFactory()
+        test_properties = {
+            'int': 42,
+            'str': 'test string',
+            'dict': {
+                'a': 'b',
+            }
+        }
+
+        serialized_properties = layer._get_serialized_properties(test_properties)
+        self.assertEqual(serialized_properties['str'], test_properties['str'])
+        self.assertIsInstance(serialized_properties['int'], str)
+        self.assertIsInstance(serialized_properties['dict'], str)
+
     def test_shapefile_same_import_export(self):
         FeatureFactory(layer=self.layer, properties={
             'key1': [{

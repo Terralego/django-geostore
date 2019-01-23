@@ -222,14 +222,21 @@ class Layer(models.Model):
                     schema=schema,
                     crs=from_epsg(self.layer_projection)) as shapefile:
                 for feature in self.features.all():
+
                     shapefile.write({
                         'geometry': json.loads(feature.geom.json),
-                        'properties': {
-                                prop: json.dumps(feature.properties.get(prop))
-                                for prop in self.layer_properties
-                            }
+                        'properties': self._get_serialized_properties(feature.properties)
                         })
             return make_zipfile_bytesio(shape_folder)
+
+    def _get_serialized_properties(self, feature_properties):
+        properties = {}
+        for prop, value in feature_properties.items():
+            if isinstance(value, str):
+                properties[prop] = value
+            else:
+                properties[prop] = json.dumps(value)
+        return properties
 
     def _fiona_shape_projection(self, shape):
         ''' Return projection in EPSG format or raw Proj format extracted from
