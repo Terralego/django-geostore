@@ -220,6 +220,7 @@ class Layer(models.Model):
                     mode='w',
                     driver='ESRI Shapefile',
                     schema=schema,
+                    encoding='UTF-8',
                     crs=from_epsg(self.layer_projection)) as shapefile:
                 for feature in self.features.all():
 
@@ -230,7 +231,7 @@ class Layer(models.Model):
             return make_zipfile_bytesio(shape_folder)
 
     def _get_serialized_properties(self, feature_properties):
-        properties = {}
+        properties = {k: None for k in self.layer_properties}
         for prop, value in feature_properties.items():
             if isinstance(value, str):
                 properties[prop] = value
