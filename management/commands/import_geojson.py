@@ -72,7 +72,8 @@ class Command(BaseCommand):
             try:
                 schema = json.loads(options.get('schema').read())
             except AttributeError:
-                raise CommandError("Please provide a valid schema file")
+                schema = {}
+
             try:
                 layer_settings = options.get('layer_settings')
                 settings = json.loads(layer_settings.read()) if layer_settings else {}
