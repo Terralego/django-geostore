@@ -255,24 +255,24 @@ def guess_maxzoom(layer):
 
 
 def guess_minzoom(layer):
-        """
-        Procedure that uses DB output to guess a min zoom level.
+    """
+    Procedure that uses DB output to guess a min zoom level.
 
-        Criteria: zoom satisfying the following condition:
-        tile_lenght / tile_fraction <= BBox(features).smallerSide
-        If extent = 0, returns 0
+    Criteria: zoom satisfying the following condition:
+    tile_lenght / tile_fraction <= BBox(features).smallerSide
+    If extent = 0, returns 0
 
-        Explanation about the tile_fraction = 8 just above:
-        ---------------------------------------------------
-        It's purpose is to give an idea of when a dataset becomes to small
-        to be shown in the map, so when doing.
-        """
+    Explanation about the tile_fraction = 8 just above:
+    ---------------------------------------------------
+    It's purpose is to give an idea of when a dataset becomes to small
+    to be shown in the map, so when doing.
+    """
 
-        extent = SIGTools.get_extent_of_layer(layer)
+    extent = SIGTools.get_extent_of_layer(layer)
 
-        if extent == 0:
-            return 0
+    if extent == 0:
+        return 0
 
-        tile_fraction = 8
-        min_zoom = floor(log((2*pi*EARTH_RADIUS)/(extent*tile_fraction), 2))
-        return min(min_zoom, 22)
+    tile_fraction = 8
+    min_zoom = floor(log((2*pi*EARTH_RADIUS)/(extent*tile_fraction), 2))
+    return min(min_zoom, 22)
