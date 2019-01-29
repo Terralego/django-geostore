@@ -137,120 +137,120 @@ class Routing(object):
         }
 
     def _get_raw_route(self, start_point, end_point):
-            """Return raw route between two points from pgrouting's
-            pgr_withPoints function that need to be transformed to
-            real geometry.
-            """
+        """Return raw route between two points from pgrouting's
+        pgr_withPoints function that need to be transformed to
+        real geometry.
+        """
 
-            q = """
-            WITH points AS (
-                -- This is a virtual table of points used for routing and
-                -- their position on the closest edge.
-                SELECT
-                    points.pid,
-                    points.edge_id,
-                    ST_Line_Substring(terra_feature.geom,
-                                      points.fraction_start,
-                                      points.fraction_end) AS geom
-                FROM
-                    (VALUES
-                        (1, %s, 0, %s::float),
-                        (1, %s, %s::float, 1),
-                        (2, %s, 0, %s::float),
-                        (2, %s, %s::float, 1)
-                    ) AS points(pid, edge_id, fraction_start, fraction_end)
-                    JOIN terra_feature ON
-                        terra_feature.id = points.edge_id
-            ),
-            pgr AS (
-                -- Here we do the routing from point 1 to point 2 using
-                -- pgr_withPoints that uses the dijkstra algorythm. next_node
-                -- and next_geom are used later to reconstruct the final
-                -- geometry of the shortest path.
-                SELECT
-                    pgr.path_seq,
-                    pgr.node,
-                    pgr.edge,
-                    terra_feature.geom AS edge_geom,
-                    terra_feature.properties,
-                    (LEAD(pgr.node) OVER (ORDER BY path_seq))
-                        AS next_node,
-                    (LAG(terra_feature.geom) OVER (ORDER BY path_seq))
-                        AS prev_geom,
-                    (LEAD(terra_feature.geom) OVER (ORDER BY path_seq))
-                        AS next_geom
-                FROM
-                    pgr_withPoints(
-                        'SELECT id, source, target,
-                            ST_Length(geom) AS cost,
-                            ST_Length(geom) AS reverse_cost
-                         FROM terra_feature
-                         WHERE layer_id = %s
-                               AND source IS NOT NULL
-                         ORDER BY id',
-                        'SELECT *
-                         FROM (VALUES (1, %s, %s::float), (2, %s, %s::float))
-                            AS points (pid, edge_id, fraction)',
-                        -1, -2, details := true
-                    ) AS pgr
-                LEFT OUTER JOIN terra_feature ON pgr.edge = terra_feature.id
-            ),
-            route AS (
-                /* Finaly we reconstruct the geometry by collecting each edge.
-                   At point 1 and 2, we get the splited edge.
-                */
-                SELECT
-                    CASE
-                    WHEN node = -1 THEN  -- Start Point
-                        (SELECT points.geom
-                         FROM points
-                         WHERE points.pid = -pgr.node
-                         -- Non topologic graph,
-                         -- get the closest to the next egde
-                         ORDER BY ST_Distance(points.geom, pgr.next_geom) ASC
-                         LIMIT 1)
-                    WHEN next_node = -2 THEN  -- Going to End Point
-                        (SELECT points.geom
-                         FROM points
-                         WHERE points.pid = -pgr.next_node
-                         -- Non topologic graph,
-                         -- get the closest to the previous egde
-                         ORDER BY ST_Distance(points.geom, pgr.prev_geom) ASC
-                         LIMIT 1)
-                    ELSE
-                        edge_geom  -- Let's return the full edge geometry
-                    END AS final_geometry,
-                    properties
-                FROM pgr
-            )
+        q = """
+        WITH points AS (
+            -- This is a virtual table of points used for routing and
+            -- their position on the closest edge.
             SELECT
-                final_geometry AS geometry,
+                points.pid,
+                points.edge_id,
+                ST_Line_Substring(terra_feature.geom,
+                                    points.fraction_start,
+                                    points.fraction_end) AS geom
+            FROM
+                (VALUES
+                    (1, %s, 0, %s::float),
+                    (1, %s, %s::float, 1),
+                    (2, %s, 0, %s::float),
+                    (2, %s, %s::float, 1)
+                ) AS points(pid, edge_id, fraction_start, fraction_end)
+                JOIN terra_feature ON
+                    terra_feature.id = points.edge_id
+        ),
+        pgr AS (
+            -- Here we do the routing from point 1 to point 2 using
+            -- pgr_withPoints that uses the dijkstra algorythm. next_node
+            -- and next_geom are used later to reconstruct the final
+            -- geometry of the shortest path.
+            SELECT
+                pgr.path_seq,
+                pgr.node,
+                pgr.edge,
+                terra_feature.geom AS edge_geom,
+                terra_feature.properties,
+                (LEAD(pgr.node) OVER (ORDER BY path_seq))
+                    AS next_node,
+                (LAG(terra_feature.geom) OVER (ORDER BY path_seq))
+                    AS prev_geom,
+                (LEAD(terra_feature.geom) OVER (ORDER BY path_seq))
+                    AS next_geom
+            FROM
+                pgr_withPoints(
+                    'SELECT id, source, target,
+                        ST_Length(geom) AS cost,
+                        ST_Length(geom) AS reverse_cost
+                        FROM terra_feature
+                        WHERE layer_id = %s
+                            AND source IS NOT NULL
+                        ORDER BY id',
+                    'SELECT *
+                        FROM (VALUES (1, %s, %s::float), (2, %s, %s::float))
+                        AS points (pid, edge_id, fraction)',
+                    -1, -2, details := true
+                ) AS pgr
+            LEFT OUTER JOIN terra_feature ON pgr.edge = terra_feature.id
+        ),
+        route AS (
+            /* Finaly we reconstruct the geometry by collecting each edge.
+                At point 1 and 2, we get the splited edge.
+            */
+            SELECT
+                CASE
+                WHEN node = -1 THEN  -- Start Point
+                    (SELECT points.geom
+                        FROM points
+                        WHERE points.pid = -pgr.node
+                        -- Non topologic graph,
+                        -- get the closest to the next egde
+                        ORDER BY ST_Distance(points.geom, pgr.next_geom) ASC
+                        LIMIT 1)
+                WHEN next_node = -2 THEN  -- Going to End Point
+                    (SELECT points.geom
+                        FROM points
+                        WHERE points.pid = -pgr.next_node
+                        -- Non topologic graph,
+                        -- get the closest to the previous egde
+                        ORDER BY ST_Distance(points.geom, pgr.prev_geom) ASC
+                        LIMIT 1)
+                ELSE
+                    edge_geom  -- Let's return the full edge geometry
+                END AS final_geometry,
                 properties
-            FROM route
-            WHERE final_geometry IS NOT NULL;
-            """
-            self._fix_point_fraction(start_point)
-            self._fix_point_fraction(end_point)
+            FROM pgr
+        )
+        SELECT
+            final_geometry AS geometry,
+            properties
+        FROM route
+        WHERE final_geometry IS NOT NULL;
+        """
+        self._fix_point_fraction(start_point)
+        self._fix_point_fraction(end_point)
 
-            with connection.cursor() as cursor:
-                cursor.execute(q, [
-                                   start_point.pk, float(start_point.fraction),
-                                   start_point.pk, float(start_point.fraction),
-                                   end_point.pk, float(end_point.fraction),
-                                   end_point.pk, float(end_point.fraction),
-                                   self.layer.pk,
-                                   start_point.pk, float(start_point.fraction),
-                                   end_point.pk, float(end_point.fraction),
-                                   ])
+        with connection.cursor() as cursor:
+            cursor.execute(q, [
+                                start_point.pk, float(start_point.fraction),
+                                start_point.pk, float(start_point.fraction),
+                                end_point.pk, float(end_point.fraction),
+                                end_point.pk, float(end_point.fraction),
+                                self.layer.pk,
+                                start_point.pk, float(start_point.fraction),
+                                end_point.pk, float(end_point.fraction),
+                                ])
 
-                return [
-                    {
-                        'geometry': geometry,
-                        'properties': properties
-                    } for geometry, properties in cursor.fetchall()
-                ]
+            return [
+                {
+                    'geometry': geometry,
+                    'properties': properties
+                } for geometry, properties in cursor.fetchall()
+            ]
 
-            return None
+        return None
 
     def _fix_point_fraction(self, point):
         """ This function is used to fix problem with pgrouting when point
