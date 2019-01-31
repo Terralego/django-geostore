@@ -314,7 +314,7 @@ class Layer(models.Model):
 
     @cached_property
     def layer_properties(self):
-        ''' Return properties of first feature of the layer
+        ''' Return dict of properties that are used by layer's feature
         '''
         feature_table = Feature._meta.db_table
 
