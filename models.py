@@ -325,7 +325,7 @@ class Layer(models.Model):
             SELECT
                 jsonb_object_keys(properties) AS key
             FROM
-                (SELECT properties FROM {feature_table} WHERE {layer_field} = %s LIMIT 1) AS t
+                (SELECT properties FROM {feature_table} WHERE {layer_field} = %s) AS t
             GROUP BY
                 key;
             """
