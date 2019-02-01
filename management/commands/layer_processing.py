@@ -1,6 +1,6 @@
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
+from django.db.models import Q
 from django.utils.module_loading import import_string
 
 from terracommon.terra import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
@@ -11,78 +11,112 @@ class Command(BaseCommand):
     help = 'Run a data processing on layers - UNSAFE command'
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        # Inputs Layers
+        # pk and name are mutually exclusive to avoid supporting the order of this two kind of parameters.
+        exclusive_group_layer_ins = parser.add_mutually_exclusive_group(required=True)
+        exclusive_group_layer_ins.add_argument(
             '-pk-ins', '--layer-pk-ins',
             default=[],
-            required=True,
             action='append',
             help=("PKs of the input layers."))
-        parser.add_argument(
+        exclusive_group_layer_ins.add_argument(
+            '-name-ins', '--layer-name-ins',
+            default=[],
+            action='append',
+            help=("Names of the input layers."))
+
+        # Output Layers
+        exclusive_group_layer_out = parser.add_mutually_exclusive_group()
+        exclusive_group_layer_out.add_argument(
             '-pk-out', '--layer-pk-out',
             type=int,
             action="store",
             help=("PK of the output layer."))
+        exclusive_group_layer_out.add_argument(
+            '-name-out', '--layer-name-out',
+            action="store",
+            help=("Name of the output layer."))
+
         parser.add_argument(
             '-co', '--clear_output',
             action="store_true",
             help=("Empty the output layer before adding data."))
-        exclusive_group = parser.add_mutually_exclusive_group()
-        exclusive_group.add_argument(
+
+        # Processing action
+        exclusive_group_processing = parser.add_mutually_exclusive_group(required=True)
+        exclusive_group_processing.add_argument(
             '-s', '--sql',
             action="store",
             help=("UNSAFE SQL Query. Eg. SELECT identifier, properties, ST_Centroid(geom::geometry) AS geom FROM in0"))
-        exclusive_group.add_argument(
+        exclusive_group_processing.add_argument(
             '-s-centroid', '--sql-centroid',
             action="store_true",
             help=("Compute centroid"))
-        exclusive_group.add_argument(
+        exclusive_group_processing.add_argument(
             '-p', '--python',
             help=("UNSAFE Compute with a python callable module, use multiple key=value as arguments"))
-        exclusive_group.add_argument(
+        exclusive_group_processing.add_argument(
             '-mv', '--make-valid',
             action="store_true",
             help=("Enforce valide geomtries"))
-        parser.add_argument(
-            '--dry-run',
-            action="store_true",
-            help='Execute une dry-run mode')
+
         parser.add_argument(
             'command_args',
             nargs='*',
             action="store",
             help='Processing command arguments')
 
-    def _get_layer_ins(self, layer_pk_ins):
-        try:
-            return [Layer.objects.get(pk=layer_pk_in) for layer_pk_in in layer_pk_ins]
-        except ObjectDoesNotExist:
-            raise CommandError(f"Fails open one or many layers layer-pk-ins: {', '.join(layer_pk_ins)}")
+        parser.add_argument(
+            '--dry-run',
+            action="store_true",
+            help='Execute une dry-run mode')
 
-    def _get_layer_out(self, layer_pk_out, clear_output, verbosity):
-        if layer_pk_out:
-            try:
-                layer_out = Layer.objects.get(pk=layer_pk_out)
-            except ObjectDoesNotExist:
-                raise CommandError(f'Fails open layers layer-pk-out: {layer_pk_out}')
+    def _get_layer_ins(self, pks, names):
+        try:
+            return Layer.objects.filter(Q(pk__in=pks) | Q(name__in=names))
+        except Layer.DoesNotExist:
+            raise CommandError(f"Fails open one or many layers layer-pk-ins: {', '.join(pks)}")
+
+    def _get_layer_by_pk(self, pk):
+        try:
+            return Layer.objects.get(pk=pk)
+        except Layer.DoesNotExist:
+            raise CommandError(f'Fails open layers layer-pk-out: {pk}')
+
+    def _get_layer_by_name(self, name):
+        try:
+            return Layer.objects.get(name=name)
+        except Layer.DoesNotExist:
+            raise CommandError(f'Fails open layers layer-name-out: {name}')
+
+    def _get_layer_out(self, pk, name, clear_output, verbosity):
+        if pk or name:
+            layer = self._get_layer_by_pk(pk) if pk else self._get_layer_by_name(name)
             if clear_output:
-                layer_out.features.all().delete()
+                layer.features.all().delete()
         else:
-            layer_out = Layer.objects.create()
+            layer = Layer.objects.create()
             if verbosity >= 1:
                 self.stdout.write(
-                    f"The created layer pk is {layer_out.pk}, "
-                    "it can be used to import more features "
-                    "in the same layer with different "
-                    "options")
+                    f"The created layer pk is {layer.pk} and this name \"{layer.name}\""
+                    "it can be used to import more features in the same layer with different options")
 
-        return layer_out
+        return layer
 
     @transaction.atomic()
     def handle(self, *args, **options):
         dryrun = options.get('dry_run')
         sp = transaction.savepoint()
-        layer_ins = self._get_layer_ins(options.get('layer_pk_ins'))
-        layer_out = self._get_layer_out(options.get('layer_pk_out'), options.get('clear_output'), options['verbosity'])
+        layer_ins = self._get_layer_ins(
+            options.get('layer_pk_ins'),
+            options.get('layer_name_ins')
+        )
+        layer_out = self._get_layer_out(
+            options.get('layer_pk_out'),
+            options.get('layer_name_out'),
+            options.get('clear_output'),
+            options['verbosity']
+        )
         command_args = dict([a.split('=', 1) for a in options.get('command_args') or []])
 
         sql = options.get('sql')
