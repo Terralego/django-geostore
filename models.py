@@ -24,6 +24,7 @@ from terracommon.core.helpers import make_zipfile_bytesio
 
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet
+from .routing.helpers import Routing
 from .tiles.funcs import ST_SRID, ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 
@@ -55,6 +56,15 @@ def zoom_update(func):
             layer.save(update_fields=["settings"])
 
         return response
+    return wrapper
+
+
+def topology_update(func):
+    def wrapper(layer, *args, **kwargs):
+        response = func(layer, *args, **kwargs)
+        Routing.create_topology(layer)
+        return response
+
     return wrapper
 
 
@@ -143,6 +153,7 @@ class Layer(models.Model):
                                ' empty geometry,'
                                f' row skipped : {row}')
 
+    @topology_update
     @zoom_update
     def from_csv_dictreader(self, reader, pk_properties, options, operations,
                             init=False, chunk_size=1000, fast=False):
@@ -170,6 +181,7 @@ class Layer(models.Model):
                 fast=fast
             )
 
+    @topology_update
     @zoom_update
     def from_geojson(self, geojson_data, id_field=None, update=False):
         """
@@ -250,6 +262,7 @@ class Layer(models.Model):
         else:
             return fiona.crs.to_string(projection)
 
+    @topology_update
     @zoom_update
     def from_shapefile(self, zipped_shapefile_file, id_field=None):
         ''' Load ShapeFile content provided into a zipped archive.
