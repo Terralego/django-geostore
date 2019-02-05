@@ -2,12 +2,37 @@ import json
 
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.test import APIClient
 
 from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Feature
 from terracommon.terra.tests.factories import LayerFactory
+
+
+class IntersectionTestCase(TestCase):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.client = APIClient()
+        self.user = TerraUserFactory()
+        self.client.force_authenticate(user=self.user)
+
+    def test_intersect_bad_geometry(self):
+        linestring = {
+            "type": "LineString",
+            "coordinates": [
+                [
+                    [1.25, 5.5, [2.65, 5.5]]
+                ]
+            ]
+        }
+        response = self.client.post(
+            reverse('terra:layer-intersects', kwargs={'pk': self.layer.pk}),
+            {'geom': json.dumps(linestring)},
+            format='json',
+        )
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
 class PolygonIntersectTestCase(TestCase):
