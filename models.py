@@ -1,3 +1,4 @@
+import glob
 import json
 import logging
 import os
@@ -22,6 +23,7 @@ from mercantile import tiles
 
 from terracommon.core.helpers import make_zipfile_bytesio
 
+from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet
 from .routing.helpers import Routing
@@ -218,28 +220,47 @@ class Layer(models.Model):
 
     def to_shapefile(self):
 
-        schema = {
-            'geometry': self.layer_geometry,
-            'properties': self.layer_properties,
-        }
-
         if not self.features.count():
             return
 
         with TemporaryDirectory() as shape_folder:
-            with fiona.open(
-                    os.path.join(shape_folder, 'shape.shp'),
+            shapes = {}
+
+            # Create one shapefile by kind of geometry
+            for geom_type in GIS_POINT + GIS_LINESTRING + GIS_POLYGON:
+                schema = {
+                    'geometry': geom_type,
+                    'properties': self.layer_properties,
+                }
+
+                shapes[geom_type] = fiona.open(
+                    shape_folder,
+                    layer=geom_type,
                     mode='w',
                     driver='ESRI Shapefile',
                     schema=schema,
                     encoding='UTF-8',
-                    crs=from_epsg(self.layer_projection)) as shapefile:
-                for feature in self.features.all():
+                    crs=from_epsg(self.layer_projection)
+                )
 
-                    shapefile.write({
-                        'geometry': json.loads(feature.geom.json),
-                        'properties': self._get_serialized_properties(feature.properties)
-                        })
+            # Export features to each kind of geometry
+            for feature in self.features.all():
+                shapes[feature.geom.geom_type].write({
+                    'geometry': json.loads(feature.geom.json),
+                    'properties': self._get_serialized_properties(feature.properties)
+                    })
+
+            # Close fiona files
+            for geom_type, shape in shapes.items():
+                shape_size = len(shape)
+                shape.close()
+
+                # Delete empty shapes
+                if not shape_size:
+                    for filename in glob.iglob(os.path.join(shape_folder, f'{geom_type}.*')):
+                        os.remove(filename)
+
+            # Zip to BytesIO and return shape files
             return make_zipfile_bytesio(shape_folder)
 
     def _get_serialized_properties(self, feature_properties):
