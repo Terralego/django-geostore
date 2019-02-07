@@ -8,8 +8,9 @@ from django.db import connection
 from django.db.models import F
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import (ST_Area, ST_Buffer, ST_Length, ST_MakeEnvelope,
-                    ST_SetEffectiveArea, ST_SnapToGrid, ST_Transform)
+from .funcs import (ST_Area, ST_CollectionExtract, ST_Length, ST_MakeEnvelope,
+                    ST_MakeValid, ST_SetEffectiveArea, ST_SnapToGrid,
+                    ST_Transform)
 from .sigtools import SIGTools
 
 
@@ -56,7 +57,7 @@ class VectorTile(object):
     def _sanitize(self, layer_query):
         if self.layer.layer_geometry in self.POLYGON:
             layer_query = layer_query.annotate(
-                outgeom3857=ST_Buffer('outgeom3857', 0)
+                outgeom3857=ST_CollectionExtract(ST_MakeValid('outgeom3857'), 3)
             )
         return layer_query
 
