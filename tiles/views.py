@@ -4,6 +4,8 @@ from urllib.parse import unquote, urljoin
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 
@@ -83,6 +85,7 @@ class TilejsonView(APIView):
             404: 'The layer group does not exist'
             }
     )
+    @method_decorator(cache_page(60 * 60 * 24))
     def get(self, request, group):
         self.layers = Layer.objects.filter(group=group)
 
