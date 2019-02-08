@@ -4,13 +4,64 @@ from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK
+from rest_framework.test import APIClient
 
 from terracommon.accounts.tests.factories import TerraUserFactory
+from terracommon.terra.models import Feature
+from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
 
-from .factories import FeatureFactory, LayerFactory
+
+class FeatureListPostTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = TerraUserFactory()
+
+        self.client.force_authenticate(user=self.user)
+
+        self.layer = LayerFactory(
+            name="tree",
+            schema={
+                "name": {
+                    "type": "string"
+                },
+                "age": {
+                    "type": "integer"
+                }
+            })
+
+    def test_feature_with_valid_properties_is_posted(self):
+        """Feature with valid properties is successfully POSTed"""
+        response = self.client.post(
+                        reverse('terra:feature-list', args=[self.layer.id, ]),
+                        {
+                                "geom": "POINT(0 0)",
+                                "layer": self.layer.id,
+                                "name": "valid tree",
+                                "age": 10,
+                                "properties": {},
+                        },
+                        format='json',)
+        features = Feature.objects.all()
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(features), 1)
+        self.assertEqual(features[0].properties['name'], 'valid tree')
+
+    def test_feature_with_missing_property_type_is_not_posted(self):
+        """Feature with missing property type is not successfully POSTed"""
+        response = self.client.post(
+                        reverse('terra:feature-list', args=[self.layer.id, ]),
+                        {
+                            "geom": "POINT(0 0)",
+                            "layer": self.layer.id,
+                            "name": "invalid tree"
+                        },
+                        format='json')
+
+        self.assertEqual(response.status_code, 400)
 
 
-class FeaturesTestCase(TestCase):
+class FeaturesListGetTestCase(TestCase):
     fake_geometry = {
         "type": "Point",
         "coordinates": [
@@ -77,75 +128,6 @@ class FeaturesTestCase(TestCase):
 
         self.user = TerraUserFactory()
         self.client.force_login(self.user)
-
-    def test_features_intersections(self):
-        layer = LayerFactory(group=self.group_name)
-        FeatureFactory(
-            layer=layer,
-            geom=GEOSGeometry(json.dumps(self.intersect_ref_geometry)))
-
-        """The layer below must intersect"""
-        response = self.client.post(
-            reverse('terra:layer-intersects', args=[layer.pk, ]),
-            {
-                'geom': json.dumps(self.intersect_geometry)
-            }
-        )
-
-        self.assertEqual(200, response.status_code)
-        response = response.json().get('results', {})
-        self.assertEqual(
-            1,
-            len(response.get('features'))
-        )
-        self.assertDictEqual(
-            self.intersect_ref_geometry,
-            response.get('features')[0].get('geometry')
-        )
-
-        """The layer below must NOT intersect"""
-        response = self.client.post(
-            reverse('terra:layer-intersects', args=[layer.name, ]),
-            {
-                'geom': json.dumps(self.fake_geometry)
-            }
-        )
-
-        self.assertEqual(200, response.status_code)
-
-        response = response.json().get('results', {})
-        self.assertEqual(0, len(response.get('features')))
-
-        """Tests that the intersects view throw an error if geometry is
-           invalid
-        """
-        response = self.client.post(
-            reverse('terra:layer-intersects', args=[layer.pk, ]),
-            {
-                'geom': '''Invalid geometry'''
-            }
-        )
-        self.assertEqual(400, response.status_code)
-
-    def test_features_linestring_format(self):
-        response = self.client.post(
-            reverse('terra:layer-intersects', args=[self.layer.pk, ]),
-            {
-                'geom': json.dumps(self.fake_linestring)
-            }
-        )
-
-        self.assertEqual(400, response.status_code)
-
-    def test_features_polygon_format(self):
-        response = self.client.post(
-            reverse('terra:layer-intersects', args=[self.layer.pk, ]),
-            {
-                'geom': json.dumps(self.fake_polygon)
-            }
-        )
-
-        self.assertEqual(400, response.status_code)
 
     def test_features_filter_by_properties(self):
         layer = LayerFactory(group=self.group_name)

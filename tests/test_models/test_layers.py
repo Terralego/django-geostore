@@ -1,14 +1,20 @@
 import csv
+import json
+import os
 import tempfile
 
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
 from django.test import TestCase
+from rest_framework.test import APIClient
 
+from terracommon.accounts.mixins import UserTokenGeneratorMixin
+from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Layer
+from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
 from terracommon.terra.transformations import set_geometry_from_options
 
 
-class ImportCSVFeaturesTestCase(TestCase):
+class LayerFromCSVDictReaderTestCase(TestCase):
     def setUp(self):
         self.layer = Layer.objects.create(name='fake layer')
 
@@ -174,3 +180,109 @@ class ImportCSVFeaturesTestCase(TestCase):
         feature = self.layer.features.get(properties__SIREN='437582422',
                                           properties__NIC='00097')
         self.assertEqual((1.408246, 43.575224), feature.geom.coords)
+
+
+class LayerFromGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.user = TerraUserFactory()
+        self.client.force_login(self.user)
+
+    def test_import_geojson_with_projection(self):
+        with_projection = """{"type": "FeatureCollection", "crs":
+                             { "type": "name", "properties": { "name":
+                             "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                             "features": []}"""
+        self.layer.from_geojson(with_projection, "01-01", "01-01")
+
+    def test_import_geojson_withtout_projection(self):
+        without_projection = """{"type": "FeatureCollection",
+                                "features": []}"""
+        self.layer.from_geojson(without_projection, "01-01", "01-01")
+
+        with_bad_projection = """{"type": "FeatureCollection", "crs":
+                                 { "type": "name", "properties": { "name":
+                                 "BADPROJECTION" } }, "features": []}"""
+        with self.assertRaises(GEOSException):
+            self.layer.from_geojson(with_bad_projection, "01-01", "01-01")
+
+
+class LayerFromShapefileTestCase(TestCase, UserTokenGeneratorMixin):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.user = TerraUserFactory()
+        self.client.force_login(self.user)
+
+    def test_shapefile_import(self):
+        layer = LayerFactory()
+        shapefile_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                      'files',
+                                      'shapefile-WGS84.zip')
+
+        with open(shapefile_path, 'rb') as shapefile:
+            layer.from_shapefile(shapefile)
+
+        self.assertEqual(8, layer.features.all().count())
+
+
+class LayerExportGeometryTestCase(TestCase):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.fake_geometry = {
+            "type": "Point",
+            "coordinates": [
+                2.,
+                45.
+            ]
+        }
+
+    def test_to_geojson(self):
+        # Create at least one feature in the layer, so it's not empty
+        FeatureFactory(layer=self.layer)
+        FeatureFactory(
+            layer=self.layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'number': 1, 'digit': 34},
+        )
+        self.assertEqual(str(self.layer.to_geojson()['features'][0]['geometry']),
+                         "{'type': 'Point', 'coordinates': [2.4609375, 45.583289756006316]}")
+        self.assertEqual(str(self.layer.to_geojson()['features'][1]['geometry']),
+                         "{'type': 'Point', 'coordinates': [2.0, 45.0]}")
+        self.assertEqual(str(self.layer.to_geojson()['features'][1]['properties']),
+                         "{'digit': 34, 'number': 1}")
+
+
+class LayerSettingsTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.layer = LayerFactory()
+        self.user = TerraUserFactory()
+        self.client.force_authenticate(self.user)
+
+    def test_layer_settings(self):
+        with self.assertRaises(KeyError):
+            self.layer.layer_settings('foo', 'bar', '666')
+
+        with self.assertRaises(KeyError):
+            self.layer.layer_settings('tiles', 'minzoom')
+
+        self.assertEqual(
+            self.layer.layer_settings_with_default('tiles', 'minzoom'),
+            0
+        )
+
+    def test_set_layer_settings(self):
+        with self.assertRaises(KeyError):
+            self.layer.layer_settings('foo', 'bar')
+
+        self.layer.set_layer_settings('foo', 'bar', 123)
+
+        self.assertEqual(
+            self.layer.layer_settings('foo', 'bar'),
+            123
+        )
+
+        self.assertEqual(
+            self.layer.layer_settings_with_default('foo', 'bar'),
+            123
+        )

@@ -8,7 +8,7 @@ from terracommon.terra.models import Layer
 
 class ImportgeojsonTest(TestCase):
     def test_default_group(self):
-        empty_geojson = os.path.join(os.path.dirname(__file__),
+        empty_geojson = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                      'files',
                                      'empty.json')
 
@@ -17,7 +17,6 @@ class ImportgeojsonTest(TestCase):
             f'-g{empty_geojson}',
             f'-s{empty_geojson}',
             verbosity=0)
-
         # Retrieve the layer
         layer = Layer.objects.all()[0]
         self.assertEqual('__nogroup__', layer.group)

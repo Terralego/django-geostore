@@ -11,7 +11,7 @@ from terracommon.terra.models import Feature
 class ImportGeojsonTest(TestCase):
 
     def get_good_data(self):
-        overpass_path = os.path.join(os.path.dirname(__file__),
+        overpass_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                      'files',
                                      'overpass.osm')
         with open(overpass_path, 'rb') as overpass_file:

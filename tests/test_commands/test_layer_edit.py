@@ -6,20 +6,18 @@ from django.test import TestCase
 from terracommon.terra.models import Layer
 
 
-class ImportshapefileTest(TestCase):
-    def test_default_group(self):
-        # Sample ShapeFile
+class LayerEditTest(TestCase):
+    def setUp(self):
         shapefile_path = os.path.join(
-                    os.path.dirname(__file__),
-                    'files',
-                    'shapefile-WGS84.zip')
+            os.path.dirname(os.path.dirname(__file__)),
+            'files',
+            'shapefile-WGS84.zip')
         sample_shapefile = open(shapefile_path, 'rb')
 
-        # Fake json
-        empty_json = os.path.join(os.path.dirname(__file__), 'files', 'empty.json')
-        foo_bar_json = os.path.join(os.path.dirname(__file__), 'files', 'foo_bar.json')
+        empty_json = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                  'files',
+                                  'empty.json')
 
-        # Import a shapefile
         call_command(
             'import_shapefile',
             '-iID_PG',
@@ -27,12 +25,17 @@ class ImportshapefileTest(TestCase):
             '-s', empty_json,
             verbosity=0)
 
+    def test_layer_edit(self):
         # Ensure old settings
         layer = Layer.objects.all()[0]
         self.assertNotEqual('new_name', layer.name)
         self.assertNotEqual('new_group', layer.group)
         self.assertNotEqual({'foo': 'bar'}, layer.schema)
         self.assertNotEqual({'foo': 'bar'}, layer.settings)
+
+        foo_bar_json = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                    'files',
+                                    'foo_bar.json')
 
         # Change settings
         call_command(

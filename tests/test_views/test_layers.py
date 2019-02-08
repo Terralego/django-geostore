@@ -5,7 +5,7 @@ from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.gis.geos import GEOSException, GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
@@ -17,33 +17,247 @@ from rest_framework.test import APIClient
 
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.accounts.tests.factories import TerraUserFactory
-from terracommon.terra.models import zoom_update
+from terracommon.terra.models import Feature
+from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
 
-from .factories import FeatureFactory, LayerFactory
+
+class LayerLineIntersectionTestCase(TestCase):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.client = APIClient()
+        self.user = TerraUserFactory()
+        self.client.force_authenticate(user=self.user)
+
+    def test_intersect_bad_geometry(self):
+        linestring = {
+            "type": "LineString",
+            "coordinates": [
+                [
+                    [1.25, 5.5, [2.65, 5.5]]
+                ]
+            ]
+        }
+        response = self.client.post(
+            reverse('terra:layer-intersects', kwargs={'pk': self.layer.pk}),
+            {'geom': json.dumps(linestring)},
+            format='json',
+        )
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerTestCase(TestCase, UserTokenGeneratorMixin):
+class LayerPolygonIntersectTestCase(TestCase):
+    def setUp(self):
+        # from http://wiki.geojson.org/GeoJSON_draft_version_6#Polygon
+        self.polygon = {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [100.0, 0.0],
+                    [101.0, 0.0],
+                    [101.0, 1.0],
+                    [100.0, 1.0],
+                    [100.0, 0.0]
+                ]
+            ]
+        }
+        self.client = APIClient()
+        self.user = TerraUserFactory()
+        self.client.force_authenticate(user=self.user)
+
+    def test_polygon_intersection(self):
+        layer = LayerFactory()
+        Feature.objects.create(
+            geom=json.dumps({
+                "type": "LineString",
+                "coordinates": [
+                    [103.0, 0.0], [101.0, 1.0]
+                ]
+            }),
+            layer=layer,
+            properties={},
+        )
+        Feature.objects.create(
+            geom=json.dumps({
+                "type": "Point",
+                "coordinates": [100.0, 0.0]
+            }),
+            layer=layer,
+            properties={},
+        )
+
+        # This feature is not intersecting with the polygon
+        # It is not expected to be in the response returned
+        Feature.objects.create(
+            geom=json.dumps({
+                "type": "LineString",
+                "coordinates": [
+                    [30, 10], [10, 30], [40, 40]
+                ]
+            }),
+            layer=layer,
+            properties={},
+        )
+
+        response = self.client.post(
+            reverse('terra:layer-intersects', kwargs={'pk': layer.pk}),
+            {'geom': json.dumps(self.polygon)},
+            format='json',
+        )
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        json_response = response.json()
+        self.assertEqual(
+            2,
+            len(json_response['results']['features'])
+        )
+
+
+class LayerFeatureIntersectionTest(TestCase):
+    def setUp(self):
+        self.fake_geometry = {
+            "type": "Point",
+            "coordinates": [
+                2.,
+                45.
+            ]
+        }
+        self.intersect_geometry = {
+            "type": "LineString",
+            "coordinates": [
+                [
+                    1.3839340209960938,
+                    43.602521593464054
+                ],
+                [
+                    1.4869308471679688,
+                    43.60376465190968
+                ]
+            ]
+        }
+        self.intersect_ref_geometry = {
+            "type": "LineString",
+            "coordinates": [
+                [
+                    1.440925598144531,
+                    43.64750394449096
+                ],
+                [
+                    1.440582275390625,
+                    43.574421623084234
+                ]
+            ]
+        }
+        self.fake_linestring = {
+            "type": "LineString",
+            "coordinates": [
+                [
+                    1.3839340209960938,
+                    43.602521593464054
+                ],
+            ]
+        }
+        self.fake_polygon = {
+            "type": "Polygon",
+            "coordinates": [
+                [
+                    [
+                        1.3839340209960938,
+                        43.602521593464054
+                    ],
+                    [
+                        1.440582275390625,
+                        43.574421623084234
+                    ]
+                ]
+            ]
+        }
+
+        self.group_name = 'mygroup'
+        self.layer = LayerFactory.create(group=self.group_name,
+                                         add_features=5)
+
+        self.user = TerraUserFactory()
+        self.client.force_login(self.user)
+
+    def test_features_intersections(self):
+        layer = LayerFactory(group=self.group_name)
+        FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.intersect_ref_geometry)))
+
+        """The layer below must intersect"""
+        response = self.client.post(
+            reverse('terra:layer-intersects', args=[layer.pk, ]),
+            {
+                'geom': json.dumps(self.intersect_geometry)
+            }
+        )
+
+        self.assertEqual(200, response.status_code)
+        response = response.json().get('results', {})
+        self.assertEqual(
+            1,
+            len(response.get('features'))
+        )
+        self.assertDictEqual(
+            self.intersect_ref_geometry,
+            response.get('features')[0].get('geometry')
+        )
+
+        """The layer below must NOT intersect"""
+        response = self.client.post(
+            reverse('terra:layer-intersects', args=[layer.name, ]),
+            {
+                'geom': json.dumps(self.fake_geometry)
+            }
+        )
+
+        self.assertEqual(200, response.status_code)
+
+        response = response.json().get('results', {})
+        self.assertEqual(0, len(response.get('features')))
+
+        """Tests that the intersects view throw an error if geometry is
+           invalid
+        """
+        response = self.client.post(
+            reverse('terra:layer-intersects', args=[layer.pk, ]),
+            {
+                'geom': '''Invalid geometry'''
+            }
+        )
+        self.assertEqual(400, response.status_code)
+
+    def test_features_linestring_format(self):
+        response = self.client.post(
+            reverse('terra:layer-intersects', args=[self.layer.pk, ]),
+            {
+                'geom': json.dumps(self.fake_linestring)
+            }
+        )
+
+        self.assertEqual(400, response.status_code)
+
+    def test_features_polygon_format(self):
+        response = self.client.post(
+            reverse('terra:layer-intersects', args=[self.layer.pk, ]),
+            {
+                'geom': json.dumps(self.fake_polygon)
+            }
+        )
+
+        self.assertEqual(400, response.status_code)
+
+
+class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = TerraUserFactory()
         self.client.force_login(self.user)
 
-    def test_import_geojson(self):
-        with_projection = """{"type": "FeatureCollection", "crs":
-                             { "type": "name", "properties": { "name":
-                             "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-                             "features": []}"""
-        self.layer.from_geojson(with_projection, "01-01", "01-01")
-
-        without_projection = """{"type": "FeatureCollection",
-                                "features": []}"""
-        self.layer.from_geojson(without_projection, "01-01", "01-01")
-
-        with_bad_projection = """{"type": "FeatureCollection", "crs":
-                                 { "type": "name", "properties": { "name":
-                                 "BADPROJECTION" } }, "features": []}"""
-        with self.assertRaises(GEOSException):
-            self.layer.from_geojson(with_bad_projection, "01-01", "01-01")
+    def get_uidb64_token_for_user(self):
+        return (urlsafe_base64_encode(force_bytes(self.user.pk)).decode(),
+                default_token_generator.make_token(self.user))
 
     def test_shapefile_export(self):
         # Create at least one feature in the layer, so it's not empty
@@ -128,21 +342,10 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
-    def test_shapefile_import(self):
-        layer = LayerFactory()
-        shapefile_path = os.path.join(os.path.dirname(__file__),
-                                      'files',
-                                      'shapefile-WGS84.zip')
-
-        with open(shapefile_path, 'rb') as shapefile:
-            layer.from_shapefile(shapefile)
-
-        self.assertEqual(8, layer.features.all().count())
-
     def test_shapefile_import_view(self):
         layer = LayerFactory()
 
-        shapefile_path = os.path.join(os.path.dirname(__file__),
+        shapefile_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                       'files',
                                       'shapefile-WGS84.zip')
 
@@ -168,6 +371,17 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
             )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
+
+class LayerGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.user = TerraUserFactory()
+        self.client.force_login(self.user)
+
+    def get_uidb64_token_for_user(self):
+        return (urlsafe_base64_encode(force_bytes(self.user.pk)).decode(),
+                default_token_generator.make_token(self.user))
+
     def test_to_geojson(self):
         # Create at least one feature in the layer, so it's not empty
         FeatureFactory(layer=self.layer)
@@ -184,12 +398,8 @@ class LayerTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual(self.layer.features.all().count(),
                          len(response.get('features')))
 
-    def get_uidb64_token_for_user(self):
-        return (urlsafe_base64_encode(force_bytes(self.user.pk)).decode(),
-                default_token_generator.make_token(self.user))
 
-
-class TestLayerFeaturesUpdate(TestCase):
+class LayerDetailTest(TestCase):
     geometry = {
         "type": "LineString",
         "coordinates": [
@@ -254,43 +464,3 @@ class TestLayerFeaturesUpdate(TestCase):
 
         feature.refresh_from_db()
         self.assertDictEqual(feature.properties, updated_properties)
-
-    def test_layer_settings(self):
-        with self.assertRaises(KeyError):
-            self.layer.layer_settings('foo', 'bar', '666')
-
-        with self.assertRaises(KeyError):
-            self.layer.layer_settings('tiles', 'minzoom')
-
-        self.assertEqual(
-            self.layer.layer_settings_with_default('tiles', 'minzoom'),
-            0
-        )
-
-    def test_set_layer_settings(self):
-        with self.assertRaises(KeyError):
-            self.layer.layer_settings('foo', 'bar')
-
-        self.layer.set_layer_settings('foo', 'bar', 123)
-
-        self.assertEqual(
-            self.layer.layer_settings('foo', 'bar'),
-            123
-        )
-
-        self.assertEqual(
-            self.layer.layer_settings_with_default('foo', 'bar'),
-            123
-        )
-
-    def test_zoom_update(self):
-        with self.assertRaises(KeyError):
-            self.layer.layer_settings('tiles', 'maxzoom')
-
-        # Call the decorator manualy on nop lambda
-        self.layer.beta_lambda = lambda *args, **kargs: False
-        zoom_update(self.layer.beta_lambda)(self.layer)
-
-        self.assertEqual(
-            self.layer.layer_settings('tiles', 'maxzoom') is not None,
-            True)

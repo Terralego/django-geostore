@@ -8,10 +8,9 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from terracommon.terra.models import Layer
+from terracommon.terra.tests.factories import LayerFactory
 from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
                                              guess_minzoom)
-
-from .factories import LayerFactory
 
 
 @override_settings(DEBUG=True, CACHES={
@@ -182,10 +181,10 @@ class VectorTilesTestCase(TestCase):
             True)
 
         # test guess_maxzoom returns sensible value from OSM Fontainebleau paths&tracks
-        chunk_fontainebleau_geojson = os.path.join(os.path.dirname(__file__),
+        chunk_fontainebleau_geojson = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                                    'files',
                                                    'chunk_fontainebleau.geojson')
-        schema_json = os.path.join(os.path.dirname(__file__),
+        schema_json = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                    'files',
                                    'empty.json')
 
