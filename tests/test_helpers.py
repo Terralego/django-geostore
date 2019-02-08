@@ -248,12 +248,12 @@ class SubsetTests(TestCase):
 
     def test_basic(self):
         self.assertEqual(self.MY_CHOICES.ODD, ((1, u'One for the money'),
-                                          (3, u'Three to get ready')))
+                                               (3, u'Three to get ready')))
 
     def test__contains__(self):
         self.failUnless(self.MY_CHOICES.ONE in self.MY_CHOICES.ODD)
 
     def test__eq__(self):
         self.assertEqual(self.MY_CHOICES.ODD, ((1, u'One for the money'),
-                                          (3, u'Three to get ready')))
+                                               (3, u'Three to get ready')))
         self.assertEqual(self.MY_CHOICES.ODD, self.MY_CHOICES.ODD_BIS)
