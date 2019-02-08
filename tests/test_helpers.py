@@ -141,30 +141,30 @@ class GeometryDefinerTest(TestCase):
         self.assertEqual(geometry, Point(-1.560408, 47.218658))
 
 
-MY_CHOICES = Choices(
-   ('ONE', 1, u'One for the money'),
-   ('TWO', 2, u'Two for the show'),
-   ('THREE', 3, u'Three to get ready'),
-)
-MY_CHOICES.add_subset("ODD", ("ONE", "THREE"))
-
-
 class ChoicesTests(TestCase):
+    def setUp(self):
+        self.MY_CHOICES = Choices(
+            ('ONE', 1, u'One for the money'),
+            ('TWO', 2, u'Two for the show'),
+            ('THREE', 3, u'Three to get ready'),
+        )
+        self.MY_CHOICES.add_subset("ODD", ("ONE", "THREE"))
+
     """
     Testing the choices
     """
     def test_simple_choice(self):
-        self.assertEqual(MY_CHOICES.CHOICES,
+        self.assertEqual(self.MY_CHOICES.CHOICES,
                          ((1, u"One for the money"),
                           (2, u"Two for the show"),
                           (3, u"Three to get ready"),))
-        self.assertEqual(MY_CHOICES.CHOICES_DICT,
+        self.assertEqual(self.MY_CHOICES.CHOICES_DICT,
                          {
                              1: u'One for the money',
                              2: u'Two for the show',
                              3: u'Three to get ready'
                          })
-        self.assertEqual(MY_CHOICES.REVERTED_CHOICES_DICT,
+        self.assertEqual(self.MY_CHOICES.REVERTED_CHOICES_DICT,
                          {
                             u'One for the money': 1,
                             u'Three to get ready': 3,
@@ -172,10 +172,10 @@ class ChoicesTests(TestCase):
                          })
 
     def test__contains__(self):
-        self.failUnless(MY_CHOICES.ONE in MY_CHOICES)
+        self.failUnless(self.MY_CHOICES.ONE in self.MY_CHOICES)
 
     def test__iter__(self):
-        self.assertEqual([k for k, v in MY_CHOICES], [1, 2, 3])
+        self.assertEqual([k for k, v in self.MY_CHOICES], [1, 2, 3])
 
     def test_unique_values(self):
         self.assertRaises(ValueError, Choices,
@@ -186,13 +186,13 @@ class ChoicesTests(TestCase):
                           ('TWO', 2, u'Deux'), ('TWO', 4, u'Quatre'))
 
     def test_const_choice(self):
-        self.assertEqual(MY_CHOICES.CONST_CHOICES,
+        self.assertEqual(self.MY_CHOICES.CONST_CHOICES,
                          (("ONE", u"One for the money"),
                           ("TWO", u"Two for the show"),
                           ("THREE", u"Three to get ready"),))
 
     def test_value_to_const(self):
-        self.assertEqual(MY_CHOICES.VALUE_TO_CONST,
+        self.assertEqual(self.MY_CHOICES.VALUE_TO_CONST,
                          {1: "ONE", 2: "TWO", 3: "THREE"})
 
     def test_add_should_add_in_correct_order(self):
@@ -236,20 +236,24 @@ class ChoicesTests(TestCase):
         self.assertEqual(MY_CHOICES.EVEN, ((2, u'Deux'), (4, u'Quatre')))
 
 
-# Needed for Subset tests
-MY_CHOICES.add_subset("ODD_BIS", ("ONE", "THREE"))
-
-
 class SubsetTests(TestCase):
+    def setUp(self):
+        self.MY_CHOICES = Choices(
+            ('ONE', 1, u'One for the money'),
+            ('TWO', 2, u'Two for the show'),
+            ('THREE', 3, u'Three to get ready'),
+        )
+        self.MY_CHOICES.add_subset("ODD", ("ONE", "THREE"))
+        self.MY_CHOICES.add_subset("ODD_BIS", ("ONE", "THREE"))
 
     def test_basic(self):
-        self.assertEqual(MY_CHOICES.ODD, ((1, u'One for the money'),
+        self.assertEqual(self.MY_CHOICES.ODD, ((1, u'One for the money'),
                                           (3, u'Three to get ready')))
 
     def test__contains__(self):
-        self.failUnless(MY_CHOICES.ONE in MY_CHOICES.ODD)
+        self.failUnless(self.MY_CHOICES.ONE in self.MY_CHOICES.ODD)
 
     def test__eq__(self):
-        self.assertEqual(MY_CHOICES.ODD, ((1, u'One for the money'),
+        self.assertEqual(self.MY_CHOICES.ODD, ((1, u'One for the money'),
                                           (3, u'Three to get ready')))
-        self.assertEqual(MY_CHOICES.ODD, MY_CHOICES.ODD_BIS)
+        self.assertEqual(self.MY_CHOICES.ODD, self.MY_CHOICES.ODD_BIS)
