@@ -125,13 +125,13 @@ class Command(BaseCommand):
         if python_object_name:
             self._call(python_object_name, layer_ins, layer_out, **command_args)
         elif options.get('sql_centroid'):
-            self._simple_sql('ST_Centroid', layer_ins, layer_out)
+            self._simple_sql('ST_Centroid', layer_ins, layer_out, options['verbosity'])
         elif options.get('sql_make_valid'):
-            self._simple_sql('ST_MakeValid', layer_ins, layer_out)
+            self._simple_sql('ST_MakeValid', layer_ins, layer_out, options['verbosity'])
         elif sql:
-            self._sql(sql, layer_ins, layer_out)
+            self._sql(sql, layer_ins, layer_out, options['verbosity'])
         elif options.get('make_valid'):
-            self._processing_make_valid(layer_ins, layer_out)
+            self._processing_make_valid(layer_ins, layer_out, options['verbosity'])
         else:
             raise CommandError("Missing processing SQL or pyhton")
 
@@ -144,12 +144,12 @@ class Command(BaseCommand):
         callable_object = import_string(python_callable_name)
         callable_object(layer_ins, layer_out, **command_args)
 
-    def _simple_sql(self, sql_function, layer_ins, layer_out):
+    def _simple_sql(self, sql_function, layer_ins, layer_out, verbosity):
         return self._sql(
             f'SELECT identifier, properties, {sql_function}(geom::geometry) AS geom FROM in0',
-            layer_ins, layer_out)
+            layer_ins, layer_out, verbosity)
 
-    def _sql(self, sql, layer_ins, layer_out):
+    def _sql(self, sql, layer_ins, layer_out, verbosity):
         args = []
         raws = []
         for (i, l) in enumerate(layer_ins):
@@ -167,11 +167,12 @@ class Command(BaseCommand):
                     {sql}
                 ) AS t
             '''
-            self.stdout.write(sql_query)
+            if verbosity >= 1:
+                self.stdout.write(sql_query)
 
             cursor.execute(sql_query, args)
 
-    def _processing_make_valid(self, layer_ins, layer_out):
+    def _processing_make_valid(self, layer_ins, layer_out, verbosity):
         if len(layer_ins) != 1:
             raise ValueError('Exactly one input layer required')
         layer_in = layer_ins[0]
@@ -204,7 +205,7 @@ class Command(BaseCommand):
                     FROM
                         in0
                     """,
-                    layer_ins, layer_out)
+                    layer_ins, layer_out, verbosity)
             else:
                 # MultiPolygon
                 self._sql(
@@ -220,4 +221,4 @@ class Command(BaseCommand):
                     FROM
                         in0
                     """,
-                    layer_ins, layer_out)
+                    layer_ins, layer_out, verbosity)
