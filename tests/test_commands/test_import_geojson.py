@@ -6,7 +6,7 @@ from django.test import TestCase
 from terracommon.terra.models import Layer
 
 
-class ImportgeojsonTest(TestCase):
+class ImportGeojsonTest(TestCase):
     def test_default_group(self):
         empty_geojson = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                                      'files',

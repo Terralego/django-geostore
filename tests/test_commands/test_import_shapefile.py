@@ -6,7 +6,7 @@ from django.test import TestCase
 from terracommon.terra.models import Layer
 
 
-class ImportshapefileTest(TestCase):
+class ImportShapefileTest(TestCase):
     def test_default_group_nogroup(self):
         # Sample ShapeFile
         shapefile_path = os.path.join(
