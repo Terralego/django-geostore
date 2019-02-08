@@ -1,6 +1,5 @@
 import csv
 import json
-import os
 import tempfile
 
 from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
@@ -11,6 +10,7 @@ from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Layer
 from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
+from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.transformations import set_geometry_from_options
 
 
@@ -215,9 +215,7 @@ class LayerFromShapefileTestCase(TestCase, UserTokenGeneratorMixin):
 
     def test_shapefile_import(self):
         layer = LayerFactory()
-        shapefile_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                      'files',
-                                      'shapefile-WGS84.zip')
+        shapefile_path = get_files_tests('shapefile-WGS84.zip')
 
         with open(shapefile_path, 'rb') as shapefile:
             layer.from_shapefile(shapefile)

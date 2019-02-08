@@ -1,22 +1,16 @@
-import os
-
 from django.core.management import call_command
 from django.test import TestCase
 
 from terracommon.terra.models import Layer
+from terracommon.terra.tests.utils import get_files_tests
 
 
 class LayerEditTest(TestCase):
     def setUp(self):
-        shapefile_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            'files',
-            'shapefile-WGS84.zip')
+        shapefile_path = get_files_tests('shapefile-WGS84.zip')
         sample_shapefile = open(shapefile_path, 'rb')
 
-        empty_json = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                  'files',
-                                  'empty.json')
+        empty_json = get_files_tests('empty.json')
 
         call_command(
             'import_shapefile',
@@ -33,9 +27,7 @@ class LayerEditTest(TestCase):
         self.assertNotEqual({'foo': 'bar'}, layer.schema)
         self.assertNotEqual({'foo': 'bar'}, layer.settings)
 
-        foo_bar_json = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                    'files',
-                                    'foo_bar.json')
+        foo_bar_json = get_files_tests('foo_bar.json')
 
         # Change settings
         call_command(

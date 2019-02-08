@@ -1,5 +1,4 @@
 import json
-import os
 
 from django.core.cache import cache
 from django.core.management import call_command
@@ -9,6 +8,7 @@ from django.urls import reverse
 
 from terracommon.terra.models import Layer
 from terracommon.terra.tests.factories import LayerFactory
+from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
                                              guess_minzoom)
 
@@ -181,12 +181,8 @@ class VectorTilesTestCase(TestCase):
             True)
 
         # test guess_maxzoom returns sensible value from OSM Fontainebleau paths&tracks
-        chunk_fontainebleau_geojson = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                                   'files',
-                                                   'chunk_fontainebleau.geojson')
-        schema_json = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                   'files',
-                                   'empty.json')
+        chunk_fontainebleau_geojson = get_files_tests('chunk_fontainebleau.geojson')
+        schema_json = get_files_tests('empty.json')
 
         call_command(
             'import_geojson',

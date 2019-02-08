@@ -1,16 +1,13 @@
-import os
-
 from django.core.management import call_command
 from django.test import TestCase
 
 from terracommon.terra.models import Layer
+from terracommon.terra.tests.utils import get_files_tests
 
 
 class ImportGeojsonTest(TestCase):
     def test_default_group(self):
-        empty_geojson = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                     'files',
-                                     'empty.json')
+        empty_geojson = get_files_tests('empty.json')
 
         call_command(
             'import_geojson',

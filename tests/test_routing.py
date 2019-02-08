@@ -1,5 +1,3 @@
-import os
-
 from django.conf import settings
 from django.contrib.gis.geos import LineString, Point
 from django.db import connection
@@ -10,8 +8,8 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Layer
 from terracommon.terra.routing.helpers import Routing
-
-from .factories import FeatureFactory
+from terracommon.terra.tests.factories import FeatureFactory
+from terracommon.terra.tests.utils import get_files_tests
 
 
 class RoutingTestCase(TestCase):
@@ -42,10 +40,7 @@ class RoutingTestCase(TestCase):
         self.user = TerraUserFactory()
         self.client.force_login(self.user)
 
-        geojson_path = os.path.join(
-                          os.path.dirname(__file__),
-                          'files',
-                          'toulouse.geojson')
+        geojson_path = get_files_tests('toulouse.geojson')
 
         with open(geojson_path,
                   mode='r',

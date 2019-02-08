@@ -1,5 +1,4 @@
 import json
-import os
 from io import BytesIO
 from zipfile import ZipFile
 
@@ -19,6 +18,7 @@ from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Feature
 from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
+from terracommon.terra.tests.utils import get_files_tests
 
 
 class LayerLineIntersectionTestCase(TestCase):
@@ -345,9 +345,7 @@ class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
     def test_shapefile_import_view(self):
         layer = LayerFactory()
 
-        shapefile_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                      'files',
-                                      'shapefile-WGS84.zip')
+        shapefile_path = get_files_tests('shapefile-WGS84.zip')
 
         with open(shapefile_path, 'rb') as fd:
             shapefile = SimpleUploadedFile('shapefile-WGS84.zip',
