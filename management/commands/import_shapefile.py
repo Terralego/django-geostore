@@ -62,14 +62,17 @@ class Command(BaseCommand):
         dryrun = options.get('dry_run')
         group = options.get('group')
         identifier = options.get('identifier')
-        layer_settings = options.get('layer_settings')
-        settings = json.loads(layer_settings.read()) if layer_settings else {}
         generate_schema = options.get('generate_schema')
         sp = transaction.savepoint()
 
         if layer_pk:
             layer = Layer.objects.get(pk=layer_pk)
         else:
+            try:
+                layer_settings = options.get('layer_settings')
+                settings = json.loads(layer_settings.read()) if layer_settings else {}
+            except (JSONDecodeError, UnicodeDecodeError):
+                raise CommandError("Please provide a valid layer settings file")
             layer = Layer.objects.create(name=layer_name,
                                          settings=settings,
                                          group=group)
