@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from terracommon.terra.models import Layer
@@ -13,10 +13,10 @@ class Command(BaseCommand):
                             '--layer-pk',
                             type=int,
                             action="store",
+                            required=True,
                             help=("PK of the layer where to insert"
                                   "the features.\n"
-                                  "A new layer is created if not "
-                                  "present."))
+                                  ))
 
         parser.add_argument('--dry-run',
                             action="store_true",
@@ -28,13 +28,15 @@ class Command(BaseCommand):
         dryrun = options.get('dry_run', None)
 
         sp = transaction.savepoint()
-
-        layer = Layer.objects.get(pk=layer_pk)
-
+        try:
+            layer = Layer.objects.get(pk=layer_pk)
+        except Layer.DoesNotExist:
+            raise CommandError(f"Layer with pk {layer_pk} doesn't exist")
         if Routing.create_topology(layer):
-            self.stdout.write('Topology successfully updated')
+            if options['verbosity'] >= 1:
+                self.stdout.write('Topology successfully updated')
         else:
-            self.stdout.write('An error occuring during topology update')
+            self.stdout.write(self.style.ERROR('An error occuring during topology update'))
 
         if dryrun:
             transaction.savepoint_rollback(sp)
