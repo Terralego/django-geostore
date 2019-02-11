@@ -66,7 +66,7 @@ class Command(BaseCommand):
         sp = transaction.savepoint()
 
         if layer_pk:
-            layer = Layer.objects.get(pk=layer_pk)
+            layer = self.get_layer(layer_pk)
         else:
             try:
                 layer_settings = options.get('layer_settings')
@@ -105,3 +105,10 @@ class Command(BaseCommand):
     def import_datas(self, layer, file_path, identifier):
         for shapefile_file in file_path:
             layer.from_shapefile(shapefile_file, identifier)
+
+    def get_layer(self, layer_pk):
+        try:
+            layer = Layer.objects.get(pk=layer_pk)
+        except Layer.DoesNotExist:
+            raise CommandError(f"Layer with pk {layer_pk} doesn't exist")
+        return layer
