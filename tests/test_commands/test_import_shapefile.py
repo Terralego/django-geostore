@@ -1,4 +1,7 @@
+from io import StringIO
+
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 
 from terracommon.terra.models import Layer
@@ -21,10 +24,11 @@ class ImportShapefileTest(TestCase):
         self.assertTrue(len(str(layer.features.first().identifier)) < 32)
 
     def test_reprojection(self):
+        output = StringIO()
         call_command(
             'import_shapefile',
             get_files_tests('shapefile-RFG93.zip'),
-            verbosity=0)
+            verbosity=1, stdout=output)
 
         # Retrieve the layer
         layer = Layer.objects.all()[0]
@@ -86,3 +90,34 @@ class ImportShapefileTest(TestCase):
             ['ALTITUDE', 'ETIQUETTE', 'HAUTEUR', 'ID', 'ID_PG', 'NATURE', 'NOM',
              'ORIGIN_BAT', 'PUB_XDECAL', 'PUB_YDECAL', 'ROTATION', 'ROTATION_S',
              'XDECAL', 'XDECAL_SYM', 'YDECAL', 'YDECAL_SYM', 'Z_MAX', 'Z_MIN', ], True)
+
+    def test_import_shapefile_layer_with_bad_schema(self):
+        # Sample ShapeFile
+        shapefile_path = get_files_tests('shapefile-WGS84.zip')
+        sample_shapefile = open(shapefile_path, 'rb')
+        bad_json = get_files_tests('bad.json')
+        # Change settings
+        with self.assertRaises(CommandError):
+            call_command(
+                'import_shapefile',
+                '-iID_PG',
+                '-g', sample_shapefile.name,
+                '-s', bad_json,
+                verbosity=0)
+
+    def test_import_shapefile_layer_with_bad_settings(self):
+        # Sample ShapeFile
+        shapefile_path = get_files_tests('shapefile-WGS84.zip')
+        sample_shapefile = open(shapefile_path, 'rb')
+        bad_json = get_files_tests('bad.json')
+        foo_bar_json = get_files_tests('foo_bar.json')
+        # Change settings
+        with self.assertRaises(CommandError):
+            call_command(
+                'import_shapefile',
+                '-iID_PG',
+                '-g', sample_shapefile.name,
+                '-s', bad_json,
+                '-ls', foo_bar_json,
+                verbosity=0
+            )
