@@ -129,15 +129,10 @@ class Command(BaseCommand):
             self._call(python_object_name, layer_ins, layer_out, **command_args)
         elif options.get('sql_centroid'):
             self._simple_sql('ST_Centroid', layer_ins, layer_out)
-        elif options.get('sql_make_valid'):
-            self._simple_sql('ST_MakeValid', layer_ins, layer_out)
         elif sql:
             self._sql(sql, layer_ins, layer_out)
         elif options.get('make_valid'):
             self._processing_make_valid(layer_ins, layer_out)
-        else:
-            raise CommandError("Missing processing SQL or pyhton")
-
         if dryrun:
             transaction.savepoint_rollback(sp)
         else:
