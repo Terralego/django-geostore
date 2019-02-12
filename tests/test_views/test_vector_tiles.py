@@ -232,3 +232,64 @@ class VectorTilesTestCase(TestCase):
             guess_minzoom(self.layer),
             int)
         )
+
+
+class VectorTilesSpecialTestCase(TestCase):
+    group_name = 'mygroup'
+
+    def setUp(self):
+        # Same as default with properties filter not None
+        settings = {'metadata': {'attribution': 'plop'}, 'tiles': {
+            'minzoom': 0,
+            'maxzoom': 22,
+            'pixel_buffer': 4,
+            'features_filter': None,  # Json
+            'properties_filter': 'Test',  # Array of string
+            'features_limit': 10000,
+        }}
+
+        self.layer = LayerFactory(group=self.group_name, name="layerLine", settings=settings)
+
+        self.geojson_data = '''
+            {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                "type": "Feature",
+                "properties": {
+                    "foo": "bar",
+                    "baba": "fifi"
+                },
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                    [
+                        1.3700294494628906,
+                        43.603640347220924
+                    ],
+                    [
+                        1.2984466552734375,
+                        43.57902295875415
+                    ]
+                    ]
+                }
+                }
+            ]
+            }
+        '''
+        self.layer.from_geojson(geojson_data=self.geojson_data)
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    def test_tilejson_with_properties(self):
+        response = self.client.get(
+            reverse('terra:group-tilejson', args=[self.group_name]),
+            # HTTP_HOST required to build the tilejson descriptor
+            HTTP_HOST='localhost')
+        self.assertEqual(200, response.status_code)
+        self.assertGreater(len(response.content), 0)
+
+        tilejson = json.loads(response.content)
+        self.assertTrue(tilejson['attribution'])
+        self.assertTrue(tilejson['description'] is None)
+        self.assertGreater(len(tilejson['vector_layers']), 0)
+        self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
