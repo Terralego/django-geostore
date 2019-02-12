@@ -1,6 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
-from django.db.models import Q
 from django.utils.module_loading import import_string
 
 from terracommon.terra import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
@@ -73,7 +72,11 @@ class Command(BaseCommand):
 
     def _get_layer_ins(self, pks, names):
         try:
-            return Layer.objects.filter(Q(pk__in=pks) | Q(name__in=names))
+            # On Layer at time to ensure order
+            return (
+                [Layer.objects.get(id=id) for id in pks] +
+                [Layer.objects.get(name=name) for name in names]
+            )
         except Layer.DoesNotExist:
             raise CommandError(f"Fails open one or many layers layer-pk-ins: {', '.join(pks)}")
 
