@@ -11,13 +11,13 @@ from terracommon.terra.tests.utils import get_files_tests
 
 class UpdateTopologyTestCase(TestCase):
     def test_update_topology_routing_fail(self):
-        output = StringIO()
         layer = LayerFactory()
-        call_command(
-            'update_topology',
-            f'--layer-pk={layer.pk}',
-            verbosity=1, stdout=output)
-        self.assertIn('An error occuring during topology update', output.getvalue())
+        with self.assertRaises(CommandError) as error:
+            call_command(
+                'update_topology',
+                f'--layer-pk={layer.pk}',
+                verbosity=0)
+        self.assertEqual('An error occuring during topology update', str(error.exception))
 
     def test_update_topology_fail(self):
         output = StringIO()

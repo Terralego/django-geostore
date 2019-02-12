@@ -29,8 +29,7 @@ class ImportGeojsonTest(TestCase):
             verbosity=1, stdout=output)
         self.assertIn("The created layer pk is", output.getvalue())
         # Retrieve the layer
-        layer = Layer.objects.all()
-        self.assertEqual(len(layer), 0)
+        self.assertEqual(Layer.objects.count(), 0)
 
     def test_import_geojson_layer_with_bad_schema(self):
         empty_geojson = get_files_tests('empty.json')
