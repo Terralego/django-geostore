@@ -79,7 +79,7 @@ class Command(BaseCommand):
             )
         except Layer.DoesNotExist:
             raise CommandError(f"Fails open one or many layers layer-pk-ins: {', '.join(pks)}")
-
+        
     def _get_layer_by_pk(self, pk):
         try:
             return Layer.objects.get(pk=pk)
