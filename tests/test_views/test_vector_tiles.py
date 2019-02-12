@@ -6,7 +6,7 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from terracommon.terra.models import Layer
+from terracommon.terra.models import Feature, Layer
 from terracommon.terra.tests.factories import LayerFactory
 from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
@@ -95,6 +95,15 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tilejson['vector_layers']), 0)
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
 
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    def test_tilejson_fail_no_layer(self):
+        Feature.objects.all().delete()
+        Layer.objects.all().delete()
+        response = self.client.get(
+            reverse('terra:group-tilejson', args=[self.group_name]),
+            HTTP_HOST='localhost')
+        self.assertEqual(404, response.status_code)
+
     def test_vector_tiles_view(self):
         # first query that generate the cache
         response = self.client.get(
@@ -121,6 +130,14 @@ class VectorTilesTestCase(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(b'', response.content)
+
+    @override_settings(MAX_TILE_ZOOM=9)
+    def test_vector_tiles_view_max_tile_zoom_lower_actual_zoom(self):
+        # first query that generate the cache
+        response = self.client.get(
+            reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
+        self.assertEqual(204, response.status_code)
+        self.assertEqual(len(response.content), 0)
 
     def test_caching_geometry(self):
         features = self.layer.features.all()
