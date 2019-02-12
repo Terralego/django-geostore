@@ -2,7 +2,6 @@ import argparse
 import json
 from json.decoder import JSONDecodeError
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
@@ -36,7 +35,7 @@ class Command(BaseCommand):
         layer_pk = options.get('layer_pk')
         try:
             layer = Layer.objects.get(pk=layer_pk)
-        except ObjectDoesNotExist:
+        except Layer.DoesNotExist:
             raise CommandError("Please provide a valid layer pk")
 
         self._settings(layer, options)
