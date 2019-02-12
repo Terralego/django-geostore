@@ -65,12 +65,12 @@ class Command(BaseCommand):
         sp = transaction.savepoint()
 
         if layer_pk:
-            layer = Layer.objects.get(pk=layer_pk)
+            layer = self.get_layer(layer_pk)
         else:
             try:
                 settings = json.loads(layer_settings.read()) if layer_settings else {}
 
-            except JSONDecodeError:
+            except (JSONDecodeError, UnicodeDecodeError):
                 raise CommandError("Please provide a valid layer settings file")
 
             layer = Layer.objects.create(name=layer_name,
@@ -104,3 +104,10 @@ class Command(BaseCommand):
         for file_in in geojson_files:
             geojson = file_in.read()
             layer.from_geojson(geojson, identifier)
+
+    def get_layer(self, layer_pk):
+        try:
+            layer = Layer.objects.get(pk=layer_pk)
+        except Layer.DoesNotExist:
+            raise CommandError(f"Layer with pk {layer_pk} doesn't exist")
+        return layer
