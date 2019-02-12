@@ -36,7 +36,7 @@ class Command(BaseCommand):
             if options['verbosity'] >= 1:
                 self.stdout.write('Topology successfully updated')
         else:
-            self.stdout.write(self.style.ERROR('An error occuring during topology update'))
+            raise CommandError('An error occuring during topology update')
 
         if dryrun:
             transaction.savepoint_rollback(sp)
