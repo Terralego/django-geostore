@@ -139,6 +139,15 @@ class VectorTilesTestCase(TestCase):
         self.assertEqual(204, response.status_code)
         self.assertEqual(len(response.content), 0)
 
+    def test_vector_tiles_view_without_layer(self):
+        # first query that generate the cache
+        Feature.objects.all().delete()
+        Layer.objects.all().delete()
+        response = self.client.get(
+            reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
+        self.assertEqual(404, response.status_code)
+        self.assertEqual(len(response.content), 0)
+
     def test_caching_geometry(self):
         features = self.layer.features.all()
         tile = VectorTile(self.layer)
