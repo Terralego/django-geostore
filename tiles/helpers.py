@@ -8,9 +8,8 @@ from django.db import connection
 from django.db.models import F
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import (ST_Area, ST_CollectionExtract, ST_Length, ST_MakeEnvelope,
-                    ST_MakeValid, ST_SetEffectiveArea, ST_SnapToGrid,
-                    ST_Transform)
+from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
+                    ST_SimplifyPreserveTopology, ST_SnapToGrid, ST_Transform)
 from .sigtools import SIGTools
 
 
@@ -40,24 +39,26 @@ class VectorTile(object):
     # Number of tile units per pixel
     EXTENT_RATIO = 16
 
+    def _simplify(self, layer_query, pixel_width_x, pixel_width_y):
+        if self.layer.layer_geometry in self.POLYGON:
+            # Grid step is pixel_width_x / 4 and pixel_width_y / 4
+            # Simplify to average two grid steps
+            layer_query = layer_query.annotate(
+                outgeom3857=ST_SimplifyPreserveTopology('outgeom3857', (pixel_width_x + pixel_width_y) / 2 / 2)
+            )
+        return layer_query
+
     def _lower_precision(self, layer_query, xmin, ymin, pixel_width_x, pixel_width_y):
         if self.layer.layer_geometry in self.LINESTRING or self.layer.layer_geometry in self.POLYGON:
             layer_query = layer_query.annotate(
                 outgeom3857=ST_SnapToGrid(
-                    ST_SetEffectiveArea('outgeom3857', pixel_width_x * pixel_width_y / 4 / 128),
+                    'outgeom3857',
                     xmin,
                     ymin,
                     pixel_width_x / self.EXTENT_RATIO,
                     pixel_width_y / self.EXTENT_RATIO)
             ).filter(
                 outgeom3857__isnull=False
-            )
-        return layer_query
-
-    def _sanitize(self, layer_query):
-        if self.layer.layer_geometry in self.POLYGON:
-            layer_query = layer_query.annotate(
-                outgeom3857=ST_CollectionExtract(ST_MakeValid('outgeom3857'), 3)
             )
         return layer_query
 
@@ -129,10 +130,15 @@ class VectorTile(object):
                 bbox_select__intersects=F('geom')
             )
 
-        layer_query = self._lower_precision(layer_query, xmin, ymin, pixel_width_x, pixel_width_y)
-        layer_query = self._sanitize(layer_query)
+        # Filter features
         layer_query = self._filter_on_property(layer_query, features_filter)
         layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
+
+        # Lighten geometry
+        layer_query = self._simplify(layer_query, pixel_width_x, pixel_width_y)
+        layer_query = self._lower_precision(layer_query, xmin, ymin, pixel_width_x, pixel_width_y)
+
+        # Seatbelt
         layer_query = self._limit(layer_query, features_limit)
 
         layer_raw_query, args = layer_query.query.sql_with_params()
