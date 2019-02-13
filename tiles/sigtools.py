@@ -1,10 +1,8 @@
-from math import pi
-
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Polygon
 from django.db.models.functions import Cast
 
-from . import EARTH_RADIUS, EPSG_3857
+from . import EPSG_3857
 from .funcs import ST_Extent, ST_Transform
 
 
