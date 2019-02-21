@@ -204,11 +204,13 @@ class Layer(models.Model):
         for feature in geojson.get('features', []):
             properties = feature.get('properties', {})
             identifier = properties.get(id_field, uuid.uuid4())
-            Feature.objects.create(
+            Feature.objects.update_or_create(
                 layer=self,
                 identifier=identifier,
-                properties=properties,
-                geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
+                defaults={
+                    'properties': properties,
+                    'geom': GEOSGeometry(json.dumps(feature.get('geometry'))),
+                }
             )
 
     def to_geojson(self):
