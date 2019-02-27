@@ -1,8 +1,10 @@
 from urllib.parse import unquote
 
+import jsonschema
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
@@ -10,34 +12,27 @@ from terracommon.terra.models import (Feature, FeatureRelation, Layer,
 
 
 class PropertiesSerializer(serializers.ModelSerializer):
-    """
-    Serialize models with a 'properties' field described by the 'schema' field
-    of 'schema_model'
-    The properties are dynamically flattened with other static fields.
-    The viewset url must contains a parameter named against model name suffixed
-    by '_pk'.
-    """
-    schema_model = None
+    properties = serializers.JSONField()
 
-    def get_fields(self):
-        pk_url_kwarg = f'{self.schema_model._meta.model_name}_pk'
-        schema_object = get_object_or_404(
-                            self.schema_model,
-                            pk=self.context['view'].kwargs[pk_url_kwarg]
-                        )
-        fields = super().get_fields()
-        for name, description in schema_object.schema.items():
-            Field = {
-                'integer': serializers.IntegerField,
-                'string': serializers.CharField,
-            }[description['type']]
-            fields.update({name: Field(source=f'properties.{name}')})
-        return fields
+    def validate_properties(self, value):
+        """
+        Properties should be valid json, and valid data according layer's schema
+        """
+        super().validate_properties(value)
+
+        layer = self.context.get('layer')
+        if layer and layer.schema:
+            # validate properties according layer schema definition
+            try:
+                jsonschema.validate(value, layer.schema)
+
+            except jsonschema.exceptions.ValidationError as exc:
+                raise ValidationError(exc.message)
+
+        return value
 
 
 class FeatureSerializer(PropertiesSerializer):
-    schema_model = Layer
-
     class Meta:
         model = Feature
         fields = ('id', 'geom', 'layer', 'properties', )

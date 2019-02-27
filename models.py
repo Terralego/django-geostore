@@ -345,28 +345,45 @@ class Layer(models.Model):
 
     @cached_property
     def layer_properties(self):
-        ''' Return dict of properties that are used by layer's feature
-        '''
-        feature_table = Feature._meta.db_table
+        """
+        Return properties based on layer features or layer schema definition
+        """
+        if self.schema:
+            results = self.schema.get('properties', {}).keys()
 
-        layer_field = Feature._meta.get_field('layer').get_attname_column()[1]
+        else:
+            feature_table = Feature._meta.db_table
 
-        cursor = connection.cursor()
-        raw_query = f"""
-            SELECT
-                jsonb_object_keys(properties) AS key
-            FROM
-                (SELECT properties FROM {feature_table} WHERE {layer_field} = %s) AS t
-            GROUP BY
-                key;
-            """
+            layer_field = Feature._meta.get_field('layer').get_attname_column()[1]
 
-        cursor.execute(raw_query, [self.pk, ])
+            cursor = connection.cursor()
+            raw_query = f"""
+                SELECT
+                    jsonb_object_keys(properties) AS key
+                FROM
+                    (SELECT properties FROM {feature_table} WHERE {layer_field} = %s) AS t
+                GROUP BY
+                    key;
+                """
+
+            cursor.execute(raw_query, [self.pk, ])
+            results = cursor.fetchall()
 
         return {
             prop: 'str'
-            for (prop, ) in cursor.fetchall()
+            for (prop, ) in results
         }
+
+    def get_property_title(self, prop):
+        json_form_properties = self.schema.get('properties', {})
+
+        if prop in json_form_properties:
+            data = json_form_properties[prop]
+            title = data.get('title', prop)
+            return title
+
+        return prop
+
 
     @cached_property
     def layer_geometry(self):

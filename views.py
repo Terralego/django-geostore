@@ -156,8 +156,19 @@ class FeatureViewSet(viewsets.ModelViewSet):
     filter_fields = ('properties', )
     lookup_field = 'identifier'
 
+    def __init__(self):
+        super().__init__()
+        self.layer = self.get_layer()
+
+    def get_layer(self):
+        return get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['layer'] = self.layer
+        return context
+
     def get_queryset(self):
-        self.layer = get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
         return self.layer.features.all()
 
 
