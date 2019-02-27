@@ -16,7 +16,7 @@ from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
 from django.core.serializers import serialize
 from django.db import connection, transaction
-from django.db.models import F, Manager
+from django.db.models import Manager
 from django.utils.functional import cached_property
 from fiona.crs import from_epsg
 from mercantile import tiles
@@ -27,7 +27,7 @@ from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet
 from .routing.helpers import Routing
-from .tiles.funcs import ST_SRID, ST_HausdorffDistance
+from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 
 logger = logging.getLogger(__name__)
@@ -345,8 +345,7 @@ class Layer(models.Model):
 
     @cached_property
     def layer_projection(self):
-        feature = self.features.annotate(srid=ST_SRID(F('geom'))).first()
-        return feature.srid
+        return settings.INTERNAL_GEOMETRY_SRID
 
     @cached_property
     def layer_properties(self):
