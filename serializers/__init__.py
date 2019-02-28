@@ -27,7 +27,7 @@ class PropertiesSerializer(serializers.ModelSerializer):
                 jsonschema.validate(value, layer.schema)
 
             except jsonschema.exceptions.ValidationError as exc:
-                raise ValidationError(exc.message)
+                raise ValidationError(detail=exc.message)
 
         return value
 
