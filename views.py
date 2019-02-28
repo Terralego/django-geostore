@@ -167,7 +167,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
         return self.get_layer().features.all()
 
     def perform_create(self, serializer):
-        serializer.layer = self.get_layer()
+        serializer.validated_data['layer'] = self.get_layer()
         serializer.save()
 
 

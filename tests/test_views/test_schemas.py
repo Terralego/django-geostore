@@ -14,7 +14,6 @@ class SchemaValidationTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         self.no_schema_layer = LayerFactory(name="no schema")
-        self.empty_schema_layer = LayerFactory(name="schema empty", schema={'properties': []})
         self.property_schema_layer = LayerFactory(
             name="tree",
             schema={
@@ -38,41 +37,33 @@ class SchemaValidationTest(TestCase):
                                     format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.json())
 
-    def test_empty_schema_no_property_ok(self):
-        """
-        If empty schema defined, allow features without properties
-        """
-        response = self.client.post(reverse('terra:feature-list', args=[self.no_schema_layer.pk, ]),
-                                    data={"geom": "POINT(0 0)"},
-                                    format='json')
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.json())
-
-    def test_empty_schema_property_ko(self):
-        """
-        If empty schema defined, deny features with properties
-        """
-        response = self.client.post(reverse('terra:feature-list', args=[self.empty_schema_layer.pk, ]),
-                                    data={"geom": "POINT(0 0)",
-                                          "properties": {"toto": "ok"}},
-                                    format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.json())
-
-    def test_schema_property_match(self):
+    def test_schema_property_match_good(self):
         """
         If schema defined, allow features with properties in schema
         """
-        response = self.client.post(reverse('terra:feature-list', args=[self.empty_schema_layer.pk, ]),
+        response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"name": "ok",
                                                          "age": 10}},
                                     format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.json())
 
+    def test_schema_property_match_bad(self):
+        """
+        If schema defined, allow features with properties in schema
+        """
+        response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
+                                    data={"geom": "POINT(0 0)",
+                                          "properties": {"name": 20,
+                                                         "age": "wrong data"}},
+                                    format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.json())
+
     def test_schema_property_doesnt_match(self):
         """
         If schema defined, deny features with properties not in schema
         """
-        response = self.client.post(reverse('terra:feature-list', args=[self.empty_schema_layer.pk, ]),
+        response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"toto": "ok"}},
                                     format='json')
