@@ -1,7 +1,6 @@
 from urllib.parse import unquote
 
 import jsonschema
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -18,8 +17,6 @@ class PropertiesSerializer(serializers.ModelSerializer):
         """
         Properties should be valid json, and valid data according layer's schema
         """
-        super().validate_properties(value)
-
         layer = self.context.get('layer')
         if layer and layer.schema:
             # validate properties according layer schema definition
@@ -36,6 +33,7 @@ class FeatureSerializer(PropertiesSerializer):
     class Meta:
         model = Feature
         fields = ('id', 'geom', 'layer', 'properties', )
+        read_only_fields = ('id', 'layer')
 
 
 class FeatureInLayerSerializer(serializers.ModelSerializer):
