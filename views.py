@@ -151,25 +151,20 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
 class FeatureViewSet(viewsets.ModelViewSet):
     serializer_class = FeatureSerializer
-    swagger_schema = None  # FIXME: Temporary disable schema generation
     filter_backends = (JSONFieldFilterBackend, )
     filter_fields = ('properties', )
     lookup_field = 'identifier'
-
-    def __init__(self):
-        super().__init__()
-        self.layer = self.get_layer()
 
     def get_layer(self):
         return get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['layer'] = self.layer
+        context['layer'] = self.get_layer()
         return context
 
     def get_queryset(self):
-        return self.layer.features.all()
+        return self.get_layer().features.all()
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
