@@ -166,6 +166,10 @@ class FeatureViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.get_layer().features.all()
 
+    def perform_create(self, serializer):
+        serializer.layer = self.get_layer()
+        serializer.save()
+
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
     queryset = LayerRelation.objects.all()
