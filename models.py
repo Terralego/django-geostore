@@ -242,7 +242,7 @@ class Layer(models.Model):
                     driver='ESRI Shapefile',
                     schema=schema,
                     encoding='UTF-8',
-                    crs=from_epsg(self.layer_projection)
+                    crs=from_epsg(settings.INTERNAL_GEOMETRY_SRID)
                 )
 
             # Export features to each kind of geometry
@@ -342,10 +342,6 @@ class Layer(models.Model):
         # clean cache of updated features
         [feature.clean_vect_tile_cache() for feature in modified]
         return modified
-
-    @cached_property
-    def layer_projection(self):
-        return settings.INTERNAL_GEOMETRY_SRID
 
     @cached_property
     def layer_properties(self):
