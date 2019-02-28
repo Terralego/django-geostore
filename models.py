@@ -460,7 +460,7 @@ class Feature(models.Model):
                                   blank=False,
                                   null=False,
                                   default=uuid.uuid4)
-    properties = JSONField()
+    properties = JSONField(default=dict, blank=True)
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
                               related_name='features')

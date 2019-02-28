@@ -9,8 +9,8 @@ from terracommon.terra.models import (Feature, FeatureRelation, Layer,
                                       LayerRelation)
 
 
-class PropertiesSerializer(serializers.ModelSerializer):
-    properties = serializers.JSONField()
+class FeatureSerializer(serializers.ModelSerializer):
+    properties = serializers.JSONField(required=False)
 
     def validate_properties(self, value):
         """
@@ -27,8 +27,6 @@ class PropertiesSerializer(serializers.ModelSerializer):
 
         return value
 
-
-class FeatureSerializer(PropertiesSerializer):
     class Meta:
         model = Feature
         fields = ('id', 'geom', 'layer', 'properties', )
@@ -94,9 +92,7 @@ class LayerRelationSerializer(serializers.ModelSerializer):
         fields = ('id', 'origin', 'destination', 'schema')
 
 
-class FeatureRelationSerializer(PropertiesSerializer):
-    schema_model = LayerRelation
-
+class FeatureRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeatureRelation
         fields = ('id', 'origin', 'destination')
