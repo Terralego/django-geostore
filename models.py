@@ -443,6 +443,9 @@ class Layer(models.Model):
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
 
+    def __str__(self):
+        return f"{self.name} ({self.group})"
+
     class Meta:
         ordering = ['id']
         permissions = (
