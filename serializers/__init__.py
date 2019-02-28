@@ -1,7 +1,6 @@
-from urllib.parse import unquote
-
 import jsonschema
 from django.urls import reverse
+from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -55,10 +54,10 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
         return reverse('terra:layer-intersects', args=[obj.name, ])
 
     def get_group_tilejson(self, obj):
-        return unquote(reverse('terra:group-tilejson', args=[obj.group]))
+        return urlunquote(reverse('terra:group-tilejson', args=[obj.group]))
 
     def get_group_tiles(self, obj):
-        return unquote(reverse('terra:group-tiles-pattern', args=[obj.group]))
+        return urlunquote(reverse('terra:group-tiles-pattern', args=[obj.group]))
 
     def get_routing_url(self, obj):
         return reverse('terra:layer-route', args=[obj.pk, ])
