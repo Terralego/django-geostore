@@ -1,9 +1,20 @@
 from django.contrib.auth.models import Permission
 from django.contrib.gis import admin
 
-from .models import Feature, FeatureRelation, Layer
+from . import models
 
-admin.site.register(Layer)
-admin.site.register(Feature, admin.OSMGeoAdmin)
-admin.site.register(FeatureRelation)
+
+@admin.register(models.Layer)
+class LayerAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'name', 'group')
+    list_filter = ('group', )
+
+
+@admin.register(models.Feature)
+class FeatureAdmin(admin.OSMGeoAdmin):
+    list_display = ('pk', 'identifier', 'layer', 'source', 'target')
+    list_filter = ('layer', )
+
+
+admin.site.register(models.FeatureRelation)
 admin.site.register(Permission)
