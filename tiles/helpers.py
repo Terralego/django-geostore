@@ -149,7 +149,7 @@ class VectorTile(object):
             filter = ', '.join([f"'{f}'" for f in properties_filter])
             properties = f'''
                 (
-                    {properties}
+                    ({properties})
                     - (
                         SELECT array_agg(k)
                         FROM jsonb_object_keys(properties) AS t(k)
