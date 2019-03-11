@@ -22,6 +22,7 @@ from fiona.crs import from_epsg
 from mercantile import tiles
 
 from terracommon.core.helpers import make_zipfile_bytesio
+from .validators import validate_json_schema, validate_json_schema_data
 
 from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from .helpers import ChunkIterator
@@ -73,7 +74,7 @@ def topology_update(func):
 class Layer(models.Model):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
-    schema = JSONField(default=dict, blank=True)
+    schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
 
     # Settings scheam
     SETTINGS_DEFAULT = {
@@ -384,7 +385,6 @@ class Layer(models.Model):
 
         return prop
 
-
     @cached_property
     def layer_geometry(self):
         ''' Return the geometry type of the layer using the first feature in
@@ -499,6 +499,8 @@ class Feature(models.Model):
         return self.geom.extent
 
     def save(self, *args, **kwargs):
+        # validate schema properties
+        validate_json_schema_data(self.properties, self.layer.schema)
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
 
