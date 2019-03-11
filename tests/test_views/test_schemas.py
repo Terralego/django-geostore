@@ -31,7 +31,7 @@ class SchemaValidationTest(TestCase):
         """
         If no schema defined (or empty), all properties are accepted
         """
-        response = self.client.post(reverse('terra:feature-list',args=[self.no_schema_layer.pk, ]),
+        response = self.client.post(reverse('terra:feature-list', args=[self.no_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"toto": "ok"}},
                                     format='json')
