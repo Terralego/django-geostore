@@ -1,8 +1,6 @@
-import jsonschema
 from django.urls import reverse
 from django.utils.http import urlunquote
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
@@ -12,21 +10,6 @@ from terracommon.terra.models import (Feature, FeatureRelation, Layer,
 class FeatureSerializer(serializers.ModelSerializer):
     properties = serializers.JSONField(required=False)
 
-    def validate_properties(self, value):
-        """
-        Properties should be valid json, and valid data according layer's schema
-        """
-        layer = self.context.get('layer')
-        if layer and layer.schema:
-            # validate properties according layer schema definition
-            try:
-                jsonschema.validate(value, layer.schema)
-
-            except jsonschema.exceptions.ValidationError as exc:
-                raise ValidationError(detail=exc.message)
-
-        return value
-
     class Meta:
         model = Feature
         fields = ('id', 'geom', 'layer', 'properties', )
@@ -34,7 +17,6 @@ class FeatureSerializer(serializers.ModelSerializer):
 
 
 class FeatureInLayerSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Feature
         fields = ('id', 'geom', )
