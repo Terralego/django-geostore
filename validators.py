@@ -1,6 +1,6 @@
+import jsonschema
 from django.core.exceptions import ValidationError
 from jsonschema.validators import validator_for
-import jsonschema
 
 
 def validate_json_schema(value):

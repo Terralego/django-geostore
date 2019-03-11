@@ -22,7 +22,6 @@ from fiona.crs import from_epsg
 from mercantile import tiles
 
 from terracommon.core.helpers import make_zipfile_bytesio
-from .validators import validate_json_schema, validate_json_schema_data
 
 from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from .helpers import ChunkIterator
@@ -30,6 +29,7 @@ from .managers import FeatureQuerySet
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
+from .validators import validate_json_schema, validate_json_schema_data
 
 logger = logging.getLogger(__name__)
 
