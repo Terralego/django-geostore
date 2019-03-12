@@ -55,15 +55,15 @@ class Command(BaseCommand):
                             help='Execute une dry-run mode')
 
     def handle(self, *args, **options):
-        layer_pk = options.get('layer-pk')
+        layer_pk = options.get('layer_pk')
         layer_name = options.get('layer-name') or uuid.uuid4()
         file_path = options.get('file_path')
-        dryrun = options.get('dry-run')
+        dryrun = options.get('dry_run')
         group = options.get('group')
         identifier = options.get('identifier')
-        layer_settings = options.get('layer-settings')
+        layer_settings = options.get('layer_settings')
         settings = json.loads(layer_settings.read()) if layer_settings else {}
-        generate_schema = options.get('generate-chema')
+        generate_schema = options.get('generate_schema')
         sp = transaction.savepoint()
 
         if layer_pk:

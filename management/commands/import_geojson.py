@@ -53,10 +53,10 @@ class Command(BaseCommand):
 
     @transaction.atomic()
     def handle(self, *args, **options):
-        layer_pk = options.get('layer-pk')
-        layer_name = options.get('layer-name') or uuid.uuid4()
+        layer_pk = options.get('layer_pk')
+        layer_name = options.get('layer_name') or uuid.uuid4()
         file_path = options.get('file_path')
-        dryrun = options.get('dry-run')
+        dryrun = options.get('dry_run')
         group = options.get('group')
         identifier = options.get('identifier')
         layer_settings = options.get('layer_settings')
