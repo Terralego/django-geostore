@@ -29,9 +29,6 @@ class ImportShapefileTest(TestCase):
         shapefile_path = get_files_tests('shapefile-RFG93.zip')
         sample_shapefile = open(shapefile_path, 'rb')
 
-        # Create a fake json schema
-        empty_geojson = get_files_tests('empty.json')
-
         call_command(
             'import_shapefile',
             sample_shapefile.name,
