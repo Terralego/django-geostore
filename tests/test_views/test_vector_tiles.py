@@ -171,22 +171,17 @@ class VectorTilesTestCase(TestCase):
 
     def test_guess_maxzoom(self):
 
-        # guess_maxzoom returning -1 when TypeError is raised
-        self.assertEqual(
-            guess_maxzoom(self.layerPoint),
-            14)
+        # guess_maxzoom returning -1 when TypeError is raised14)
 
-        self.assertEqual(
-            guess_maxzoom(self.layer) is not None,
-            True)
+        self.assertEqual(guess_maxzoom(self.layer) is not None, True)
 
         # test guess_maxzoom returns sensible value from OSM Fontainebleau paths&tracks
         chunk_fontainebleau_geojson = get_files_tests('chunk_fontainebleau.geojson')
 
         call_command(
             'import_geojson', chunk_fontainebleau_geojson,
-            f'--group=maxzoom_test',
-            '-lchunk_fontainebleau',
+            '-gr', 'maxzoom_test',
+            '-ln', 'chunk_fontainebleau',
             verbosity=0)
 
         layer_chunk_fontainebleau = Layer.objects.get(name='chunk_fontainebleau')
