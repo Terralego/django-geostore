@@ -15,12 +15,12 @@ class FeatureSerializer(serializers.ModelSerializer):
         """
         Validate schema if exists
         """
-        if self.context['layer'].schema:
-            validate_json_schema_data(data, self.context['layer'].schema)
+        if self.context.get('layer_pk'):
+            layer = Layer.objects.get(pk=self.context.get('layer_pk'))
+            validate_json_schema_data(data, layer.schema)
         return data
 
     class Meta:
-        geo_field = 'geom'
         model = Feature
         fields = ('id', 'identifier', 'layer', 'geom', 'properties', )
         read_only_fields = ('id', 'layer')

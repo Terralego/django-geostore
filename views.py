@@ -154,23 +154,20 @@ class FeatureViewSet(viewsets.ModelViewSet):
     filter_fields = ('properties', )
     lookup_field = 'identifier'
 
-    def get_layer(self):
-        return get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
-
     def get_serializer_context(self):
         """
-        Layer access in serializer
+        Layer access in serializer (pk to insure schema generation)
         """
         context = super().get_serializer_context()
-        context['layer'] = self.get_layer()
+        context.update({'layer_pk': self.kwargs.get('layer_pk')})
         return context
 
     def get_queryset(self):
-        return self.get_layer().features.all()
+        layer = get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
+        return layer.features.all()
 
     def perform_create(self, serializer):
-        serializer.validated_data['layer'] = self.get_layer()
-        serializer.save()
+        serializer.save(layer_id=self.kwargs.get('layer_pk'))
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
