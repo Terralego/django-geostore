@@ -124,7 +124,6 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         return Response(response)
 
     def partial_update(self, request, *args, **kwargs):
-
         if not request.user.has_perm('terra.can_update_features_properties'):
             self.permission_denied(request, 'Operation not allowed')
 
@@ -159,6 +158,9 @@ class FeatureViewSet(viewsets.ModelViewSet):
         return get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
 
     def get_serializer_context(self):
+        """
+        Layer access in serializer
+        """
         context = super().get_serializer_context()
         context['layer'] = self.get_layer()
         return context
@@ -179,4 +181,3 @@ class LayerRelationViewSet(viewsets.ModelViewSet):
 class FeatureRelationViewSet(viewsets.ModelViewSet):
     queryset = FeatureRelation.objects.all()
     serializer_class = FeatureRelationSerializer
-    swagger_schema = None  # FIXME: Temporary disable schema generation

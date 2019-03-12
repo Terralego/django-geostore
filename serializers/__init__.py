@@ -5,21 +5,25 @@ from rest_framework import serializers
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
                                       LayerRelation)
+from terracommon.terra.validators import validate_json_schema_data
 
 
 class FeatureSerializer(serializers.ModelSerializer):
     properties = serializers.JSONField(required=False)
 
+    def validate_properties(self, data):
+        """
+        Validate schema if exists
+        """
+        if self.context['layer'].schema:
+            validate_json_schema_data(data, self.context['layer'].schema)
+        return data
+
     class Meta:
+        geo_field = 'geom'
         model = Feature
-        fields = ('id', 'geom', 'layer', 'properties', )
+        fields = ('id', 'identifier', 'layer', 'geom', 'properties', )
         read_only_fields = ('id', 'layer')
-
-
-class FeatureInLayerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Feature
-        fields = ('id', 'geom', )
 
 
 class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
