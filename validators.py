@@ -26,7 +26,7 @@ def validate_json_schema_data(value, schema):
         # check result schema
         if value and schema:
             properties = schema.get('properties').keys()
-            unexpected_properties = value.keys() - properties
+            unexpected_properties = list(value.keys() - properties)
             if unexpected_properties:
                 # value key(s) not in expected properties
                 raise ValidationError(message=f"{unexpected_properties.join(',')} not in schema properties")
