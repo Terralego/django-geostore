@@ -182,12 +182,9 @@ class VectorTilesTestCase(TestCase):
 
         # test guess_maxzoom returns sensible value from OSM Fontainebleau paths&tracks
         chunk_fontainebleau_geojson = get_files_tests('chunk_fontainebleau.geojson')
-        schema_json = get_files_tests('empty.json')
 
         call_command(
-            'import_geojson',
-            f'-g{chunk_fontainebleau_geojson}',
-            f'-s{schema_json}',
+            'import_geojson', chunk_fontainebleau_geojson,
             f'--group=maxzoom_test',
             '-lchunk_fontainebleau',
             verbosity=0)
