@@ -1,9 +1,8 @@
 import argparse
 import json
 import uuid
-from json.decoder import JSONDecodeError
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from terracommon.terra.models import Layer
@@ -13,6 +12,12 @@ class Command(BaseCommand):
     help = 'Import Features from Ziped ShapeFile'
 
     def add_arguments(self, parser):
+        parser.add_argument('file_path',
+                            nargs='+',
+                            type=argparse.FileType('rb'),
+                            action="store",
+                            help='Ziped ShapeFile files to import')
+
         exclusive_group = parser.add_mutually_exclusive_group()
         exclusive_group.add_argument('-pk', '--layer-pk',
                                      type=int,
@@ -21,27 +26,21 @@ class Command(BaseCommand):
                                            "the features.\n"
                                            "A new layer is created if not "
                                            "present."))
-        exclusive_group.add_argument('-l', '--layer',
+        exclusive_group.add_argument('-ln', '--layer-name',
                                      action="store",
                                      help=("Name of created layer "
                                            "containing ShapeFile datas."
                                            "If not provided an uuid4 is set."))
-        parser.add_argument('-s', '--schema',
-                            type=argparse.FileType('r'),
+        parser.add_argument('-gs', '--generate-schema',
                             action="store",
-                            help=("JSON schema file that describe "
+                            help=("Generate JSON schema from "
                                   "ShapeFile properties.\n"
-                                  "Only needed if -l option is provided"))
-        parser.add_argument('-ls', '--layer_settings', nargs='?',
+                                  "Only available if not -pk option provided."))
+        parser.add_argument('-ls', '--layer-settings', nargs='?',
                             type=argparse.FileType('r'),
                             action="store",
-                            help=("JSON settings file to override default"))
-        parser.add_argument('-g', '--shapefile',
-                            nargs='+',
-                            type=argparse.FileType('rb'),
-                            action="store",
-                            required=True,
-                            help='Ziped ShapeFile files to import')
+                            help="JSON settings file to override default")
+
         parser.add_argument('-i', '--identifier',
                             action="store",
                             help="Field in properties that will be used as "
@@ -55,47 +54,50 @@ class Command(BaseCommand):
                             action="store_true",
                             help='Execute une dry-run mode')
 
-    @transaction.atomic()
     def handle(self, *args, **options):
-        layer_pk = options.get('layer_pk')
-        layer_name = options.get('layer') or uuid.uuid4()
-        shapefile_files = options.get('shapefile')
-        dryrun = options.get('dry_run')
+        layer_pk = options.get('layer-pk')
+        layer_name = options.get('layer-name') or uuid.uuid4()
+        file_path = options.get('file_path')
+        dryrun = options.get('dry-run')
         group = options.get('group')
         identifier = options.get('identifier')
-
+        layer_settings = options.get('layer-settings')
+        settings = json.loads(layer_settings.read()) if layer_settings else {}
+        generate_schema = options.get('generate-chema')
         sp = transaction.savepoint()
 
         if layer_pk:
             layer = Layer.objects.get(pk=layer_pk)
         else:
-            try:
-                schema = json.loads(options.get('schema').read())
-            except AttributeError:
-                raise CommandError("Please provide a valid schema file")
-            try:
-                layer_settings = options.get('layer_settings')
-                settings = json.loads(layer_settings.read()) if layer_settings else {}
-            except JSONDecodeError:
-                raise CommandError("Please provide a valid layer settings file")
             layer = Layer.objects.create(name=layer_name,
-                                         schema=schema,
                                          settings=settings,
                                          group=group)
-            if options['verbosity'] >= 1:
+
+            if options['verbosity'] > 0:
                 self.stdout.write(
                     f"The created layer pk is {layer.pk}, "
                     "it can be used to import more features "
                     "in the same layer with different "
-                    "options")
+                    "options"
+                )
 
-        self.import_datas(layer, shapefile_files, identifier)
+        self.import_datas(layer, file_path, identifier)
+        if generate_schema:
+            # only in layer creation, find properties to generate schema
+            layer.schema = {
+                'properties': {
+                    key: {
+                        'type': 'string'
+                    } for key, value in layer.layer_properties.items()
+                }
+            }
+            layer.save()
 
         if dryrun:
             transaction.savepoint_rollback(sp)
         else:
             transaction.savepoint_commit(sp)
 
-    def import_datas(self, layer, shapefile_files, identifier):
-        for shapefile_file in shapefile_files:
+    def import_datas(self, layer, file_path, identifier):
+        for shapefile_file in file_path:
             layer.from_shapefile(shapefile_file, identifier)

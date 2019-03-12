@@ -11,14 +11,10 @@ class ImportShapefileTest(TestCase):
         shapefile_path = get_files_tests('shapefile-WGS84.zip')
         sample_shapefile = open(shapefile_path, 'rb')
 
-        # Fake json schema
-        empty_geojson = get_files_tests('empty.json')
-
         call_command(
             'import_shapefile',
-            f'-iID_PG',
-            f'-g{sample_shapefile.name}',
-            f'-s{empty_geojson}',
+            sample_shapefile.name,
+            '-i', 'ID_PG',
             verbosity=0)
 
         # Retrieve the layer
@@ -38,8 +34,7 @@ class ImportShapefileTest(TestCase):
 
         call_command(
             'import_shapefile',
-            f'-g{sample_shapefile.name}',
-            f'-s{empty_geojson}',
+            sample_shapefile.name,
             verbosity=0)
 
         # Retrieve the layer
@@ -59,15 +54,13 @@ class ImportShapefileTest(TestCase):
         sample_shapefile = open(shapefile_path, 'rb')
 
         # Fake json
-        empty_json = get_files_tests('empty.json')
         foo_bar_json = get_files_tests('foo_bar.json')
 
         # Import a shapefile
         call_command(
             'import_shapefile',
-            '-iID_PG',
-            '-g', sample_shapefile.name,
-            '-s', empty_json,
+            sample_shapefile.name,
+            '-i', 'ID_PG',
             verbosity=0)
 
         # Ensure old settings
@@ -83,7 +76,6 @@ class ImportShapefileTest(TestCase):
             '-pk', layer.pk,
             '-l', 'new_name',
             '-gr', 'new_group',
-            '-s', foo_bar_json,
             '-ls', foo_bar_json
         )
 
@@ -91,5 +83,4 @@ class ImportShapefileTest(TestCase):
         layer = Layer.objects.all()[0]
         self.assertEqual('new_name', layer.name)
         self.assertEqual('new_group', layer.group)
-        self.assertEqual({'foo': 'bar'}, layer.schema)
         self.assertEqual({'foo': 'bar'}, layer.settings)

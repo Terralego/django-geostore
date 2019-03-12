@@ -9,14 +9,9 @@ class LayerEditTest(TestCase):
     def setUp(self):
         shapefile_path = get_files_tests('shapefile-WGS84.zip')
         sample_shapefile = open(shapefile_path, 'rb')
-
-        empty_json = get_files_tests('empty.json')
-
         call_command(
-            'import_shapefile',
-            '-iID_PG',
-            '-g', sample_shapefile.name,
-            '-s', empty_json,
+            'import_shapefile', sample_shapefile.name,
+            '-i', 'ID_PG',
             verbosity=0)
 
     def test_layer_edit(self):
@@ -24,7 +19,6 @@ class LayerEditTest(TestCase):
         layer = Layer.objects.all()[0]
         self.assertNotEqual('new_name', layer.name)
         self.assertNotEqual('new_group', layer.group)
-        self.assertNotEqual({'foo': 'bar'}, layer.schema)
         self.assertNotEqual({'foo': 'bar'}, layer.settings)
 
         foo_bar_json = get_files_tests('foo_bar.json')
@@ -35,7 +29,6 @@ class LayerEditTest(TestCase):
             '-pk', layer.pk,
             '-l', 'new_name',
             '-gr', 'new_group',
-            '-s', foo_bar_json,
             '-ls', foo_bar_json
         )
 
@@ -43,5 +36,4 @@ class LayerEditTest(TestCase):
         layer = Layer.objects.all()[0]
         self.assertEqual('new_name', layer.name)
         self.assertEqual('new_group', layer.group)
-        self.assertEqual({'foo': 'bar'}, layer.schema)
         self.assertEqual({'foo': 'bar'}, layer.settings)

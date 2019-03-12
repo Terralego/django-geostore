@@ -9,11 +9,7 @@ class LayerProcessingTestCase(TestCase):
     def test_layer_processing(self):
         empty_json = get_files_tests('empty.json')
 
-        call_command(
-            'import_geojson',
-            f'-g{empty_json}',
-            f'-s{empty_json}',
-            verbosity=0)
+        call_command('import_geojson', empty_json, verbosity=0)
 
         # Retrieve the layer
         layer = Layer.objects.all()[0]
@@ -27,14 +23,9 @@ class LayerProcessingTestCase(TestCase):
         self.assertEqual(len(Layer.objects.all()), 2)
 
     def test_layer_processing_by_name(self):
-        empty_json = get_files_tests('empty.json')
         geojson = get_files_tests('toulouse.geojson')
 
-        call_command(
-            'import_geojson',
-            f'-g{geojson}',
-            f'-s{empty_json}',
-            verbosity=0)
+        call_command('import_geojson', geojson, verbosity=0)
 
         # Retrieve the layer
         in_layer = Layer.objects.all()[0]

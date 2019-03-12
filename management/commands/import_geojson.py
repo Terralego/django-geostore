@@ -13,35 +13,31 @@ class Command(BaseCommand):
     help = 'Import Features from GeoJSON files'
 
     def add_arguments(self, parser):
+        parser.add_argument('file_path',
+                            nargs='+',
+                            type=argparse.FileType('r', encoding='UTF-8'),
+                            action="store",
+                            help='GeoJSON files to import')
         exclusive_group = parser.add_mutually_exclusive_group()
         exclusive_group.add_argument('-pk', '--layer-pk',
                                      type=int,
                                      action="store",
-                                     help=("PK of the layer where to insert"
-                                           "the features.\n"
-                                           "A new layer is created if not "
-                                           "present."))
-        exclusive_group.add_argument('-l', '--layer',
+                                     help="PK of the layer where to insert the features."
+                                          "A new layer is created if not present.")
+        exclusive_group.add_argument('-ln', '--layer-name',
                                      action="store",
-                                     help=("Name of created layer "
-                                           "containing GeoJSON datas."
-                                           "If not provided an uuid4 is set."))
-        parser.add_argument('-s', '--schema',
-                            type=argparse.FileType('r'),
+                                     help="Name of created layer containing GeoJSON datas."
+                                          "If not provided an uuid4 is set.")
+        parser.add_argument('-gs', '--generate-schema',
                             action="store",
-                            help=("JSON schema file that describe "
+                            help=("Generate json form schema from"
                                   "GeoJSON properties.\n"
                                   "Only needed if -l option is provided"))
-        parser.add_argument('-ls', '--layer_settings', nargs='?',
+        parser.add_argument('-ls', '--layer-settings', nargs='?',
                             type=argparse.FileType('r'),
                             action="store",
                             help=("JSON settings file to override default"))
-        parser.add_argument('-g', '--geojson',
-                            nargs='+',
-                            type=argparse.FileType('r', encoding='UTF-8'),
-                            action="store",
-                            required=True,
-                            help='GeoJSON files to import')
+
         parser.add_argument('-i', '--identifier',
                             action="store",
                             help="Field in properties that will be used as "
@@ -57,12 +53,13 @@ class Command(BaseCommand):
 
     @transaction.atomic()
     def handle(self, *args, **options):
-        layer_pk = options.get('layer_pk')
-        layer_name = options.get('layer') or uuid.uuid4()
-        geojson_files = options.get('geojson')
-        dryrun = options.get('dry_run')
+        layer_pk = options.get('layer-pk')
+        layer_name = options.get('layer-name') or uuid.uuid4()
+        file_path = options.get('file_path')
+        dryrun = options.get('dry-run')
         group = options.get('group')
         identifier = options.get('identifier')
+        layer_settings = options.get('layer_settings')
 
         sp = transaction.savepoint()
 
@@ -70,26 +67,21 @@ class Command(BaseCommand):
             layer = Layer.objects.get(pk=layer_pk)
         else:
             try:
-                schema = json.loads(options.get('schema').read())
-            except AttributeError:
-                schema = {}
-
-            try:
-                layer_settings = options.get('layer_settings')
                 settings = json.loads(layer_settings.read()) if layer_settings else {}
+
             except JSONDecodeError:
                 raise CommandError("Please provide a valid layer settings file")
+
             layer = Layer.objects.create(name=layer_name,
-                                         schema=schema,
                                          settings=settings,
                                          group=group)
-            if options['verbosity'] >= 1:
+            if options['verbosity'] > 0:
                 self.stdout.write(f"The created layer pk is {layer.pk}, "
                                   "it can be used to import more features"
                                   " in the same layer with different "
                                   "options")
 
-        self.import_datas(layer, geojson_files, identifier)
+        self.import_datas(layer, file_path, identifier)
 
         if dryrun:
             transaction.savepoint_rollback(sp)
