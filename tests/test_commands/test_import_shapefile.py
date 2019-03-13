@@ -81,3 +81,24 @@ class ImportShapefileTest(TestCase):
         self.assertEqual('new_name', layer.name)
         self.assertEqual('new_group', layer.group)
         self.assertEqual({'foo': 'bar'}, layer.settings)
+
+    def test_schema_generated(self):
+        shapefile_path = get_files_tests('shapefile-WGS84.zip')
+        sample_shapefile = open(shapefile_path, 'rb')
+
+        call_command(
+            'import_shapefile',
+            sample_shapefile.name,
+            '-i', 'ID_PG',
+            '-gs',
+            verbosity=0)
+
+        # Retrieve the layer
+        layer = Layer.objects.get()
+
+        # Assert schema properties are presents
+        self.assertNotEqual(
+            layer.schema.get('properties').keys() -
+            ['ALTITUDE', 'ETIQUETTE', 'HAUTEUR', 'ID', 'ID_PG', 'NATURE', 'NOM',
+             'ORIGIN_BAT', 'PUB_XDECAL', 'PUB_YDECAL', 'ROTATION', 'ROTATION_S',
+             'XDECAL', 'XDECAL_SYM', 'YDECAL', 'YDECAL_SYM', 'Z_MAX', 'Z_MIN', ], True)
