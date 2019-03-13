@@ -12,7 +12,7 @@ def validate_json_schema(value):
             # check only if schema defined
             cls = validator_for(value)
             cls.check_schema(value)
-    except jsonschema.exceptions.ValidationError as e:
+    except Exception as e:
         raise ValidationError(message=e.message)
 
     return value

@@ -5,7 +5,7 @@ from rest_framework import serializers
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
                                       LayerRelation)
-from terracommon.terra.validators import validate_json_schema_data
+from terracommon.terra.validators import validate_json_schema_data, validate_json_schema
 
 
 class FeatureSerializer(serializers.ModelSerializer):
@@ -33,6 +33,7 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     routing_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
+    schema = serializers.JSONField(required=False, validators=[validate_json_schema])
 
     def get_group_intersect(self, obj):
         return reverse('terra:layer-intersects', args=[obj.name, ])
