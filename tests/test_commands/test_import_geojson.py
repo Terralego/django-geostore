@@ -15,3 +15,21 @@ class ImportGeojsonTest(TestCase):
         # Retrieve the layer
         layer = Layer.objects.all()[0]
         self.assertEqual('__nogroup__', layer.group)
+
+    def test_schema_generated(self):
+        call_command(
+            'import_shapefile',
+            get_files_tests('bati.geojson'),
+            '-i', 'ID_PG',
+            '-gs',
+            verbosity=0)
+
+        # Retrieve the layer
+        layer = Layer.objects.get()
+
+        # Assert schema properties are presents
+        self.assertNotEqual(
+            layer.schema.get('properties').keys() -
+            ['ALTITUDE', 'ETIQUETTE', 'HAUTEUR', 'ID', 'ID_PG', 'NATURE', 'NOM',
+             'ORIGIN_BAT', 'PUB_XDECAL', 'PUB_YDECAL', 'ROTATION', 'ROTATION_S',
+             'XDECAL', 'XDECAL_SYM', 'YDECAL', 'YDECAL_SYM', 'Z_MAX', 'Z_MIN', ], True)
