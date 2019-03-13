@@ -7,10 +7,8 @@ from terracommon.terra.tests.utils import get_files_tests
 
 class ImportGeojsonTest(TestCase):
     def test_default_group(self):
-        empty_geojson = get_files_tests('empty.json')
-
         call_command(
-            'import_geojson', empty_geojson,
+            'import_geojson', get_files_tests('empty.json'),
             verbosity=0)
         # Retrieve the layer
         layer = Layer.objects.all()[0]
@@ -20,7 +18,6 @@ class ImportGeojsonTest(TestCase):
         call_command(
             'import_shapefile',
             get_files_tests('bati.geojson'),
-            '-i', 'ID_PG',
             '-gs',
             verbosity=0)
 

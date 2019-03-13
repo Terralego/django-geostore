@@ -7,13 +7,9 @@ from terracommon.terra.tests.utils import get_files_tests
 
 class ImportShapefileTest(TestCase):
     def test_default_group_nogroup(self):
-        # Sample ShapeFile
-        shapefile_path = get_files_tests('shapefile-WGS84.zip')
-        sample_shapefile = open(shapefile_path, 'rb')
-
         call_command(
             'import_shapefile',
-            sample_shapefile.name,
+            get_files_tests('shapefile-WGS84.zip'),
             '-i', 'ID_PG',
             verbosity=0)
 
@@ -25,13 +21,9 @@ class ImportShapefileTest(TestCase):
         self.assertTrue(len(str(layer.features.first().identifier)) < 32)
 
     def test_reprojection(self):
-        # Sample ShapeFile
-        shapefile_path = get_files_tests('shapefile-RFG93.zip')
-        sample_shapefile = open(shapefile_path, 'rb')
-
         call_command(
             'import_shapefile',
-            sample_shapefile.name,
+            get_files_tests('shapefile-RFG93.zip'),
             verbosity=0)
 
         # Retrieve the layer
@@ -46,17 +38,13 @@ class ImportShapefileTest(TestCase):
         self.assertTrue(bbox[3] <= 90)
 
     def test_default_group(self):
-        # Sample ShapeFile
-        shapefile_path = get_files_tests('shapefile-WGS84.zip')
-        sample_shapefile = open(shapefile_path, 'rb')
-
         # Fake json
         foo_bar_json = get_files_tests('foo_bar.json')
 
         # Import a shapefile
         call_command(
             'import_shapefile',
-            sample_shapefile.name,
+            get_files_tests('shapefile-WGS84.zip'),
             '-i', 'ID_PG',
             verbosity=0)
 
@@ -83,13 +71,9 @@ class ImportShapefileTest(TestCase):
         self.assertEqual({'foo': 'bar'}, layer.settings)
 
     def test_schema_generated(self):
-        shapefile_path = get_files_tests('shapefile-WGS84.zip')
-        sample_shapefile = open(shapefile_path, 'rb')
-
         call_command(
             'import_shapefile',
-            sample_shapefile.name,
-            '-i', 'ID_PG',
+            get_files_tests('shapefile-WGS84.zip'),
             '-gs',
             verbosity=0)
 

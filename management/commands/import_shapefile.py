@@ -83,7 +83,7 @@ class Command(BaseCommand):
                 )
 
         self.import_datas(layer, file_path, identifier)
-        if generate_schema:
+        if generate_schema and not layer_pk:
             # only in layer creation, find properties to generate schema
             layer.schema = {
                 'properties': {

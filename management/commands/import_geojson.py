@@ -83,7 +83,7 @@ class Command(BaseCommand):
                                   "options")
 
         self.import_datas(layer, file_path, identifier)
-        if generate_schema:
+        if generate_schema and not layer_pk:
             # only in layer creation, find properties to generate schema
             layer.schema = {
                 'type': 'object',
@@ -99,7 +99,6 @@ class Command(BaseCommand):
             transaction.savepoint_rollback(sp)
         else:
             transaction.savepoint_commit(sp)
-
 
     def import_datas(self, layer, geojson_files, identifier):
         for file_in in geojson_files:
