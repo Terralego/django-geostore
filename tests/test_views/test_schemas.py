@@ -50,21 +50,27 @@ class SchemaValidationTest(TestCase):
 
     def test_schema_property_match_bad(self):
         """
-        If schema defined, allow features with properties in schema
+        If schema defined, deny unvalid data
         """
         response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"name": 20,
                                                          "age": "wrong data"}},
                                     format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.json())
+        response_json = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("properties", response_json)
+        self.assertIn("age", response_json['properties'])
 
     def test_schema_property_doesnt_match(self):
         """
-        If schema defined, deny features with properties not in schema
+        If schema defined, deny properties not in schema
         """
         response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"toto": "ok"}},
                                     format='json')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.json())
+        response_json = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("properties", response_json)
+        self.assertIn("unexpected", response_json['properties'])
