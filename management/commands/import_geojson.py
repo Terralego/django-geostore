@@ -29,7 +29,7 @@ class Command(BaseCommand):
                                      help="Name of created layer containing GeoJSON datas."
                                           "If not provided an uuid4 is set.")
         parser.add_argument('-gs', '--generate-schema',
-                            action="store",
+                            action="store_true",
                             help=("Generate json form schema from"
                                   "GeoJSON properties.\n"
                                   "Only needed if -l option is provided"))
@@ -60,6 +60,7 @@ class Command(BaseCommand):
         group = options.get('group')
         identifier = options.get('identifier')
         layer_settings = options.get('layer_settings')
+        generate_schema = options.get('generate_schema')
 
         sp = transaction.savepoint()
 
@@ -82,11 +83,23 @@ class Command(BaseCommand):
                                   "options")
 
         self.import_datas(layer, file_path, identifier)
+        if generate_schema:
+            # only in layer creation, find properties to generate schema
+            layer.schema = {
+                'type': 'object',
+                'properties': {
+                    key: {
+                        'type': 'string'
+                    } for key, value in layer.layer_properties.items()
+                }
+            }
+            layer.save()
 
         if dryrun:
             transaction.savepoint_rollback(sp)
         else:
             transaction.savepoint_commit(sp)
+
 
     def import_datas(self, layer, geojson_files, identifier):
         for file_in in geojson_files:

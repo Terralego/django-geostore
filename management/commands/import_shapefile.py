@@ -9,7 +9,7 @@ from terracommon.terra.models import Layer
 
 
 class Command(BaseCommand):
-    help = 'Import Features from Ziped ShapeFile'
+    help = 'Import Features from Zipped ShapeFile'
 
     def add_arguments(self, parser):
         parser.add_argument('file_path',
@@ -32,7 +32,7 @@ class Command(BaseCommand):
                                            "containing ShapeFile datas."
                                            "If not provided an uuid4 is set."))
         parser.add_argument('-gs', '--generate-schema',
-                            action="store",
+                            action='store_true',
                             help=("Generate JSON schema from "
                                   "ShapeFile properties.\n"
                                   "Only available if not -pk option provided."))
@@ -54,6 +54,7 @@ class Command(BaseCommand):
                             action="store_true",
                             help='Execute une dry-run mode')
 
+    @transaction.atomic()
     def handle(self, *args, **options):
         layer_pk = options.get('layer_pk')
         layer_name = options.get('layer-name') or uuid.uuid4()
