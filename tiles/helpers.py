@@ -13,7 +13,7 @@ from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
 from .sigtools import SIGTools
 
 
-def cached_tile(func, expiration=3600*24):
+def cached_tile(func, expiration=3600 * 24 * 7):
     def wrapper(self, x, y, z,
                 pixel_buffer, features_filter, properties_filter,
                 features_limit, *args, **kwargs):
