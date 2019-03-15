@@ -9,7 +9,7 @@ from django.db.models import F
 
 from . import EARTH_RADIUS, EPSG_3857
 from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
-                    ST_SimplifyPreserveTopology, ST_SnapToGrid, ST_Transform)
+                    ST_SimplifyPreserveTopology, ST_Transform)
 from .sigtools import SIGTools
 
 
@@ -37,28 +37,15 @@ class VectorTile(object):
         self.layer, self.cache_key = layer, cache_key
 
     # Number of tile units per pixel
-    EXTENT_RATIO = 16
+    EXTENT_RATIO = 8
+    TILE_WIDTH_PIXEL = 512
 
     def _simplify(self, layer_query, pixel_width_x, pixel_width_y):
         if self.layer.layer_geometry in self.POLYGON:
-            # Grid step is pixel_width_x / 4 and pixel_width_y / 4
-            # Simplify to average two grid steps
+            # Grid step is pixel_width_x / EXTENT_RATIO and pixel_width_y / EXTENT_RATIO
+            # Simplify to average half pixel width
             layer_query = layer_query.annotate(
                 outgeom3857=ST_SimplifyPreserveTopology('outgeom3857', (pixel_width_x + pixel_width_y) / 2 / 2)
-            )
-        return layer_query
-
-    def _lower_precision(self, layer_query, xmin, ymin, pixel_width_x, pixel_width_y):
-        if self.layer.layer_geometry in self.LINESTRING or self.layer.layer_geometry in self.POLYGON:
-            layer_query = layer_query.annotate(
-                outgeom3857=ST_SnapToGrid(
-                    'outgeom3857',
-                    xmin,
-                    ymin,
-                    pixel_width_x / self.EXTENT_RATIO,
-                    pixel_width_y / self.EXTENT_RATIO)
-            ).filter(
-                outgeom3857__isnull=False
             )
         return layer_query
 
@@ -108,8 +95,8 @@ class VectorTile(object):
         bounds = mercantile.bounds(x, y, z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
-        pixel_width_x = (xmax - xmin) / 256
-        pixel_width_y = (ymax - ymin) / 256
+        pixel_width_x = (xmax - xmin) / self.TILE_WIDTH_PIXEL
+        pixel_width_y = (ymax - ymin) / self.TILE_WIDTH_PIXEL
 
         layer_query = features.annotate(
                 bbox=ST_MakeEnvelope(
@@ -136,7 +123,6 @@ class VectorTile(object):
 
         # Lighten geometry
         layer_query = self._simplify(layer_query, pixel_width_x, pixel_width_y)
-        layer_query = self._lower_precision(layer_query, xmin, ymin, pixel_width_x, pixel_width_y)
 
         # Seatbelt
         layer_query = self._limit(layer_query, features_limit)
@@ -170,7 +156,7 @@ class VectorTile(object):
                         ST_AsMvtGeom(
                             outgeom3857,
                             bbox,
-                            {256 * self.EXTENT_RATIO},
+                            {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
                             {pixel_buffer * self.EXTENT_RATIO},
                             true) AS geometry
                     FROM
@@ -180,7 +166,7 @@ class VectorTile(object):
                     ST_AsMVT(
                         tilegeom,
                         CAST(%s AS text),
-                        {256 * self.EXTENT_RATIO},
+                        {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
                         'geometry'
                     ) AS mvt
                 FROM
@@ -257,7 +243,7 @@ def guess_maxzoom(layer):
         # total number of pixels to represent length `avg` (equator)
         nb_pixels_total = 2*pi*EARTH_RADIUS/avg
 
-        tile_resolution = 256*VectorTile.EXTENT_RATIO
+        tile_resolution = VectorTile.TILE_WIDTH_PIXEL*VectorTile.EXTENT_RATIO
 
         # zoom (ceil) to fit those pixels at `tile_resolution`
         max_zoom = ceil(log(nb_pixels_total/tile_resolution, 2))
