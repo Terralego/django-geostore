@@ -85,7 +85,7 @@ class TilejsonView(APIView):
             404: 'The layer group does not exist'
             }
     )
-    @method_decorator(cache_page(60 * 60 * 24))
+    @method_decorator(cache_page(60 * 60 * 24 * 7))
     def get(self, request, group):
         self.layers = Layer.objects.filter(group=group)
 
