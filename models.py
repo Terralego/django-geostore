@@ -14,6 +14,7 @@ from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.indexes import GistIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
@@ -484,6 +485,10 @@ class Feature(models.Model):
 
     class Meta:
         ordering = ['id']
+        indexes = [
+            models.Index(fields=['identifier', ]),
+            GistIndex(fields=['layer', 'geom']),
+            ]
 
 
 class LayerRelation(models.Model):
