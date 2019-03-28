@@ -18,6 +18,29 @@ from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
         'BACKEND': ('django.core.cache.backends'
                     '.locmem.LocMemCache')
     }})
+class VectorTilesNoLayerTestCase(TestCase):
+    group_name = 'mygroup'
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    def test_tilejson_fail_no_layer(self):
+        response = self.client.get(
+            reverse('terra:group-tilejson', args=[self.group_name]),
+            HTTP_HOST='localhost')
+        self.assertEqual(404, response.status_code)
+
+    def test_vector_tiles_view_without_layer(self):
+        # first query that generate the cache
+        response = self.client.get(
+            reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
+        self.assertEqual(404, response.status_code)
+        self.assertEqual(len(response.content), 0)
+
+
+@override_settings(DEBUG=True, CACHES={
+    'default': {
+        'BACKEND': ('django.core.cache.backends'
+                    '.locmem.LocMemCache')
+    }})
 class VectorTilesTestCase(TestCase):
     group_name = 'mygroup'
 
@@ -95,15 +118,6 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tilejson['vector_layers']), 0)
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
 
-    @override_settings(ALLOWED_HOSTS=['localhost'])
-    def test_tilejson_fail_no_layer(self):
-        Feature.objects.all().delete()
-        Layer.objects.all().delete()
-        response = self.client.get(
-            reverse('terra:group-tilejson', args=[self.group_name]),
-            HTTP_HOST='localhost')
-        self.assertEqual(404, response.status_code)
-
     def test_vector_tiles_view(self):
         # first query that generate the cache
         response = self.client.get(
@@ -137,15 +151,6 @@ class VectorTilesTestCase(TestCase):
         response = self.client.get(
             reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
         self.assertEqual(204, response.status_code)
-        self.assertEqual(len(response.content), 0)
-
-    def test_vector_tiles_view_without_layer(self):
-        # first query that generate the cache
-        Feature.objects.all().delete()
-        Layer.objects.all().delete()
-        response = self.client.get(
-            reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
-        self.assertEqual(404, response.status_code)
         self.assertEqual(len(response.content), 0)
 
     def test_caching_geometry(self):
