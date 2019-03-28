@@ -6,7 +6,7 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from terracommon.terra.models import Feature, Layer
+from terracommon.terra.models import Layer
 from terracommon.terra.tests.factories import LayerFactory
 from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
