@@ -6,6 +6,9 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from rest_framework.status import (HTTP_200_OK, HTTP_204_NO_CONTENT,
+                                   HTTP_404_NOT_FOUND)
+
 from terracommon.terra.models import Layer
 from terracommon.terra.tests.factories import LayerFactory
 from terracommon.terra.tests.utils import get_files_tests
@@ -26,13 +29,13 @@ class VectorTilesNoLayerTestCase(TestCase):
         response = self.client.get(
             reverse('terra:group-tilejson', args=[self.group_name]),
             HTTP_HOST='localhost')
-        self.assertEqual(404, response.status_code)
+        self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
 
     def test_vector_tiles_view_without_layer(self):
         # first query that generate the cache
         response = self.client.get(
             reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
-        self.assertEqual(404, response.status_code)
+        self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
         self.assertEqual(len(response.content), 0)
 
 
@@ -109,7 +112,7 @@ class VectorTilesTestCase(TestCase):
             reverse('terra:group-tilejson', args=[self.group_name]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
 
         tilejson = json.loads(response.content)
@@ -122,7 +125,7 @@ class VectorTilesTestCase(TestCase):
         # first query that generate the cache
         response = self.client.get(
             reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
         query_count = len(connection.queries)
         original_content = response.content
@@ -142,7 +145,7 @@ class VectorTilesTestCase(TestCase):
         response = self.client.get(
             reverse('terra:group-tiles', args=[self.group_name, 10, 1, 1]))
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(b'', response.content)
 
     @override_settings(MAX_TILE_ZOOM=9)
@@ -150,7 +153,7 @@ class VectorTilesTestCase(TestCase):
         # first query that generate the cache
         response = self.client.get(
             reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
-        self.assertEqual(204, response.status_code)
+        self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
         self.assertEqual(len(response.content), 0)
 
     def test_caching_geometry(self):
@@ -290,7 +293,7 @@ class VectorTilesSpecialTestCase(TestCase):
             reverse('terra:group-tilejson', args=[self.group_name]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
 
         tilejson = json.loads(response.content)
