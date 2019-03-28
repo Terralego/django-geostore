@@ -123,7 +123,7 @@ class LayerProcessingTestCase(TestCase):
                 f'--layer-name-out=out_fail',
                 f'--sql-centroid',
                 verbosity=0)
-        self.assertIn("Fails open one or many layers with layer-pk-ins : 999", str(error.exception))
+        self.assertIn("layer-pk-ins: 999", str(error.exception))
 
     def test_layer_processing_fail_wrong_name_in(self):
         with self.assertRaises(CommandError) as error:
@@ -133,7 +133,7 @@ class LayerProcessingTestCase(TestCase):
                 f'--layer-name-out=out_fail',
                 f'--sql-centroid',
                 verbosity=0)
-        self.assertIn("Fails open one or many layers with layer-name-ins : in_fail", str(error.exception))
+        self.assertIn("layer-name-ins: in_fail", str(error.exception))
 
     def test_layer_processing_fail_wrong_name_out(self):
         layer = LayerFactory()
