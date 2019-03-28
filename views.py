@@ -14,11 +14,8 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT
 
-from terracommon.accounts.permissions import (IsPostOrToken,
-                                              TokenBasedPermission)
-from terracommon.core.mixins import MultipleFieldLookupMixin
-
 from .filters import JSONFieldFilterBackend
+from .mixins import MultipleFieldLookupMixin
 from .models import FeatureRelation, Layer, LayerRelation
 from .routing.helpers import Routing
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
@@ -31,8 +28,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     lookup_fields = ('pk', 'name')
 
     @detail_route(methods=['get', 'post'],
-                  url_path='shapefile',
-                  permission_classes=(IsPostOrToken, ))
+                  url_path='shapefile')
     def shapefile(self, request, pk=None):
         layer = self.get_object()
 
@@ -62,8 +58,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
         return response
 
-    @detail_route(methods=['get'], url_path='geojson',
-                  permission_classes=(TokenBasedPermission,))
+    @detail_route(methods=['get'], url_path='geojson')
     def to_geojson(self, request, pk=None):
         layer = self.get_object()
         return JsonResponse(layer.to_geojson())

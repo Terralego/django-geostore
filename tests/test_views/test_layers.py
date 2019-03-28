@@ -324,15 +324,6 @@ class LayerShapefileTestCase(TestCase):
             f'{shape_url}?token={token}&uidb64={uidb64}')
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
-    def test_shapefile_fake_token(self):
-        url = "{}?token=aaa&uidb64=zzzzz".format(
-            reverse('terra:layer-shapefile', args=[self.layer.pk, ]))
-
-        self.assertEqual(
-            self.client.get(url).status_code,
-            HTTP_403_FORBIDDEN
-        )
-
     def test_no_shapefile_import(self):
         layer = LayerFactory()
 
