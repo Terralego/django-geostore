@@ -5,8 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK
 
-from terracommon.accounts.tests.factories import TerraUserFactory
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
+from terracommon.terra.tests.factories import FeatureFactory, LayerFactory, TerraUserFactory
 
 
 class FeaturesListViewTest(TestCase):

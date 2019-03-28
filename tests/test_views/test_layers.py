@@ -14,10 +14,8 @@ from rest_framework.status import (HTTP_200_OK, HTTP_204_NO_CONTENT,
                                    HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN)
 from rest_framework.test import APIClient
 
-from terracommon.accounts.mixins import UserTokenGeneratorMixin
-from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Feature
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
+from terracommon.terra.tests.factories import FeatureFactory, LayerFactory, TerraUserFactory
 from terracommon.terra.tests.utils import get_files_tests
 
 
@@ -249,7 +247,7 @@ class LayerFeatureIntersectionTest(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
+class LayerShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = TerraUserFactory()
@@ -370,7 +368,7 @@ class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
+class LayerGeojsonTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = TerraUserFactory()
