@@ -193,7 +193,7 @@ class LayerFeatureIntersectionTest(TestCase):
             }
         )
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json().get('results', {})
         self.assertEqual(
             1,
@@ -212,7 +212,7 @@ class LayerFeatureIntersectionTest(TestCase):
             }
         )
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
 
         response = response.json().get('results', {})
         self.assertEqual(0, len(response.get('features')))
@@ -226,7 +226,7 @@ class LayerFeatureIntersectionTest(TestCase):
                 'geom': '''Invalid geometry'''
             }
         )
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_features_linestring_format(self):
         response = self.client.post(
@@ -236,7 +236,7 @@ class LayerFeatureIntersectionTest(TestCase):
             }
         )
 
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_features_polygon_format(self):
         response = self.client.post(
@@ -246,7 +246,7 @@ class LayerFeatureIntersectionTest(TestCase):
             }
         )
 
-        self.assertEqual(400, response.status_code)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
 class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
@@ -389,7 +389,7 @@ class LayerGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
         response = self.client.get(
             f'{geojson_url}?token={token}&uidb64={uidb64}')
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code)
 
         response = response.json()
         self.assertEqual('FeatureCollection', response.get('type'))

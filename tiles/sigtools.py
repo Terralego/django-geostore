@@ -1,10 +1,8 @@
-from math import pi
-
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.geos import Polygon
 from django.db.models.functions import Cast
 
-from . import EARTH_RADIUS, EPSG_3857
+from . import EPSG_3857
 from .funcs import ST_Extent, ST_Transform
 
 
@@ -53,27 +51,3 @@ class SIGTools(object):
             )
 
         return query
-
-    @classmethod
-    def get_tile_length(cls, zoomLevel):
-        """
-        Function returning the width in meters (EPSG3857) of a tile.
-        Computation is based in the lenght of the equator
-        """
-
-        widthZoom0Equator = float(EARTH_RADIUS * 2 * pi)
-        width = widthZoom0Equator / float(2 ** int(zoomLevel))
-
-        return round(width, 4)
-
-    @classmethod
-    def get_pixel_width(cls, zoomLevel, tileSize=4096):
-        """
-        Function returning the width in meters (EPSG3857) of a tile's pixel,
-        given a fixed size set by defaut of 4096 pixels/tile
-        Uses SIGTools.get_tile_length()
-        """
-
-        width = cls.get_tile_length(int(zoomLevel)) / (tileSize)
-
-        return round(width, 4)
