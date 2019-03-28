@@ -6,8 +6,8 @@ from json.decoder import JSONDecodeError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from terracommon.terra.models import Layer
 from terracommon.terra.management.commands.mixins import CommandMixin
+from terracommon.terra.models import Layer
 
 
 class Command(CommandMixin, BaseCommand):
