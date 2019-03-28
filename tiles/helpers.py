@@ -8,13 +8,12 @@ from django.db import connection
 from django.db.models import F
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import (ST_Area, ST_CollectionExtract, ST_Length, ST_MakeEnvelope,
-                    ST_MakeValid, ST_SetEffectiveArea, ST_SnapToGrid,
-                    ST_Transform)
+from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
+                    ST_SimplifyPreserveTopology, ST_Transform)
 from .sigtools import SIGTools
 
 
-def cached_tile(func, expiration=3600*24):
+def cached_tile(func, expiration=3600 * 24 * 7):
     def wrapper(self, x, y, z,
                 pixel_buffer, features_filter, properties_filter,
                 features_limit, *args, **kwargs):
@@ -38,26 +37,15 @@ class VectorTile(object):
         self.layer, self.cache_key = layer, cache_key
 
     # Number of tile units per pixel
-    EXTENT_RATIO = 16
+    EXTENT_RATIO = 8
+    TILE_WIDTH_PIXEL = 512
 
-    def _lower_precision(self, layer_query, xmin, ymin, pixel_width_x, pixel_width_y):
-        if self.layer.layer_geometry in self.LINESTRING or self.layer.layer_geometry in self.POLYGON:
-            layer_query = layer_query.annotate(
-                outgeom3857=ST_SnapToGrid(
-                    ST_SetEffectiveArea('outgeom3857', pixel_width_x * pixel_width_y / 4 / 128),
-                    xmin,
-                    ymin,
-                    pixel_width_x / self.EXTENT_RATIO,
-                    pixel_width_y / self.EXTENT_RATIO)
-            ).filter(
-                outgeom3857__isnull=False
-            )
-        return layer_query
-
-    def _sanitize(self, layer_query):
+    def _simplify(self, layer_query, pixel_width_x, pixel_width_y):
         if self.layer.layer_geometry in self.POLYGON:
+            # Grid step is pixel_width_x / EXTENT_RATIO and pixel_width_y / EXTENT_RATIO
+            # Simplify to average half pixel width
             layer_query = layer_query.annotate(
-                outgeom3857=ST_CollectionExtract(ST_MakeValid('outgeom3857'), 3)
+                outgeom3857=ST_SimplifyPreserveTopology('outgeom3857', (pixel_width_x + pixel_width_y) / 2 / 2)
             )
         return layer_query
 
@@ -107,8 +95,8 @@ class VectorTile(object):
         bounds = mercantile.bounds(x, y, z)
         xmin, ymin = mercantile.xy(bounds.west, bounds.south)
         xmax, ymax = mercantile.xy(bounds.east, bounds.north)
-        pixel_width_x = (xmax - xmin) / 256
-        pixel_width_y = (ymax - ymin) / 256
+        pixel_width_x = (xmax - xmin) / self.TILE_WIDTH_PIXEL
+        pixel_width_y = (ymax - ymin) / self.TILE_WIDTH_PIXEL
 
         layer_query = features.annotate(
                 bbox=ST_MakeEnvelope(
@@ -129,24 +117,34 @@ class VectorTile(object):
                 bbox_select__intersects=F('geom')
             )
 
-        layer_query = self._lower_precision(layer_query, xmin, ymin, pixel_width_x, pixel_width_y)
-        layer_query = self._sanitize(layer_query)
+        # Filter features
         layer_query = self._filter_on_property(layer_query, features_filter)
         layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
+
+        # Lighten geometry
+        layer_query = self._simplify(layer_query, pixel_width_x, pixel_width_y)
+
+        # Seatbelt
         layer_query = self._limit(layer_query, features_limit)
 
         layer_raw_query, args = layer_query.query.sql_with_params()
 
-        if properties_filter is None:
-            properties = 'properties'
+        properties = "properties || json_build_object('_id', identifier)::jsonb"
+
+        if properties_filter:
+            filter = ', '.join([f"'{f}'" for f in properties_filter])
+            properties = f'''
+                (
+                    ({properties})
+                    - (
+                        SELECT array_agg(k)
+                        FROM jsonb_object_keys(properties) AS t(k)
+                        WHERE k NOT IN ({filter})
+                    )
+                )
+                '''
         elif properties_filter == []:
             properties = 'NULL'
-        else:
-            filter = ', '.join([f"'{f}'" for f in properties_filter])
-            properties = f'''properties - (
-                SELECT array_agg(k)
-                FROM jsonb_object_keys(properties) AS t(k)
-                WHERE k NOT IN ({filter}))'''
 
         with connection.cursor() as cursor:
             sql_query = f'''
@@ -158,7 +156,7 @@ class VectorTile(object):
                         ST_AsMvtGeom(
                             outgeom3857,
                             bbox,
-                            {256 * self.EXTENT_RATIO},
+                            {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
                             {pixel_buffer * self.EXTENT_RATIO},
                             true) AS geometry
                     FROM
@@ -168,7 +166,7 @@ class VectorTile(object):
                     ST_AsMVT(
                         tilegeom,
                         CAST(%s AS text),
-                        {256 * self.EXTENT_RATIO},
+                        {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
                         'geometry'
                     ) AS mvt
                 FROM
@@ -245,7 +243,7 @@ def guess_maxzoom(layer):
         # total number of pixels to represent length `avg` (equator)
         nb_pixels_total = 2*pi*EARTH_RADIUS/avg
 
-        tile_resolution = 256*VectorTile.EXTENT_RATIO
+        tile_resolution = VectorTile.TILE_WIDTH_PIXEL*VectorTile.EXTENT_RATIO
 
         # zoom (ceil) to fit those pixels at `tile_resolution`
         max_zoom = ceil(log(nb_pixels_total/tile_resolution, 2))

@@ -154,6 +154,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
     swagger_schema = None  # FIXME: Temporary disable schema generation
     filter_backends = (JSONFieldFilterBackend, )
     filter_fields = ('properties', )
+    lookup_field = 'identifier'
 
     def get_queryset(self):
         self.layer = get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))

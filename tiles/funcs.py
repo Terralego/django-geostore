@@ -99,3 +99,8 @@ class ST_MakeValid(Func):
 class ST_CollectionExtract(Func):
     function = 'ST_CollectionExtract'
     output_field = RawGeometryField()
+
+
+class ST_SimplifyPreserveTopology(Func):
+    function = 'ST_SimplifyPreserveTopology'
+    output_field = RawGeometryField()

@@ -40,7 +40,7 @@ class Routing(object):
             return self._serialize_routes(routes)
 
     @classmethod
-    def create_topology(cls, layer, tolerance=0.0001):
+    def create_topology(cls, layer, tolerance=0.0001, clean=False):
         cursor = connection.cursor()
         raw_query = """
                     SELECT
@@ -51,12 +51,11 @@ class Routing(object):
                             'id',
                             'source',
                             'target',
-                            'layer_id = %s',
-                            clean := TRUE)
+                            clean := %s)
                     """
 
         cursor.execute(raw_query,
-                       [layer.features.model._meta.db_table, tolerance, layer.pk])
+                       [layer.features.model._meta.db_table, tolerance, clean])
         return ('OK',) == cursor.fetchone()
 
     def _serialize_routes(self, routes):

@@ -2,12 +2,11 @@ from urllib.parse import unquote
 
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-
 from rest_framework import serializers
 
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
-from terracommon.terra.models import Layer, Feature, LayerRelation, \
-                                     FeatureRelation
+from terracommon.terra.models import (Feature, FeatureRelation, Layer,
+                                      LayerRelation)
 
 
 class PropertiesSerializer(serializers.ModelSerializer):

@@ -14,9 +14,10 @@ from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.indexes import GistIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
-from django.db.models import F, Manager
+from django.db.models import Manager
 from django.utils.functional import cached_property
 from fiona.crs import from_epsg
 from mercantile import tiles
@@ -27,7 +28,7 @@ from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from .helpers import ChunkIterator
 from .managers import FeatureQuerySet
 from .routing.helpers import Routing
-from .tiles.funcs import ST_SRID, ST_HausdorffDistance
+from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 
 logger = logging.getLogger(__name__)
@@ -204,11 +205,13 @@ class Layer(models.Model):
         for feature in geojson.get('features', []):
             properties = feature.get('properties', {})
             identifier = properties.get(id_field, uuid.uuid4())
-            Feature.objects.create(
+            Feature.objects.update_or_create(
                 layer=self,
                 identifier=identifier,
-                properties=properties,
-                geom=GEOSGeometry(json.dumps(feature.get('geometry'))),
+                defaults={
+                    'properties': properties,
+                    'geom': GEOSGeometry(json.dumps(feature.get('geometry'))),
+                }
             )
 
     def to_geojson(self):
@@ -240,7 +243,7 @@ class Layer(models.Model):
                     driver='ESRI Shapefile',
                     schema=schema,
                     encoding='UTF-8',
-                    crs=from_epsg(self.layer_projection)
+                    crs=from_epsg(settings.INTERNAL_GEOMETRY_SRID)
                 )
 
             # Export features to each kind of geometry
@@ -340,11 +343,6 @@ class Layer(models.Model):
         # clean cache of updated features
         [feature.clean_vect_tile_cache() for feature in modified]
         return modified
-
-    @cached_property
-    def layer_projection(self):
-        feature = self.features.annotate(srid=ST_SRID(F('geom'))).first()
-        return feature.srid
 
     @cached_property
     def layer_properties(self):
@@ -487,6 +485,10 @@ class Feature(models.Model):
 
     class Meta:
         ordering = ['id']
+        indexes = [
+            models.Index(fields=['identifier', ]),
+            GistIndex(fields=['layer', 'geom']),
+            ]
 
 
 class LayerRelation(models.Model):
