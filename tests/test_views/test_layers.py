@@ -15,7 +15,8 @@ from rest_framework.status import (HTTP_200_OK, HTTP_204_NO_CONTENT,
 from rest_framework.test import APIClient
 
 from terracommon.terra.models import Feature
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory, TerraUserFactory
+from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
+                                               TerraUserFactory)
 from terracommon.terra.tests.utils import get_files_tests
 
 

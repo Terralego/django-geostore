@@ -7,7 +7,8 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from terracommon.terra.models import Layer
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory, TerraUserFactory
+from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
+                                               TerraUserFactory)
 from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.transformations import set_geometry_from_options
 
