@@ -9,6 +9,7 @@ from django.db import transaction
 from terracommon.terra.models import Layer
 from terracommon.terra.management.commands.mixins import CommandMixin
 
+
 class Command(CommandMixin, BaseCommand):
     help = 'Import Features from GeoJSON files'
 
