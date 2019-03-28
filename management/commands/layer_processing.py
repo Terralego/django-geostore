@@ -73,13 +73,17 @@ class Command(BaseCommand):
     def _get_layer_ins(self, pks, names):
         try:
             # On Layer at time to ensure order
-            return (
-                [Layer.objects.get(id=id) for id in pks] +
-                [Layer.objects.get(name=name) for name in names]
-            )
+            layers_by_id = [Layer.objects.get(id=id) for id in pks]
         except Layer.DoesNotExist:
             raise CommandError(f"Fails open one or many layers layer-pk-ins: {', '.join(pks)}")
-        
+        try:
+            layers_by_name = [Layer.objects.get(name=name) for name in names]
+        except Layer.DoesNotExist:
+            raise CommandError(f"Fails open one or many layers layer-name-ins: {', '.join(names)}")
+        return (
+            layers_by_id + layers_by_name
+        )
+
     def _get_layer_by_pk(self, pk):
         try:
             return Layer.objects.get(pk=pk)
