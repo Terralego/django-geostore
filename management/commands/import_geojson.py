@@ -7,9 +7,9 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from terracommon.terra.models import Layer
+from terracommon.terra.management.commands.mixins import CommandMixin
 
-
-class Command(BaseCommand):
+class Command(CommandMixin, BaseCommand):
     help = 'Import Features from GeoJSON files'
 
     def add_arguments(self, parser):
@@ -104,10 +104,3 @@ class Command(BaseCommand):
         for file_in in geojson_files:
             geojson = file_in.read()
             layer.from_geojson(geojson, identifier)
-
-    def get_layer(self, layer_pk):
-        try:
-            layer = Layer.objects.get(pk=layer_pk)
-        except Layer.DoesNotExist:
-            raise CommandError(f"Layer with pk {layer_pk} doesn't exist")
-        return layer
