@@ -30,6 +30,7 @@ from .managers import FeatureQuerySet
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
+from .validators import validate_json_schema, validate_json_schema_data
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def topology_update(func):
 class Layer(models.Model):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
-    schema = JSONField(default=dict, blank=True)
+    schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
 
     # Settings scheam
     SETTINGS_DEFAULT = {
@@ -346,28 +347,44 @@ class Layer(models.Model):
 
     @cached_property
     def layer_properties(self):
-        ''' Return dict of properties that are used by layer's feature
-        '''
-        feature_table = Feature._meta.db_table
+        """
+        Return properties based on layer features or layer schema definition
+        """
+        if self.schema:
+            results = self.schema.get('properties', {}).keys()
 
-        layer_field = Feature._meta.get_field('layer').get_attname_column()[1]
+        else:
+            feature_table = Feature._meta.db_table
 
-        cursor = connection.cursor()
-        raw_query = f"""
-            SELECT
-                jsonb_object_keys(properties) AS key
-            FROM
-                (SELECT properties FROM {feature_table} WHERE {layer_field} = %s) AS t
-            GROUP BY
-                key;
-            """
+            layer_field = Feature._meta.get_field('layer').get_attname_column()[1]
 
-        cursor.execute(raw_query, [self.pk, ])
+            cursor = connection.cursor()
+            raw_query = f"""
+                SELECT
+                    jsonb_object_keys(properties) AS key
+                FROM
+                    (SELECT properties FROM {feature_table} WHERE {layer_field} = %s) AS t
+                GROUP BY
+                    key;
+                """
+
+            cursor.execute(raw_query, [self.pk, ])
+            results = cursor.fetchall()
 
         return {
             prop: 'str'
-            for (prop, ) in cursor.fetchall()
+            for (prop, ) in results
         }
+
+    def get_property_title(self, prop):
+        json_form_properties = self.schema.get('properties', {})
+
+        if prop in json_form_properties:
+            data = json_form_properties[prop]
+            title = data.get('title', prop)
+            return title
+
+        return prop
 
     @cached_property
     def layer_geometry(self):
@@ -427,6 +444,9 @@ class Layer(models.Model):
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
 
+    def __str__(self):
+        return f"{self.name} ({self.group})"
+
     class Meta:
         ordering = ['id']
         permissions = (
@@ -441,7 +461,7 @@ class Feature(models.Model):
                                   blank=False,
                                   null=False,
                                   default=uuid.uuid4)
-    properties = JSONField()
+    properties = JSONField(default=dict, blank=True)
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
                               related_name='features')
@@ -480,6 +500,8 @@ class Feature(models.Model):
         return self.geom.extent
 
     def save(self, *args, **kwargs):
+        # validate schema properties
+        validate_json_schema_data(self.properties, self.layer.schema)
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
 

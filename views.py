@@ -124,7 +124,6 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         return Response(response)
 
     def partial_update(self, request, *args, **kwargs):
-
         if not request.user.has_perm('terra.can_update_features_properties'):
             self.permission_denied(request, 'Operation not allowed')
 
@@ -151,14 +150,24 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
 class FeatureViewSet(viewsets.ModelViewSet):
     serializer_class = FeatureSerializer
-    swagger_schema = None  # FIXME: Temporary disable schema generation
     filter_backends = (JSONFieldFilterBackend, )
     filter_fields = ('properties', )
     lookup_field = 'identifier'
 
+    def get_serializer_context(self):
+        """
+        Layer access in serializer (pk to insure schema generation)
+        """
+        context = super().get_serializer_context()
+        context.update({'layer_pk': self.kwargs.get('layer_pk')})
+        return context
+
     def get_queryset(self):
-        self.layer = get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
-        return self.layer.features.all()
+        layer = get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
+        return layer.features.all()
+
+    def perform_create(self, serializer):
+        serializer.save(layer_id=self.kwargs.get('layer_pk'))
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
@@ -169,4 +178,3 @@ class LayerRelationViewSet(viewsets.ModelViewSet):
 class FeatureRelationViewSet(viewsets.ModelViewSet):
     queryset = FeatureRelation.objects.all()
     serializer_class = FeatureRelationSerializer
-    swagger_schema = None  # FIXME: Temporary disable schema generation

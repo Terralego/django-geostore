@@ -19,10 +19,6 @@ class Command(BaseCommand):
         parser.add_argument('-l', '--layer',
                             action="store",
                             help=("Change the name of the layer"))
-        parser.add_argument('-s', '--schema', nargs='?',
-                            type=argparse.FileType('r'),
-                            action="store",
-                            help=("Replace JSON schema file that describe properties."))
         parser.add_argument('-ls', '--layer_settings', nargs='?',
                             type=argparse.FileType('r'),
                             action="store",
@@ -54,19 +50,9 @@ class Command(BaseCommand):
         if group:
             layer.group = group
 
-        schema = options.get('schema')
-        if schema:
-            self._settings_schema(layer, schema)
-
         layer_settings = options.get('layer_settings')
         if layer_settings:
             self._settings_settings(layer, layer_settings)
-
-    def _settings_schema(self, layer, schema):
-        try:
-            layer.schema = json.loads(schema.read())
-        except AttributeError:
-            raise CommandError("Please provide a valid schema file")
 
     def _settings_settings(self, layer, layer_settings):
         try:

@@ -1,9 +1,9 @@
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework import status
 from rest_framework.test import APIClient
 
 from terracommon.accounts.tests.factories import TerraUserFactory
-from terracommon.terra.models import Feature
 from terracommon.terra.tests.factories import LayerFactory
 
 
@@ -11,47 +11,89 @@ class SchemaValidationTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = TerraUserFactory()
-
         self.client.force_authenticate(user=self.user)
 
-        self.layer = LayerFactory(
-            name="tree",
-            schema={
+        self.no_schema_layer = LayerFactory(name="no schema")
+        self.valid_schema = {
+            "properties": {
                 "name": {
                     "type": "string"
                 },
                 "age": {
                     "type": "integer"
                 }
-            })
+            }
+        }
+        self.property_schema_layer = LayerFactory(
+            name="tree",
+            schema=self.valid_schema)
 
-    def test_feature_with_valid_properties_is_posted(self):
-        """Feature with valid properties is successfully POSTed"""
-        response = self.client.post(
-                        reverse('terra:feature-list', args=[self.layer.id, ]),
-                        {
-                                "geom": "POINT(0 0)",
-                                "layer": self.layer.id,
-                                "name": "valid tree",
-                                "age": 10,
-                                "properties": {},
-                        },
-                        format='json',)
-        features = Feature.objects.all()
+    def test_create_layer_without_valid_schema(self):
+        """
+        Try to create layer with valid schema
+        """
+        response = self.client.post(reverse('terra:layer-list'),
+                                    data={})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(len(features), 1)
-        self.assertEqual(features[0].properties['name'], 'valid tree')
+    def test_create_layer_with_valid_schema(self):
+        """
+        Try to create layer with valid schema
+        """
+        response = self.client.post(reverse('terra:layer-list'),
+                                    data={"schema": self.valid_schema})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_feature_with_missing_property_type_is_not_posted(self):
-        """Feature with missing property type is not successfully POSTed"""
-        response = self.client.post(
-                        reverse('terra:feature-list', args=[self.layer.id, ]),
-                        {
-                            "geom": "POINT(0 0)",
-                            "layer": self.layer.id,
-                            "name": "invalid tree"
-                        },
-                        format='json')
+    def test_create_layer_unvalid_schema(self):
+        """
+        Try to create layer with unvalid schema
+        """
+        response = self.client.post(reverse('terra:layer-list'),
+                                    data={"schema": {"type": "unknown"}})
+        response_json = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("schema", response_json)
 
-        self.assertEqual(response.status_code, 400)
+    def test_no_schema_properties_ok(self):
+        """
+        If no schema defined (or empty), all properties are accepted
+        """
+        response = self.client.post(reverse('terra:feature-list', args=[self.no_schema_layer.pk, ]),
+                                    data={"geom": "POINT(0 0)",
+                                          "properties": {"toto": "ok"}})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.json())
+
+    def test_schema_property_match_good(self):
+        """
+        If schema defined, allow features with properties in schema
+        """
+        response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
+                                    data={"geom": "POINT(0 0)",
+                                          "properties": {"name": "ok",
+                                                         "age": 10}})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.json())
+
+    def test_schema_property_match_bad(self):
+        """
+        If schema defined, deny unvalid data
+        """
+        response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
+                                    data={"geom": "POINT(0 0)",
+                                          "properties": {"name": 20,
+                                                         "age": "wrong data"}})
+        response_json = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("properties", response_json)
+        self.assertIn("wrong data", response_json['properties'][0])
+
+    def test_schema_property_doesnt_match(self):
+        """
+        If schema defined, deny properties not in schema
+        """
+        response = self.client.post(reverse('terra:feature-list', args=[self.property_schema_layer.pk, ]),
+                                    data={"geom": "POINT(0 0)",
+                                          "properties": {"toto": "ok"}})
+        response_json = response.json()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("properties", response_json)
+        self.assertIn("toto", response_json['properties'][0])

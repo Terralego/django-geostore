@@ -1,53 +1,29 @@
-from urllib.parse import unquote
-
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.http import urlunquote
 from rest_framework import serializers
 
 from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
                                       LayerRelation)
+from terracommon.terra.validators import validate_json_schema_data, validate_json_schema
 
 
-class PropertiesSerializer(serializers.ModelSerializer):
-    """
-    Serialize models with a 'properties' field described by the 'schema' field
-    of 'schema_model'
-    The properties are dynamically flattened with other static fields.
-    The viewset url must contains a parameter named against model name suffixed
-    by '_pk'.
-    """
-    schema_model = None
+class FeatureSerializer(serializers.ModelSerializer):
+    properties = serializers.JSONField(required=False)
 
-    def get_fields(self):
-        pk_url_kwarg = f'{self.schema_model._meta.model_name}_pk'
-        schema_object = get_object_or_404(
-                            self.schema_model,
-                            pk=self.context['view'].kwargs[pk_url_kwarg]
-                        )
-        fields = super().get_fields()
-        for name, description in schema_object.schema.items():
-            Field = {
-                'integer': serializers.IntegerField,
-                'string': serializers.CharField,
-            }[description['type']]
-            fields.update({name: Field(source=f'properties.{name}')})
-        return fields
-
-
-class FeatureSerializer(PropertiesSerializer):
-    schema_model = Layer
+    def validate_properties(self, data):
+        """
+        Validate schema if exists
+        """
+        if self.context.get('layer_pk'):
+            layer = Layer.objects.get(pk=self.context.get('layer_pk'))
+            validate_json_schema_data(data, layer.schema)
+        return data
 
     class Meta:
         model = Feature
-        fields = ('id', 'geom', 'layer', 'properties', )
-
-
-class FeatureInLayerSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Feature
-        fields = ('id', 'geom', )
+        fields = ('id', 'identifier', 'layer', 'geom', 'properties', )
+        read_only_fields = ('id', 'layer')
 
 
 class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
@@ -57,15 +33,16 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     routing_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
+    schema = serializers.JSONField(required=False, validators=[validate_json_schema])
 
     def get_group_intersect(self, obj):
         return reverse('terra:layer-intersects', args=[obj.name, ])
 
     def get_group_tilejson(self, obj):
-        return unquote(reverse('terra:group-tilejson', args=[obj.group]))
+        return urlunquote(reverse('terra:group-tilejson', args=[obj.group]))
 
     def get_group_tiles(self, obj):
-        return unquote(reverse('terra:group-tiles-pattern', args=[obj.group]))
+        return urlunquote(reverse('terra:group-tiles-pattern', args=[obj.group]))
 
     def get_routing_url(self, obj):
         return reverse('terra:layer-route', args=[obj.pk, ])
@@ -102,9 +79,7 @@ class LayerRelationSerializer(serializers.ModelSerializer):
         fields = ('id', 'origin', 'destination', 'schema')
 
 
-class FeatureRelationSerializer(PropertiesSerializer):
-    schema_model = LayerRelation
-
+class FeatureRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeatureRelation
         fields = ('id', 'origin', 'destination')
