@@ -22,10 +22,8 @@ from django.utils.functional import cached_property
 from fiona.crs import from_epsg
 from mercantile import tiles
 
-from terracommon.core.helpers import make_zipfile_bytesio
-
 from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
-from .helpers import ChunkIterator
+from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
