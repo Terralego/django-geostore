@@ -1,8 +1,9 @@
 import argparse
 import json
 import uuid
+from json.decoder import JSONDecodeError
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from terracommon.terra.management.commands.mixins import CommandMixin
