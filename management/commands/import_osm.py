@@ -8,10 +8,11 @@ import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
+from terracommon.terra.management.commands.mixins import LayerCommandMixin
 from terracommon.terra.models import Layer
 
 
-class Command(BaseCommand):
+class Command(LayerCommandMixin, BaseCommand):
     overpass_url = "http://overpass-api.de/api/interpreter"
 
     def add_arguments(self, parser):
@@ -73,7 +74,7 @@ class Command(BaseCommand):
         if not value:
             raise CommandError('Ogr2ogr failed to create the geojson')
         if layer_pk:
-            layer = Layer.objects.get(pk=layer_pk)
+            layer = self._get_layer_by_pk(layer_pk)
         else:
             settings = {
                 'metadata': {

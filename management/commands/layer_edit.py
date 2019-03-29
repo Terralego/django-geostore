@@ -5,11 +5,11 @@ from json.decoder import JSONDecodeError
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
-from terracommon.terra.models import Layer
+from terracommon.terra.management.commands.mixins import LayerCommandMixin
 from terracommon.terra.tiles.helpers import guess_maxzoom, guess_minzoom
 
 
-class Command(BaseCommand):
+class Command(LayerCommandMixin, BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('-pk', '--layer-pk',
@@ -33,10 +33,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         layer_pk = options.get('layer_pk')
-        try:
-            layer = Layer.objects.get(pk=layer_pk)
-        except Layer.DoesNotExist:
-            raise CommandError("Please provide a valid layer pk")
+        layer = self._get_layer_by_pk(layer_pk)
 
         self._settings(layer, options)
         self._actions(layer, options)

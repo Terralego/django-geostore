@@ -144,7 +144,7 @@ class LayerProcessingTestCase(TestCase):
                 f'--layer-name-out=out_fail',
                 f'--sql-centroid',
                 verbosity=0)
-        self.assertIn("Fails open layers layer-name-out: out_fail", str(error.exception))
+        self.assertIn("Layer with name out_fail doesn't exist", str(error.exception))
 
     def test_layer_processing_fail_wrong_pk_out(self):
         layer = LayerFactory()
@@ -155,7 +155,7 @@ class LayerProcessingTestCase(TestCase):
                 f'--layer-pk-out=999',
                 f'--sql-centroid',
                 verbosity=0)
-        self.assertIn("Fails open layers layer-pk-out: 999", str(error.exception))
+        self.assertIn("Layer with pk 999 doesn't exist", str(error.exception))
 
     def test_layer_processing_clear_output(self):
         geojson = get_files_tests('toulouse.geojson')

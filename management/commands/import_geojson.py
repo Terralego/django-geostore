@@ -6,11 +6,11 @@ from json.decoder import JSONDecodeError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from terracommon.terra.management.commands.mixins import CommandMixin
+from terracommon.terra.management.commands.mixins import LayerCommandMixin
 from terracommon.terra.models import Layer
 
 
-class Command(CommandMixin, BaseCommand):
+class Command(LayerCommandMixin, BaseCommand):
     help = 'Import Features from GeoJSON files'
 
     def add_arguments(self, parser):
@@ -66,7 +66,7 @@ class Command(CommandMixin, BaseCommand):
         sp = transaction.savepoint()
 
         if layer_pk:
-            layer = self.get_layer(layer_pk)
+            layer = self._get_layer_by_pk(layer_pk)
         else:
             try:
                 settings = json.loads(layer_settings.read()) if layer_settings else {}
