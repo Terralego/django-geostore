@@ -85,7 +85,6 @@ class LayerEditTest(TestCase):
     def test_layer_edit_bad_settings(self):
         layer = Layer.objects.first()
         bad_json = get_files_tests('bad.json')
-        foo_bar_json = get_files_tests('foo_bar.json')
         # Change settings
         with self.assertRaises(CommandError):
             call_command(
@@ -93,20 +92,17 @@ class LayerEditTest(TestCase):
                 '-pk', layer.pk,
                 '-l', 'new_name',
                 '-gr', 'new_group',
-                '-s', foo_bar_json,
                 '-ls', bad_json
             )
 
     def test_layer_edit_guess_zoom(self):
         layer = Layer.objects.first()
-        foo_bar_json = get_files_tests('foo_bar.json')
         # Change settings
         call_command(
             'layer_edit',
             '-pk', layer.pk,
             '-l', 'new_name',
             '-gr', 'new_group',
-            '-s', foo_bar_json,
             '-gz'
         )
         self.assertEqual(str(layer.settings), "{'tiles': {'maxzoom': 15, 'minzoom': 15}}")

@@ -96,8 +96,8 @@ class LayerProcessingTestCase(TestCase):
 
         call_command(
             'import_geojson',
-            f'-g{geojson}',
-            f'-s{empty_json}',
+            f'{geojson}',
+            f'-ls={empty_json}',
             verbosity=0)
 
         # Retrieve the layer
@@ -158,13 +158,11 @@ class LayerProcessingTestCase(TestCase):
         self.assertIn("Fails open layers layer-pk-out: 999", str(error.exception))
 
     def test_layer_processing_clear_output(self):
-        empty_json = get_files_tests('empty.json')
         geojson = get_files_tests('toulouse.geojson')
 
         call_command(
             'import_geojson',
-            f'-g{geojson}',
-            f'-s{empty_json}',
+            f'{geojson}',
             verbosity=0)
 
         # Retrieve the layer

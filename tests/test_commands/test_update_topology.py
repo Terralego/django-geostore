@@ -29,13 +29,11 @@ class UpdateTopologyTestCase(TestCase):
         self.assertEqual("Layer with pk 999 doesn't exist", str(error.exception))
 
     def test_update_topology(self):
-        empty_json = get_files_tests('empty.json')
         geojson = get_files_tests('toulouse.geojson')
 
         call_command(
             'import_geojson',
-            f'-g{geojson}',
-            f'-s{empty_json}',
+            f'{geojson}',
             verbosity=0)
 
         # Retrieve the layer
@@ -47,23 +45,3 @@ class UpdateTopologyTestCase(TestCase):
             f'--layer-pk={in_layer.pk}',
             verbosity=1, stdout=output)
         self.assertIn('Topology successfully updated', output.getvalue())
-
-    def test_update_topology_rollback(self):
-        empty_json = get_files_tests('empty.json')
-        geojson = get_files_tests('toulouse.geojson')
-
-        call_command(
-            'import_geojson',
-            f'-g{geojson}',
-            f'-s{empty_json}',
-            verbosity=0)
-
-        # Retrieve the layer
-        in_layer = Layer.objects.first()
-
-        output = StringIO()
-        call_command(
-            'update_topology',
-            '--dry-run',
-            f'--layer-pk={in_layer.pk}',
-            verbosity=1, stdout=output)

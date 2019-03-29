@@ -31,18 +31,6 @@ class ImportGeojsonTest(TestCase):
         # Retrieve the layer
         self.assertEqual(Layer.objects.count(), 0)
 
-    def test_import_geojson_layer_with_bad_schema(self):
-        empty_geojson = get_files_tests('empty.json')
-        bad_json = get_files_tests('bad.json')
-
-        call_command(
-            'import_geojson',
-            '-g', empty_geojson,
-            '-s', bad_json,
-            verbosity=0)
-        layer = Layer.objects.first()
-        self.assertEqual('__nogroup__', layer.group)
-
     def test_schema_generated(self):
         call_command(
             'import_shapefile',
@@ -66,8 +54,7 @@ class ImportGeojsonTest(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'import_geojson',
-                '-g', empty_geojson,
-                '-s', empty_geojson,
+                empty_geojson,
                 '-ls', bad_json,
                 verbosity=0)
         self.assertEqual("Please provide a valid layer settings file", str(error.exception))
@@ -79,7 +66,7 @@ class ImportGeojsonTest(TestCase):
         call_command(
             'import_geojson',
             f'--layer-pk={layer.pk}',
-            '-g', geojson_sample,
+            '-gs', geojson_sample,
             verbosity=0
         )
         self.assertEqual(len(layer.features.all()), 838)
@@ -90,7 +77,7 @@ class ImportGeojsonTest(TestCase):
             call_command(
                 'import_geojson',
                 f'--layer-pk=999',
-                '-g', geojson_sample,
+                '-gs', geojson_sample,
                 verbosity=0
             )
         self.assertIn("Layer with pk 999 doesn't exist", str(error.exception))
