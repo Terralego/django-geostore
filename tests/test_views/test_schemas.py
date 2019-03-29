@@ -3,7 +3,6 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from terracommon.terra.models import Feature
 from terracommon.terra.tests.factories import LayerFactory, TerraUserFactory
 
 
