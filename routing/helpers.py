@@ -5,8 +5,8 @@ from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
 
-from terracommon.terra.tiles.funcs import (ST_Distance, ST_LineLocatePoint,
-                                           ST_LineSubstring)
+from ..tiles.funcs import (ST_Distance, ST_LineLocatePoint,
+                           ST_LineSubstring)
 
 
 def cached_segment(func, expiration=3600*24):
