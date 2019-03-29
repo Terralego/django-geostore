@@ -16,7 +16,7 @@ from rest_framework.test import APIClient
 
 from terracommon.terra.models import Feature
 from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
-                                               TerraUserFactory)
+                                               UserFactory)
 from terracommon.terra.tests.utils import get_files_tests
 
 
@@ -24,7 +24,7 @@ class LayerLineIntersectionTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.client = APIClient()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
 
     def test_intersect_bad_geometry(self):
@@ -61,7 +61,7 @@ class LayerPolygonIntersectTestCase(TestCase):
             ]
         }
         self.client = APIClient()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
 
     def test_polygon_intersection(self):
@@ -175,7 +175,7 @@ class LayerFeatureIntersectionTest(TestCase):
         self.layer = LayerFactory.create(group=self.group_name,
                                          add_features=5)
 
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_features_intersections(self):
@@ -251,7 +251,7 @@ class LayerFeatureIntersectionTest(TestCase):
 class LayerShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def get_uidb64_token_for_user(self):
@@ -324,6 +324,15 @@ class LayerShapefileTestCase(TestCase):
             f'{shape_url}?token={token}&uidb64={uidb64}')
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
+    def test_shapefile_fake_token(self):
+        url = "{}?token=aaa&uidb64=zzzzz".format(
+            reverse('terra:layer-shapefile', args=[self.layer.pk, ]))
+
+        self.assertEqual(
+            self.client.get(url).status_code,
+            HTTP_403_FORBIDDEN
+        )
+
     def test_no_shapefile_import(self):
         layer = LayerFactory()
 
@@ -363,7 +372,7 @@ class LayerShapefileTestCase(TestCase):
 class LayerGeojsonTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def get_uidb64_token_for_user(self):
@@ -404,7 +413,7 @@ class LayerDetailTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(self.user)
 
     def test_no_permission(self):

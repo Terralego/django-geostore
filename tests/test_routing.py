@@ -7,7 +7,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from terracommon.terra.models import Layer
 from terracommon.terra.routing.helpers import Routing
-from terracommon.terra.tests.factories import FeatureFactory, TerraUserFactory
+from terracommon.terra.tests.factories import FeatureFactory, UserFactory
 from terracommon.terra.tests.utils import get_files_tests
 
 
@@ -36,7 +36,7 @@ class RoutingTestCase(TestCase):
 
     def setUp(self):
         self.layer = Layer.objects.create(name='test_layer')
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
         geojson_path = get_files_tests('toulouse.geojson')

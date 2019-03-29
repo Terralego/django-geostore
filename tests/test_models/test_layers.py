@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from terracommon.terra.models import Layer
 from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
-                                               TerraUserFactory)
+                                               UserFactory)
 from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.transformations import set_geometry_from_options
 
@@ -184,7 +184,7 @@ class LayerFromCSVDictReaderTestCase(TestCase):
 class LayerFromGeojsonTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_import_geojson_with_projection(self):
@@ -209,7 +209,7 @@ class LayerFromGeojsonTestCase(TestCase):
 class LayerFromShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_shapefile_import(self):
@@ -253,7 +253,7 @@ class LayerSettingsTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(self.user)
 
     def test_layer_settings(self):

@@ -36,7 +36,7 @@ class FeatureFactory(factory.DjangoModelFactory):
 UserModel = get_user_model()
 
 
-class TerraUserFactory(factory.DjangoModelFactory):
+class UserFactory(factory.DjangoModelFactory):
 
     class Meta:
         model = UserModel

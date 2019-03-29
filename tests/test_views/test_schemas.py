@@ -3,13 +3,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from terracommon.terra.tests.factories import LayerFactory, TerraUserFactory
+from terracommon.terra.tests.factories import LayerFactory, UserFactory
 
 
 class SchemaValidationTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
 
         self.no_schema_layer = LayerFactory(name="no schema")
