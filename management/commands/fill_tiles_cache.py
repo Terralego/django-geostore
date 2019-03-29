@@ -13,7 +13,8 @@ class Command(BaseCommand):
     @transaction.atomic()
     def handle(self, *args, **options):
         for layer in Layer.objects.all():
-            self.stdout.write(f'Generating {layer.name} tiles cache')
+            if options['verbosity'] >= 1:
+                self.stdout.write(f'Generating {layer.name} tiles cache')
             bbox = layer.features.aggregate(bbox=Extent('geom'))['bbox']
             if bbox:
                 vtile = VectorTile(layer)
