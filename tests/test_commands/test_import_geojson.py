@@ -33,7 +33,7 @@ class ImportGeojsonTest(TestCase):
 
     def test_schema_generated(self):
         call_command(
-            'import_shapefile',
+            'import_geojson',
             get_files_tests('bati.geojson'),
             '-gs',
             verbosity=0)
@@ -66,7 +66,7 @@ class ImportGeojsonTest(TestCase):
         call_command(
             'import_geojson',
             f'--layer-pk={layer.pk}',
-            '-gs', geojson_sample,
+            geojson_sample,
             verbosity=0
         )
         self.assertEqual(len(layer.features.all()), 838)

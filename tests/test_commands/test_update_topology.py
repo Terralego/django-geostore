@@ -45,3 +45,21 @@ class UpdateTopologyTestCase(TestCase):
             f'--layer-pk={in_layer.pk}',
             verbosity=1, stdout=output)
         self.assertIn('Topology successfully updated', output.getvalue())
+
+    def test_update_topology_rollback(self):
+        geojson = get_files_tests('toulouse.geojson')
+
+        call_command(
+            'import_geojson',
+            f'{geojson}',
+            verbosity=0)
+
+        # Retrieve the layer
+        in_layer = Layer.objects.first()
+
+        output = StringIO()
+        call_command(
+            'update_topology',
+            '--dry-run',
+            f'--layer-pk={in_layer.pk}',
+            verbosity=1, stdout=output)
