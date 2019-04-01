@@ -1,5 +1,6 @@
 import json
 
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.gis.gdal.error import GDALException
 from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
                                      Point)
@@ -22,10 +23,12 @@ from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
 
 
-class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
+class LayerViewSet(PermissionRequiredMixin, MultipleFieldLookupMixin, viewsets.ModelViewSet):
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
     lookup_fields = ('pk', 'name')
+    permission_required = ('terra.add_layer',)
+    raise_exception = True
 
     @detail_route(methods=['get', 'post'],
                   url_path='shapefile')
@@ -140,14 +143,14 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         else:
             return HttpResponseBadRequest('Features are missing in GeoJSON')
 
-        return self.to_geojson(request)
 
-
-class FeatureViewSet(viewsets.ModelViewSet):
+class FeatureViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
     serializer_class = FeatureSerializer
     filter_backends = (JSONFieldFilterBackend, )
     filter_fields = ('properties', )
     lookup_field = 'identifier'
+    permission_required = ('terra.add_feature',)
+    raise_exception = True
 
     def get_serializer_context(self):
         """
