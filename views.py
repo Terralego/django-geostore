@@ -1,6 +1,5 @@
 import json
 
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.gis.gdal.error import GDALException
 from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
                                      Point)
@@ -13,7 +12,6 @@ from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
-from rest_framework.status import HTTP_204_NO_CONTENT
 
 from .filters import JSONFieldFilterBackend
 from .mixins import MultipleFieldLookupMixin
@@ -23,12 +21,10 @@ from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
 
 
-class LayerViewSet(PermissionRequiredMixin, MultipleFieldLookupMixin, viewsets.ModelViewSet):
+class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
     lookup_fields = ('pk', 'name')
-    permission_required = ('terra.add_layer',)
-    raise_exception = True
 
     @detail_route(methods=['get', 'post'],
                   url_path='shapefile')
@@ -36,35 +32,41 @@ class LayerViewSet(PermissionRequiredMixin, MultipleFieldLookupMixin, viewsets.M
         layer = self.get_object()
 
         if request.method not in SAFE_METHODS:
-
-            try:
-                shapefile = request.data['shapefile']
-                with transaction.atomic():
-                    layer.features.all().delete()
-                    layer.from_shapefile(shapefile)
-                    response = Response(status=status.HTTP_200_OK)
-            except (ValueError, MultiValueDictKeyError):
-                response = Response(status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            shape_file = layer.to_shapefile()
-
-            if shape_file:
-                response = HttpResponse(content_type='application/zip')
-                response['Content-Disposition'] = (
-                    'attachment; '
-                    f'filename="{layer.name}.zip"')
-
-                response.write(shape_file.getvalue())
+            if request.user.has_perm('terra.can_import_layers'):
+                try:
+                    shapefile = request.data['shapefile']
+                    with transaction.atomic():
+                        layer.features.all().delete()
+                        layer.from_shapefile(shapefile)
+                        response = Response(status=status.HTTP_200_OK)
+                except (ValueError, MultiValueDictKeyError):
+                    response = Response(status=status.HTTP_400_BAD_REQUEST)
             else:
-                response = Response(status=status.HTTP_204_NO_CONTENT)
+                self.permission_denied(request, 'Operation not allowed')
+        else:
+            if request.user.has_perm('terra.can_export_layers'):
+                shape_file = layer.to_shapefile()
 
+                if shape_file:
+                    response = HttpResponse(content_type='application/zip')
+                    response['Content-Disposition'] = (
+                        'attachment; '
+                        f'filename="{layer.name}.zip"')
+
+                    response.write(shape_file.getvalue())
+                else:
+                    response = Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                self.permission_denied(request, 'Operation not allowed')
         return response
 
     @detail_route(methods=['get'], url_path='geojson')
     def to_geojson(self, request, pk=None):
-        layer = self.get_object()
-        return JsonResponse(layer.to_geojson())
+        if request.user.has_perm('terra.can_export_layers'):
+            layer = self.get_object()
+            return JsonResponse(layer.to_geojson())
+        else:
+            self.permission_denied(request, 'Operation not allowed')
 
     @detail_route(methods=['post'])
     def route(self, request, pk=None):
@@ -84,7 +86,7 @@ class LayerViewSet(PermissionRequiredMixin, MultipleFieldLookupMixin, viewsets.M
         route = routing.get_route()
 
         if not route:
-            return Response(status=HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         response_data = {
             'request': {
@@ -144,13 +146,11 @@ class LayerViewSet(PermissionRequiredMixin, MultipleFieldLookupMixin, viewsets.M
             return HttpResponseBadRequest('Features are missing in GeoJSON')
 
 
-class FeatureViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
+class FeatureViewSet(viewsets.ModelViewSet):
     serializer_class = FeatureSerializer
     filter_backends = (JSONFieldFilterBackend, )
     filter_fields = ('properties', )
     lookup_field = 'identifier'
-    permission_required = ('terra.add_feature',)
-    raise_exception = True
 
     def get_serializer_context(self):
         """
