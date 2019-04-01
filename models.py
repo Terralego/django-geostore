@@ -11,6 +11,7 @@ import fiona
 import fiona.transform
 from deepmerge import always_merger
 from django.conf import settings
+from django.contrib.auth.decorators import permission_required
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
@@ -155,6 +156,7 @@ class Layer(models.Model):
                                ' empty geometry,'
                                f' row skipped : {row}')
 
+    @permission_required('terra.can_export_layers', raise_exception=True)
     @topology_update
     @zoom_update
     def from_csv_dictreader(self, reader, pk_properties, options, operations,
@@ -183,6 +185,7 @@ class Layer(models.Model):
                 fast=fast
             )
 
+    @permission_required('terra.can_export_layers', raise_exception=True)
     @topology_update
     @zoom_update
     def from_geojson(self, geojson_data, id_field=None, update=False):
@@ -213,6 +216,7 @@ class Layer(models.Model):
                 }
             )
 
+    @permission_required('terra.can_import_layers', raise_exception=True)
     def to_geojson(self):
         return json.loads(serialize('geojson',
                                     self.features.all(),
@@ -220,6 +224,7 @@ class Layer(models.Model):
                                     geometry_field='geom',
                                     properties_field='properties'))
 
+    @permission_required('terra.can_import_layers', raise_exception=True)
     def to_shapefile(self):
 
         if not self.features.count():
@@ -285,6 +290,7 @@ class Layer(models.Model):
         else:
             return fiona.crs.to_string(projection)
 
+    @permission_required('terra.can_export_layers', raise_exception=True)
     @topology_update
     @zoom_update
     def from_shapefile(self, zipped_shapefile_file, id_field=None):
@@ -450,6 +456,8 @@ class Layer(models.Model):
         permissions = (
             ('can_update_features_properties', 'Is able update geometries '
                                                'properties'),
+            ('can_export_layers', 'Is able to export layers'),
+            ('can_import_layers', 'Is able to import layers'),
         )
 
 
