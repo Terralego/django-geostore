@@ -5,6 +5,7 @@ from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
                                      Point)
 from django.core.serializers import serialize
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
@@ -154,20 +155,29 @@ class FeatureViewSet(viewsets.ModelViewSet):
     filter_fields = ('properties', )
     lookup_field = 'identifier'
 
+    def _get_layer(self):
+        queryfilter = Q(name=self.kwargs.get('layer'))
+        if self.kwargs.get('layer').isdigit():
+            queryfilter |= Q(pk=self.kwargs.get('layer'))
+
+        return get_object_or_404(Layer, queryfilter)
+
     def get_serializer_context(self):
         """
         Layer access in serializer (pk to insure schema generation)
         """
         context = super().get_serializer_context()
-        context.update({'layer_pk': self.kwargs.get('layer_pk')})
+        layer = self._get_layer()
+        context.update({'layer_pk': layer.pk})
         return context
 
     def get_queryset(self):
-        layer = get_object_or_404(Layer, pk=self.kwargs.get('layer_pk'))
+        layer = self._get_layer()
         return layer.features.all()
 
     def perform_create(self, serializer):
-        serializer.save(layer_id=self.kwargs.get('layer_pk'))
+        layer = self._get_layer()
+        serializer.save(layer_id=layer.pk)
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
