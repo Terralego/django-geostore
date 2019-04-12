@@ -22,10 +22,8 @@ from django.utils.functional import cached_property
 from fiona.crs import from_epsg
 from mercantile import tiles
 
-from terracommon.core.helpers import make_zipfile_bytesio
-
 from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
-from .helpers import ChunkIterator
+from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
@@ -452,6 +450,8 @@ class Layer(models.Model):
         permissions = (
             ('can_update_features_properties', 'Is able update geometries '
                                                'properties'),
+            ('can_export_layers', 'Is able to export layers'),
+            ('can_import_layers', 'Is able to import layers'),
         )
 
 

@@ -13,13 +13,9 @@ from rest_framework.decorators import detail_route
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
-from rest_framework.status import HTTP_204_NO_CONTENT
-
-from terracommon.accounts.permissions import (IsPostOrToken,
-                                              TokenBasedPermission)
-from terracommon.core.mixins import MultipleFieldLookupMixin
 
 from .filters import JSONFieldFilterBackend
+from .mixins import MultipleFieldLookupMixin
 from .models import FeatureRelation, Layer, LayerRelation
 from .routing.helpers import Routing
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
@@ -32,42 +28,46 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     lookup_fields = ('pk', 'name')
 
     @detail_route(methods=['get', 'post'],
-                  url_path='shapefile',
-                  permission_classes=(IsPostOrToken, ))
+                  url_path='shapefile')
     def shapefile(self, request, pk=None):
         layer = self.get_object()
 
         if request.method not in SAFE_METHODS:
-
-            try:
-                shapefile = request.data['shapefile']
-                with transaction.atomic():
-                    layer.features.all().delete()
-                    layer.from_shapefile(shapefile)
-                    response = Response(status=status.HTTP_200_OK)
-            except (ValueError, MultiValueDictKeyError):
-                response = Response(status=status.HTTP_400_BAD_REQUEST)
-
-        else:
-            shape_file = layer.to_shapefile()
-
-            if shape_file:
-                response = HttpResponse(content_type='application/zip')
-                response['Content-Disposition'] = (
-                    'attachment; '
-                    f'filename="{layer.name}.zip"')
-
-                response.write(shape_file.getvalue())
+            if request.user.has_perm('terra.can_import_layers'):
+                try:
+                    shapefile = request.data['shapefile']
+                    with transaction.atomic():
+                        layer.features.all().delete()
+                        layer.from_shapefile(shapefile)
+                        response = Response(status=status.HTTP_200_OK)
+                except (ValueError, MultiValueDictKeyError):
+                    response = Response(status=status.HTTP_400_BAD_REQUEST)
             else:
-                response = Response(status=status.HTTP_204_NO_CONTENT)
+                self.permission_denied(request, 'Operation not allowed')
+        else:
+            if request.user.has_perm('terra.can_export_layers'):
+                shape_file = layer.to_shapefile()
 
+                if shape_file:
+                    response = HttpResponse(content_type='application/zip')
+                    response['Content-Disposition'] = (
+                        'attachment; '
+                        f'filename="{layer.name}.zip"')
+
+                    response.write(shape_file.getvalue())
+                else:
+                    response = Response(status=status.HTTP_204_NO_CONTENT)
+            else:
+                self.permission_denied(request, 'Operation not allowed')
         return response
 
-    @detail_route(methods=['get'], url_path='geojson',
-                  permission_classes=(TokenBasedPermission,))
+    @detail_route(methods=['get'], url_path='geojson')
     def to_geojson(self, request, pk=None):
-        layer = self.get_object()
-        return JsonResponse(layer.to_geojson())
+        if request.user.has_perm('terra.can_export_layers'):
+            layer = self.get_object()
+            return JsonResponse(layer.to_geojson())
+        else:
+            self.permission_denied(request, 'Operation not allowed')
 
     @detail_route(methods=['post'])
     def route(self, request, pk=None):
@@ -87,7 +87,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         route = routing.get_route()
 
         if not route:
-            return Response(status=HTTP_204_NO_CONTENT)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         response_data = {
             'request': {
@@ -145,8 +145,6 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
                                               'GeoJSON, verify your data')
         else:
             return HttpResponseBadRequest('Features are missing in GeoJSON')
-
-        return self.to_geojson(request)
 
 
 class FeatureViewSet(viewsets.ModelViewSet):

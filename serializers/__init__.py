@@ -2,7 +2,6 @@ from django.urls import reverse
 from django.utils.http import urlunquote
 from rest_framework import serializers
 
-from terracommon.accounts.mixins import UserTokenGeneratorMixin
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
                                       LayerRelation)
 from terracommon.terra.validators import validate_json_schema_data, validate_json_schema
@@ -26,7 +25,7 @@ class FeatureSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'layer')
 
 
-class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
+class LayerSerializer(serializers.ModelSerializer):
     group_intersect = serializers.SerializerMethodField()
     group_tilejson = serializers.SerializerMethodField()
     group_tiles = serializers.SerializerMethodField()
@@ -47,21 +46,11 @@ class LayerSerializer(serializers.ModelSerializer, UserTokenGeneratorMixin):
     def get_routing_url(self, obj):
         return reverse('terra:layer-route', args=[obj.pk, ])
 
-    def get_token(self, obj, type):
-        if self.current_user.is_anonymous:
-            return None
-
-        uidb64, token = self.get_uidb64_token_for_user(self.current_user)
-        return "{}?uidb64={}&token={}".format(
-            reverse('terra:layer-%s' % type, args=[obj.pk, ]),
-            uidb64,
-            token)
-
     def get_shapefile_url(self, obj):
-        return self.get_token(obj, "shapefile")
+        return reverse('terra:layer-shapefile', args=[obj.pk, ])
 
     def get_geojson_url(self, obj):
-        return self.get_token(obj, "geojson")
+        return reverse('terra:layer-geojson', args=[obj.pk, ])
 
     class Meta:
         model = Layer
