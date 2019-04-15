@@ -25,6 +25,7 @@ from mercantile import tiles
 from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
+from .mixins import BaseUpdatableModel
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
@@ -70,7 +71,7 @@ def topology_update(func):
     return wrapper
 
 
-class Layer(models.Model):
+class Layer(BaseUpdatableModel):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
@@ -455,7 +456,7 @@ class Layer(models.Model):
         )
 
 
-class Feature(models.Model):
+class Feature(BaseUpdatableModel):
     geom = models.GeometryField(srid=settings.INTERNAL_GEOMETRY_SRID)
     identifier = models.CharField(max_length=255,
                                   blank=False,

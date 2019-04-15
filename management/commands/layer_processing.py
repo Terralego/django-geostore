@@ -147,8 +147,8 @@ class Command(LayerCommandMixin, BaseCommand):
             sql_query = f'''
                 WITH
                 {with_}
-                INSERT INTO {Feature._meta.db_table} (layer_id, identifier, properties, geom)
-                SELECT {layer_out.id}, * FROM (
+                INSERT INTO {Feature._meta.db_table} (layer_id, created_at, updated_at, identifier, properties, geom)
+                SELECT {layer_out.id}, NOW(), NOW(), * FROM (
                     {sql}
                 ) AS t
             '''
