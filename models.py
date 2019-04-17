@@ -350,7 +350,7 @@ class Layer(BaseUpdatableModel):
         Return properties based on layer features or layer schema definition
         """
         if self.schema:
-            results = self.schema.get('properties', {}).keys()
+            results = list(self.schema.get('properties', {}).keys())
 
         else:
             feature_table = Feature._meta.db_table
@@ -368,11 +368,11 @@ class Layer(BaseUpdatableModel):
                 """
 
             cursor.execute(raw_query, [self.pk, ])
-            results = cursor.fetchall()
+            results = [x[0] for x in cursor.fetchall()]
 
         return {
             prop: 'str'
-            for (prop, ) in results
+            for prop in results
         }
 
     def get_property_title(self, prop):
