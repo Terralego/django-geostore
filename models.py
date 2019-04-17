@@ -468,8 +468,10 @@ class Feature(BaseUpdatableModel):
                               related_name='features')
 
     source = models.IntegerField(null=True,
+                                 blank=True,
                                  help_text='Internal field used by pgRouting')
     target = models.IntegerField(null=True,
+                                 blank=True,
                                  help_text='Internal field used by pgRouting')
 
     objects = Manager.from_queryset(FeatureQuerySet)()
