@@ -501,10 +501,14 @@ class Feature(BaseUpdatableModel):
         return self.geom.extent
 
     def save(self, *args, **kwargs):
-        # validate schema properties
-        validate_json_schema_data(self.properties, self.layer.schema)
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
+
+    def clean(self):
+        """
+        Validate properties according schema if provided
+        """
+        validate_json_schema_data(self.properties, self.layer.schema)
 
     class Meta:
         ordering = ['id']
