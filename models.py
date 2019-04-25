@@ -19,6 +19,7 @@ from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext as _
 from fiona.crs import from_epsg
 from mercantile import tiles
 
@@ -30,7 +31,7 @@ from .managers import FeatureQuerySet
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
-from .validators import validate_json_schema, validate_json_schema_data
+from .validators import validate_json_schema, validate_json_schema_data, validate_type_geom
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,12 @@ class Layer(models.Model):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-
+    type_geom = models.CharField(choices=[('Undefined', _('Undefined')), ('Point', _('Point')),
+                                          ('MultiPoint', _('Multi Point')),
+                                          ('LineString', _('Linestring')), ('MultiLineString', _('Multi Linestring')),
+                                          ('Polygon', _('Polygon')), ('MultiPolygon', _('Multi Polygon')),
+                                          ('GeometryCollection', 'Geometry Collection'), ], max_length=255,
+                                 default='Undefined')
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {
@@ -229,17 +235,32 @@ class Layer(models.Model):
 
         with TemporaryDirectory() as shape_folder:
             shapes = {}
+            if self.type_geom == 'Undefined':
+                # Create one shapefile by kind of geometry
+                for geom_type in GIS_POINT + GIS_LINESTRING + GIS_POLYGON:
+                    schema = {
+                        'geometry': geom_type,
+                        'properties': self.layer_properties,
+                    }
 
-            # Create one shapefile by kind of geometry
-            for geom_type in GIS_POINT + GIS_LINESTRING + GIS_POLYGON:
+                    shapes[geom_type] = fiona.open(
+                        shape_folder,
+                        layer=geom_type,
+                        mode='w',
+                        driver='ESRI Shapefile',
+                        schema=schema,
+                        encoding='UTF-8',
+                        crs=from_epsg(settings.INTERNAL_GEOMETRY_SRID)
+                    )
+            else:
                 schema = {
-                    'geometry': geom_type,
+                    'geometry': self.type_geom,
                     'properties': self.layer_properties,
                 }
 
-                shapes[geom_type] = fiona.open(
+                shapes[self.type_geom] = fiona.open(
                     shape_folder,
-                    layer=geom_type,
+                    layer=self.type_geom,
                     mode='w',
                     driver='ESRI Shapefile',
                     schema=schema,
@@ -391,11 +412,7 @@ class Layer(models.Model):
         ''' Return the geometry type of the layer using the first feature in
             the layer
         '''
-        feature = self.features.first()
-        if feature:
-            return feature.geom.geom_type
-
-        return None
+        return self.type_geom if self.type_geom != 'Undefined' else None
 
     @cached_property
     def settings_with_default(self):
@@ -502,6 +519,7 @@ class Feature(models.Model):
     def save(self, *args, **kwargs):
         # validate schema properties
         validate_json_schema_data(self.properties, self.layer.schema)
+        validate_type_geom(self.layer.type_geom, self.geom.type, self.identifier)
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
 
