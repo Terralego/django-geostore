@@ -8,7 +8,7 @@ import terracommon.terra.validators
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('terra', '0019_merge_20190329_1056'),
+        ('terra', '0022_auto_20190417_1610'),
     ]
 
     operations = [
