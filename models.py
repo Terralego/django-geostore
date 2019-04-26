@@ -31,7 +31,8 @@ from .managers import FeatureQuerySet
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
-from .validators import validate_json_schema, validate_json_schema_data, validate_type_geom
+from .validators import (validate_json_schema, validate_json_schema_data,
+                         validate_type_geom)
 
 logger = logging.getLogger(__name__)
 
@@ -519,7 +520,7 @@ class Feature(models.Model):
     def save(self, *args, **kwargs):
         # validate schema properties
         validate_json_schema_data(self.properties, self.layer.schema)
-        validate_type_geom(self.layer.type_geom, self.geom.type, self.identifier)
+        validate_type_geom(self.layer.type_geom, self.geom.geom_type, self.identifier)
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
 
