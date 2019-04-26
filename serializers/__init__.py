@@ -32,6 +32,7 @@ class LayerSerializer(serializers.ModelSerializer):
     routing_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
+    type_geom = serializers.CharField()
     schema = serializers.JSONField(required=False, validators=[validate_json_schema])
 
     def get_group_intersect(self, obj):
