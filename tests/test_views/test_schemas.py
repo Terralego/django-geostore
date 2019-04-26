@@ -32,7 +32,7 @@ class SchemaValidationTest(TestCase):
         Try to create layer with valid schema
         """
         response = self.client.post(reverse('terra:layer-list'),
-                                    data={})
+                                    data={"type_geom": "Undefined"})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_layer_with_valid_schema(self):
@@ -40,7 +40,7 @@ class SchemaValidationTest(TestCase):
         Try to create layer with valid schema
         """
         response = self.client.post(reverse('terra:layer-list'),
-                                    data={"schema": self.valid_schema})
+                                    data={"type_geom": "Undefined", "schema": self.valid_schema})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_layer_unvalid_schema(self):
