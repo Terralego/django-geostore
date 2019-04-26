@@ -23,11 +23,10 @@ from django.utils.translation import ugettext as _
 from fiona.crs import from_epsg
 from mercantile import tiles
 
-from terracommon.core.helpers import make_zipfile_bytesio
-
 from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
-from .helpers import ChunkIterator
+from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
+from .mixins import BaseUpdatableModel
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
@@ -74,7 +73,7 @@ def topology_update(func):
     return wrapper
 
 
-class Layer(models.Model):
+class Layer(BaseUpdatableModel):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
@@ -373,7 +372,7 @@ class Layer(models.Model):
         Return properties based on layer features or layer schema definition
         """
         if self.schema:
-            results = self.schema.get('properties', {}).keys()
+            results = list(self.schema.get('properties', {}).keys())
 
         else:
             feature_table = Feature._meta.db_table
@@ -391,11 +390,11 @@ class Layer(models.Model):
                 """
 
             cursor.execute(raw_query, [self.pk, ])
-            results = cursor.fetchall()
+            results = [x[0] for x in cursor.fetchall()]
 
         return {
             prop: 'str'
-            for (prop, ) in results
+            for prop in results
         }
 
     def get_property_title(self, prop):
@@ -474,10 +473,12 @@ class Layer(models.Model):
         permissions = (
             ('can_update_features_properties', 'Is able update geometries '
                                                'properties'),
+            ('can_export_layers', 'Is able to export layers'),
+            ('can_import_layers', 'Is able to import layers'),
         )
 
 
-class Feature(models.Model):
+class Feature(BaseUpdatableModel):
     geom = models.GeometryField(srid=settings.INTERNAL_GEOMETRY_SRID)
     identifier = models.CharField(max_length=255,
                                   blank=False,
@@ -489,8 +490,10 @@ class Feature(models.Model):
                               related_name='features')
 
     source = models.IntegerField(null=True,
+                                 blank=True,
                                  help_text='Internal field used by pgRouting')
     target = models.IntegerField(null=True,
+                                 blank=True,
                                  help_text='Internal field used by pgRouting')
 
     objects = Manager.from_queryset(FeatureQuerySet)()
@@ -522,11 +525,14 @@ class Feature(models.Model):
         return self.geom.extent
 
     def save(self, *args, **kwargs):
-        # validate schema properties
-        validate_json_schema_data(self.properties, self.layer.schema)
-        validate_type_geom(self.layer.type_geom, self.geom.geom_type, self.identifier)
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
+
+    def clean(self):
+        """
+        Validate properties according schema if provided
+        """
+        validate_json_schema_data(self.properties, self.layer.schema)
 
     class Meta:
         ordering = ['id']

@@ -1,3 +1,18 @@
 import os
 
 MEDIA_ACCEL_REDIRECT = os.getenv('MEDIA_ACCEL_REDIRECT', default="False") == "True"
+HOSTNAME = os.environ.get('HOSTNAME', '')
+
+TERRA_TILES_HOSTNAMES = [
+    HOSTNAME,
+]
+
+ALLOWED_HOSTS = []
+
+DEBUG = True
+SWAGGER_ENABLED = False
+
+MAX_TILE_ZOOM = 15
+MIN_TILE_ZOOM = 10
+
+INTERNAL_GEOMETRY_SRID = 4326

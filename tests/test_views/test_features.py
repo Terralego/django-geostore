@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK
 
-from terracommon.accounts.tests.factories import TerraUserFactory
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
+from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
+                                               UserFactory)
 
 
 class FeaturesListViewTest(TestCase):
@@ -74,7 +74,7 @@ class FeaturesListViewTest(TestCase):
         self.layer = LayerFactory.create(group=self.group_name,
                                          add_features=5)
 
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_features_filter_by_properties(self):
@@ -95,7 +95,7 @@ class FeaturesListViewTest(TestCase):
             properties={'number': 2, 'text': 'foo'},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
             {'properties__number': 1, 'properties__text': 'foo'},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -116,7 +116,7 @@ class FeaturesListViewTest(TestCase):
             properties={'number': 2},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
             {'properties__wrongfield': 'wrong value'},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -143,7 +143,7 @@ class FeaturesListViewTest(TestCase):
             properties={'number': 1, 'digit': 34},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
             {'properties__number': 1, 'properties__digit': 42},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -169,7 +169,7 @@ class FeaturesListViewTest(TestCase):
             properties={'text': 'foobar', 'sentence': 'foobar is here'},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer_pk': layer.pk}),
+            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
             {
                 'properties__text': 'foobar',
                 'properties__sentence': 'foobar is here'
@@ -179,3 +179,20 @@ class FeaturesListViewTest(TestCase):
         json_response = response.json()
         self.assertEqual(json_response['count'], 2)
         self.assertEqual(len(json_response['results']), 2)
+
+    def test_feature_from_layer_name(self):
+        layer = LayerFactory()
+        feature = FeatureFactory(
+            layer=layer,
+            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+        )
+
+        response = self.client.get(
+            reverse(
+                'terra:feature-detail',
+                kwargs={'layer': str(layer.name),
+                        'identifier': str(feature.identifier)}
+            ),
+        )
+        self.assertEqual(response.status_code, HTTP_200_OK)

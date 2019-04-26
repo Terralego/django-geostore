@@ -6,10 +6,9 @@ from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from terracommon.accounts.mixins import UserTokenGeneratorMixin
-from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Layer
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
+from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
+                                               UserFactory)
 from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.transformations import set_geometry_from_options
 
@@ -182,10 +181,10 @@ class LayerFromCSVDictReaderTestCase(TestCase):
         self.assertEqual((1.408246, 43.575224), feature.geom.coords)
 
 
-class LayerFromGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
+class LayerFromGeojsonTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_import_geojson_with_projection(self):
@@ -207,10 +206,10 @@ class LayerFromGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
             self.layer.from_geojson(with_bad_projection, "01-01", "01-01")
 
 
-class LayerFromShapefileTestCase(TestCase, UserTokenGeneratorMixin):
+class LayerFromShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_shapefile_import(self):
@@ -254,7 +253,7 @@ class LayerSettingsTestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(self.user)
 
     def test_layer_settings(self):

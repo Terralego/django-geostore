@@ -3,21 +3,17 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
-from django.contrib.auth.tokens import default_token_generator
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
 from rest_framework.status import (HTTP_200_OK, HTTP_204_NO_CONTENT,
                                    HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN)
 from rest_framework.test import APIClient
 
-from terracommon.accounts.mixins import UserTokenGeneratorMixin
-from terracommon.accounts.tests.factories import TerraUserFactory
 from terracommon.terra.models import Feature
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
+from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
+                                               UserFactory)
 from terracommon.terra.tests.utils import get_files_tests
 
 
@@ -25,7 +21,7 @@ class LayerLineIntersectionTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.client = APIClient()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
 
     def test_intersect_bad_geometry(self):
@@ -62,7 +58,7 @@ class LayerPolygonIntersectTestCase(TestCase):
             ]
         }
         self.client = APIClient()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
 
     def test_polygon_intersection(self):
@@ -176,7 +172,7 @@ class LayerFeatureIntersectionTest(TestCase):
         self.layer = LayerFactory.create(group=self.group_name,
                                          add_features=5)
 
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_features_intersections(self):
@@ -249,24 +245,19 @@ class LayerFeatureIntersectionTest(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
+class LayerShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
-
-    def get_uidb64_token_for_user(self):
-        return (urlsafe_base64_encode(force_bytes(self.user.pk)).decode(),
-                default_token_generator.make_token(self.user))
 
     def test_shapefile_export(self):
         # Create at least one feature in the layer, so it's not empty
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer)
 
-        uidb64, token = self.get_uidb64_token_for_user()
         shape_url = reverse('terra:layer-shapefile', args=[self.layer.pk, ])
-        response = self.client.get(
-            f'{shape_url}?token={token}&uidb64={uidb64}')
+        response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
         zip = ZipFile(BytesIO(response.content), 'r')
@@ -291,16 +282,16 @@ class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertIsInstance(serialized_properties['dict'], str)
 
     def test_shapefile_same_import_export(self):
+        self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer, properties={
             'key1': [{
                 'key3': 'hello world',
             }]
         })
 
-        uidb64, token = self.get_uidb64_token_for_user()
         shape_url = reverse('terra:layer-shapefile', args=[self.layer.pk, ])
-        response = self.client.get(
-            f'{shape_url}?token={token}&uidb64={uidb64}')
+        response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
         shapefile = SimpleUploadedFile('shapefile-WGS84.zip',
@@ -318,23 +309,21 @@ class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
     def test_empty_shapefile_export(self):
         # Create en ampty layer to test its behavior
         LayerFactory()
-
-        uidb64, token = self.get_uidb64_token_for_user()
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         shape_url = reverse('terra:layer-shapefile', args=[self.layer.pk, ])
-        response = self.client.get(
-            f'{shape_url}?token={token}&uidb64={uidb64}')
+        response = self.client.get(shape_url)
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
-    def test_shapefile_fake_token(self):
-        url = "{}?token=aaa&uidb64=zzzzz".format(
-            reverse('terra:layer-shapefile', args=[self.layer.pk, ]))
+    def test_shapefile_no_permission(self):
+        shape_url = reverse('terra:layer-shapefile', args=[self.layer.pk, ])
 
         self.assertEqual(
-            self.client.get(url).status_code,
+            self.client.get(shape_url).status_code,
             HTTP_403_FORBIDDEN
         )
 
     def test_no_shapefile_import(self):
+        self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
         layer = LayerFactory()
 
         response = self.client.post(
@@ -343,6 +332,7 @@ class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_shapefile_import_view(self):
+        self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
         layer = LayerFactory()
 
         shapefile_path = get_files_tests('shapefile-WGS84.zip')
@@ -360,6 +350,7 @@ class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual(8, layer.features.all().count())
 
     def test_shapefile_import_view_error(self):
+        self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
         shapefile = SimpleUploadedFile('shapefile-WGS84.zip',
                                        b'bad bad data')
 
@@ -370,24 +361,19 @@ class LayerShapefileTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
+class LayerGeojsonTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_login(self.user)
-
-    def get_uidb64_token_for_user(self):
-        return (urlsafe_base64_encode(force_bytes(self.user.pk)).decode(),
-                default_token_generator.make_token(self.user))
 
     def test_to_geojson(self):
         # Create at least one feature in the layer, so it's not empty
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer)
 
-        uidb64, token = self.get_uidb64_token_for_user()
         geojson_url = reverse('terra:layer-geojson', args=[self.layer.pk, ])
-        response = self.client.get(
-            f'{geojson_url}?token={token}&uidb64={uidb64}')
+        response = self.client.get(geojson_url)
 
         self.assertEqual(HTTP_200_OK, response.status_code)
 
@@ -395,6 +381,15 @@ class LayerGeojsonTestCase(TestCase, UserTokenGeneratorMixin):
         self.assertEqual('FeatureCollection', response.get('type'))
         self.assertEqual(self.layer.features.all().count(),
                          len(response.get('features')))
+
+    def test_to_geojson_no_permission(self):
+        # Create at least one feature in the layer, so it's not empty
+        FeatureFactory(layer=self.layer)
+
+        geojson_url = reverse('terra:layer-geojson', args=[self.layer.pk, ])
+        response = self.client.get(geojson_url)
+
+        self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
 
 
 class LayerDetailTest(TestCase):
@@ -414,7 +409,7 @@ class LayerDetailTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.layer = LayerFactory()
-        self.user = TerraUserFactory()
+        self.user = UserFactory()
         self.client.force_authenticate(self.user)
 
     def test_no_permission(self):
