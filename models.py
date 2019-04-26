@@ -532,6 +532,7 @@ class Feature(BaseUpdatableModel):
         """
         Validate properties according schema if provided
         """
+        validate_type_geom(self.layer, self.geom)
         validate_json_schema_data(self.properties, self.layer.schema)
 
     class Meta:

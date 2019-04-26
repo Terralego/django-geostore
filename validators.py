@@ -37,7 +37,8 @@ def validate_json_schema_data(value, schema):
     return value
 
 
-def validate_type_geom(type_geom_layer, type_geom_feature, identifier):
-    if type_geom_layer != 'Undefined' and type_geom_layer != type_geom_feature:
-        raise ValidationError(message=f'Feature {identifier} must be type {type_geom_feature}')
-    return type_geom_feature
+def validate_type_geom(layer, feature_geom):
+    if layer and feature_geom:
+        if layer.type_geom != 'Undefined' and layer.type_geom != feature_geom.geom_type:
+            raise ValidationError(message=f'Geometry type is not the same on the layer')
+    return feature_geom
