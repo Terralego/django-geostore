@@ -413,7 +413,11 @@ class Layer(models.Model):
         ''' Return the geometry type of the layer using the first feature in
             the layer
         '''
-        return self.type_geom if self.type_geom != 'Undefined' else None
+        if self.type_geom == 'Undefined':
+            feature = self.features.first()
+            if feature:
+                return feature.geom.geom_type
+        return self.type_geom
 
     @cached_property
     def settings_with_default(self):
