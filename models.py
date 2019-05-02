@@ -19,7 +19,6 @@ from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
 from fiona.crs import from_epsg
 from mercantile import tiles
 
@@ -74,15 +73,14 @@ def topology_update(func):
 
 
 class Layer(BaseUpdatableModel):
+    TYPE_GEOM_CHOICES = [
+        (0, 'Point'), (4, 'MultiPoint'),  (1, 'LineString'), (5, 'MultiLineString'),
+        (3, 'Polygon'), (6, 'MultiPolygon'), (7, 'GeometryCollection'),
+    ]
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-    type_geom = models.CharField(choices=[('Undefined', _('Undefined')), ('Point', _('Point')),
-                                          ('MultiPoint', _('Multi Point')),
-                                          ('LineString', _('Linestring')), ('MultiLineString', _('Multi Linestring')),
-                                          ('Polygon', _('Polygon')), ('MultiPolygon', _('Multi Polygon')),
-                                          ('GeometryCollection', 'Geometry Collection'), ], max_length=255,
-                                 default='Undefined')
+    type_geom = models.IntegerField(choices=TYPE_GEOM_CHOICES, blank=True, null=True)
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {
@@ -235,10 +233,10 @@ class Layer(BaseUpdatableModel):
 
         with TemporaryDirectory() as shape_folder:
             shapes = {}
-            if self.type_geom == 'Undefined':
+            if not self.type_geom:
                 type_to_check = GIS_POINT + GIS_LINESTRING + GIS_POLYGON
             else:
-                type_to_check = self.type_geom
+                type_to_check = self.get_type_geom_display()
             # Create one shapefile by kind of geometry
             for geom_type in type_to_check:
                 schema = {
@@ -400,7 +398,7 @@ class Layer(BaseUpdatableModel):
         ''' Return the geometry type of the layer using the first feature in
             the layer
         '''
-        if self.type_geom == 'Undefined':
+        if not self.type_geom:
             feature = self.features.first()
             if feature:
                 return feature.geom.geom_type
