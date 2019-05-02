@@ -56,8 +56,8 @@ class VectorTile(object):
             )
         return layer_query
 
-    LINESTRING = ('LineString', 'MultiLineString')
-    POLYGON = ('Polygon', 'MultiPolygon')
+    LINESTRING = (1, 5)
+    POLYGON = (3, 6)
 
     def _filter_on_geom_size(self, layer_query, layer_geometry, pixel_width_x, pixel_width_y):
         if self.layer.layer_geometry in self.LINESTRING:

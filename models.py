@@ -22,7 +22,6 @@ from django.utils.functional import cached_property
 from fiona.crs import from_epsg
 from mercantile import tiles
 
-from . import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .mixins import BaseUpdatableModel
@@ -234,7 +233,8 @@ class Layer(BaseUpdatableModel):
         with TemporaryDirectory() as shape_folder:
             shapes = {}
             if not self.type_geom:
-                type_to_check = GIS_POINT + GIS_LINESTRING + GIS_POLYGON
+                type_to_check = ['LineString', 'MultiLineString', 'Point',
+                                 'MultiPoint', 'Polygon', 'MultiPolygon']
             else:
                 type_to_check = self.get_type_geom_display()
             # Create one shapefile by kind of geometry
@@ -401,7 +401,7 @@ class Layer(BaseUpdatableModel):
         if not self.type_geom:
             feature = self.features.first()
             if feature:
-                return feature.geom.geom_type
+                return feature.geom.geom_typeid
         return self.type_geom
 
     @cached_property

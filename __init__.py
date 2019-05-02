@@ -1,3 +1,3 @@
-GIS_POINT = ('Point', 'MultiPoint')
-GIS_LINESTRING = ('LineString', 'MultiLineString')
-GIS_POLYGON = ('Polygon', 'MultiPolygon')
+GIS_POINT = (0, 4)
+GIS_LINESTRING = (1, 5)
+GIS_POLYGON = (3, 6)
