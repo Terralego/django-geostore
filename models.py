@@ -236,31 +236,19 @@ class Layer(BaseUpdatableModel):
         with TemporaryDirectory() as shape_folder:
             shapes = {}
             if self.type_geom == 'Undefined':
-                # Create one shapefile by kind of geometry
-                for geom_type in GIS_POINT + GIS_LINESTRING + GIS_POLYGON:
-                    schema = {
-                        'geometry': geom_type,
-                        'properties': self.layer_properties,
-                    }
-
-                    shapes[geom_type] = fiona.open(
-                        shape_folder,
-                        layer=geom_type,
-                        mode='w',
-                        driver='ESRI Shapefile',
-                        schema=schema,
-                        encoding='UTF-8',
-                        crs=from_epsg(settings.INTERNAL_GEOMETRY_SRID)
-                    )
+                type_to_check = GIS_POINT + GIS_LINESTRING + GIS_POLYGON
             else:
+                type_to_check = self.type_geom
+            # Create one shapefile by kind of geometry
+            for geom_type in type_to_check:
                 schema = {
-                    'geometry': self.type_geom,
+                    'geometry': geom_type,
                     'properties': self.layer_properties,
                 }
 
-                shapes[self.type_geom] = fiona.open(
+                shapes[geom_type] = fiona.open(
                     shape_folder,
-                    layer=self.type_geom,
+                    layer=geom_type,
                     mode='w',
                     driver='ESRI Shapefile',
                     schema=schema,
