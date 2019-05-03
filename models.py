@@ -72,25 +72,26 @@ def topology_update(func):
     return wrapper
 
 
-class TypeGeom(IntEnum):
+class GeometryTypes(IntEnum):
     Point = 0
-    MultiPoint = 4
     LineString = 1
-    MultiLineString = 5
+    # LinearRing = 2
     Polygon = 3
+    MultiPoint = 4
+    MultiLineString = 5
     MultiPolygon = 6
     GeometryCollection = 7
 
     @classmethod
     def choices(cls):
-        return [(int(val), str(key)) for key, val in cls.__members__.items()]
+        return [(geom_type, geom_type.value) for geom_type in cls]
 
 
 class Layer(BaseUpdatableModel):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-    type_geom = models.IntegerField(choices=TypeGeom.choices(), blank=True, null=True)
+    type_geom = models.IntegerField(choices=GeometryTypes.choices(), blank=True, null=True)
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {
@@ -244,8 +245,8 @@ class Layer(BaseUpdatableModel):
         with TemporaryDirectory() as shape_folder:
             shapes = {}
             if not self.type_geom:
-                type_to_check = ['LineString', 'MultiLineString', 'Point',
-                                 'MultiPoint', 'Polygon', 'MultiPolygon']
+                type_to_check = [geom_type for geom_type in GeometryTypes
+                                 if geom_type != 'GeometryCollection']
             else:
                 type_to_check = self.get_type_geom_display()
             # Create one shapefile by kind of geometry
@@ -406,24 +407,24 @@ class Layer(BaseUpdatableModel):
 
     @property
     def is_point(self):
-        return self.layer_geometry in (TypeGeom.Point,
-                                       TypeGeom.MultiPoint)
+        return self.layer_geometry in (GeometryTypes.Point,
+                                       GeometryTypes.MultiPoint)
 
     @property
     def is_linestring(self):
-        return self.layer_geometry in (TypeGeom.LineString,
-                                       TypeGeom.MultiLineString)
+        return self.layer_geometry in (GeometryTypes.LineString,
+                                       GeometryTypes.MultiLineString)
 
     @property
     def is_polygon(self):
-        return self.layer_geometry in (TypeGeom.Polygon,
-                                       TypeGeom.MultiPolygon)
+        return self.layer_geometry in (GeometryTypes.Polygon,
+                                       GeometryTypes.MultiPolygon)
 
     @property
     def is_multi(self):
-        return self.layer_geometry in (TypeGeom.MultiPoint,
-                                       TypeGeom.MultiLineString,
-                                       TypeGeom.MultiPolygon)
+        return self.layer_geometry in (GeometryTypes.MultiPoint,
+                                       GeometryTypes.MultiLineString,
+                                       GeometryTypes.MultiPolygon)
 
     @cached_property
     def layer_geometry(self):

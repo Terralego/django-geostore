@@ -41,7 +41,7 @@ class VectorTile(object):
     TILE_WIDTH_PIXEL = 512
 
     def _simplify(self, layer_query, pixel_width_x, pixel_width_y):
-        if self.layer.layer_geometry in self.POLYGON:
+        if self.layer.is_polygon:
             # Grid step is pixel_width_x / EXTENT_RATIO and pixel_width_y / EXTENT_RATIO
             # Simplify to average half pixel width
             layer_query = layer_query.annotate(
@@ -56,18 +56,15 @@ class VectorTile(object):
             )
         return layer_query
 
-    LINESTRING = (1, 5)
-    POLYGON = (3, 6)
-
     def _filter_on_geom_size(self, layer_query, layer_geometry, pixel_width_x, pixel_width_y):
-        if self.layer.layer_geometry in self.LINESTRING:
+        if self.layer.is_linestring:
             # Larger then a half of pixel
             layer_query = layer_query.annotate(
                 length3857=ST_Length('outgeom3857')
             ).filter(
                 length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2
             )
-        elif self.layer.layer_geometry in self.POLYGON:
+        elif self.layer.is_polygon:
             # Larger than a quarter of pixel
             layer_query = layer_query.annotate(
                 area3857=ST_Area('outgeom3857')
@@ -79,9 +76,9 @@ class VectorTile(object):
     def _limit(self, layer_query, features_limit):
         if features_limit is not None:
             # Order by feature size before limit
-            if self.layer.layer_geometry in self.LINESTRING:
+            if self.layer.is_linestring:
                 layer_query = layer_query.order_by('length3857')
-            elif self.layer.layer_geometry in self.POLYGON:
+            elif self.layer.is_polygon:
                 layer_query = layer_query.order_by('area3857')
 
             layer_query = layer_query[:features_limit]
