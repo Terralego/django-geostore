@@ -4,6 +4,7 @@ import logging
 import os
 import uuid
 from copy import deepcopy
+from enum import IntEnum
 from functools import reduce
 from tempfile import TemporaryDirectory
 
@@ -71,15 +72,25 @@ def topology_update(func):
     return wrapper
 
 
+class TypeGeom(IntEnum):
+    Point = 0
+    MultiPoint = 4
+    LineString = 1
+    MultiLineString = 5
+    Polygon = 3
+    MultiPolygon = 6
+    GeometryCollection = 7
+
+    @classmethod
+    def choices(cls):
+        return [(int(val), str(key)) for key, val in cls.__members__.items()]
+
+
 class Layer(BaseUpdatableModel):
-    TYPE_GEOM_CHOICES = [
-        (0, 'Point'), (4, 'MultiPoint'),  (1, 'LineString'), (5, 'MultiLineString'),
-        (3, 'Polygon'), (6, 'MultiPolygon'), (7, 'GeometryCollection'),
-    ]
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-    type_geom = models.IntegerField(choices=TYPE_GEOM_CHOICES, blank=True, null=True)
+    type_geom = models.IntegerField(choices=TypeGeom.choices(), blank=True, null=True)
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {
@@ -395,19 +406,24 @@ class Layer(BaseUpdatableModel):
 
     @property
     def is_point(self):
-        return self.layer_geometry in (0, 4)
+        return self.layer_geometry in (TypeGeom.Point,
+                                       TypeGeom.MultiPoint)
 
     @property
     def is_linestring(self):
-        return self.layer_geometry in (1, 5)
+        return self.layer_geometry in (TypeGeom.LineString,
+                                       TypeGeom.MultiLineString)
 
     @property
     def is_polygon(self):
-        return self.layer_geometry in (3, 6)
+        return self.layer_geometry in (TypeGeom.Polygon,
+                                       TypeGeom.MultiPolygon)
 
     @property
     def is_multi(self):
-        return self.layer_geometry in (4, 5, 6)
+        return self.layer_geometry in (TypeGeom.MultiPoint,
+                                       TypeGeom.MultiLineString,
+                                       TypeGeom.MultiPolygon)
 
     @cached_property
     def layer_geometry(self):
