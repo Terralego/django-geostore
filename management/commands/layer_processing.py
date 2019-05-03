@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 from django.utils.module_loading import import_string
 
-from terracommon.terra import GIS_LINESTRING, GIS_POINT, GIS_POLYGON
 from terracommon.terra.management.commands.mixins import LayerCommandMixin
 from terracommon.terra.models import Feature, Layer
 
@@ -160,12 +159,12 @@ class Command(LayerCommandMixin, BaseCommand):
             raise ValueError('Exactly one input layer required')
         layer_in = layer_ins[0]
 
-        if layer_in.layer_geometry in GIS_POINT:
+        if layer_in.is_point:
             raise NotImplementedError
-        elif layer_in.layer_geometry in GIS_LINESTRING:
+        elif layer_in.is_linestring:
             raise NotImplementedError
-        elif layer_in.layer_geometry in GIS_POLYGON:
-            if not layer_in.layer_geometry.startswith('Multi'):
+        elif layer_in.is_polygon:
+            if not layer_in.is_multi:
                 # Polygon
                 self._sql(
                     """

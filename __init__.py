@@ -1,3 +1,0 @@
-GIS_POINT = (0, 4)
-GIS_LINESTRING = (1, 5)
-GIS_POLYGON = (3, 6)

@@ -393,6 +393,22 @@ class Layer(BaseUpdatableModel):
 
         return prop
 
+    @property
+    def is_point(self):
+        return self.layer_geometry in (0, 4)
+
+    @property
+    def is_linestring(self):
+        return self.layer_geometry in (1, 5)
+
+    @property
+    def is_polygon(self):
+        return self.layer_geometry in (3, 6)
+
+    @property
+    def is_multi(self):
+        return self.layer_geometry in (4, 5, 6)
+
     @cached_property
     def layer_geometry(self):
         ''' Return the geometry type of the layer using the first feature in

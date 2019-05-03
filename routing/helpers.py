@@ -25,7 +25,7 @@ def cached_segment(func, expiration=3600*24):
 class Routing(object):
 
     def __init__(self, points, layer):
-        if layer.layer_geometry != 1:
+        if not layer.is_linestring or layer.is_multi:
             raise ValueError('Layer is not routable')
 
         self.points, self.layer = points, layer
