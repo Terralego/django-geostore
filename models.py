@@ -75,7 +75,7 @@ def topology_update(func):
 class GeometryTypes(IntEnum):
     Point = 0
     LineString = 1
-    # LinearRing = 2
+    # LinearRing 2
     Polygon = 3
     MultiPoint = 4
     MultiLineString = 5
@@ -245,8 +245,7 @@ class Layer(BaseUpdatableModel):
         with TemporaryDirectory() as shape_folder:
             shapes = {}
             if not self.type_geom:
-                type_to_check = [geom_type for geom_type in GeometryTypes
-                                 if geom_type != 'GeometryCollection']
+                type_to_check = [str(key) for key in GeometryTypes.__members__.keys() if key != 'GeometryCollection']
             else:
                 type_to_check = self.get_type_geom_display()
             # Create one shapefile by kind of geometry
