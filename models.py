@@ -91,7 +91,7 @@ class Layer(BaseUpdatableModel):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-    type_geom = models.IntegerField(choices=GeometryTypes.choices(), blank=True, null=True)
+    type_geom = models.IntegerField(choices=GeometryTypes.choices(), null=True)
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {

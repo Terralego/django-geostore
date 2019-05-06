@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='layer',
             name='type_geom',
-            field=models.IntegerField(blank=True, choices=[(terracommon.terra.models.GeometryTypes(0), 0), (terracommon.terra.models.GeometryTypes(1), 1), (terracommon.terra.models.GeometryTypes(3), 3), (terracommon.terra.models.GeometryTypes(4), 4), (terracommon.terra.models.GeometryTypes(5), 5), (terracommon.terra.models.GeometryTypes(6), 6), (terracommon.terra.models.GeometryTypes(7), 7)], null=True),
+            field=models.IntegerField(choices=[(terracommon.terra.models.GeometryTypes(0), 0), (terracommon.terra.models.GeometryTypes(1), 1), (terracommon.terra.models.GeometryTypes(3), 3), (terracommon.terra.models.GeometryTypes(4), 4), (terracommon.terra.models.GeometryTypes(5), 5), (terracommon.terra.models.GeometryTypes(6), 6), (terracommon.terra.models.GeometryTypes(7), 7)], null=True),
         ),
     ]
