@@ -245,7 +245,9 @@ class Layer(BaseUpdatableModel):
         with TemporaryDirectory() as shape_folder:
             shapes = {}
             if not self.type_geom:
-                type_to_check = [str(key) for key in GeometryTypes.__members__.keys() if key != 'GeometryCollection']
+                type_to_check = [GeometryTypes.Point.name, GeometryTypes.MultiPoint.name,
+                                 GeometryTypes.LineString.name, GeometryTypes.MultiLineString.name,
+                                 GeometryTypes.Polygon.name, GeometryTypes.MultiPolygon.name]
             else:
                 type_to_check = self.get_type_geom_display()
             # Create one shapefile by kind of geometry
