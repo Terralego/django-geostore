@@ -432,7 +432,7 @@ class Layer(BaseUpdatableModel):
         ''' Return the geometry type of the layer using the first feature in
             the layer if the layer have no geom_type or the geom_type of the layer
         '''
-        if not self.geom_type:
+        if self.geom_type is None:
             feature = self.features.first()
             if feature:
                 return feature.geom.geom_typeid
