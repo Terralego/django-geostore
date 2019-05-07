@@ -244,7 +244,7 @@ class Layer(BaseUpdatableModel):
 
         with TemporaryDirectory() as shape_folder:
             shapes = {}
-            if not self.geom_type:
+            if self.geom_type is None:
                 type_to_check = [GeometryTypes.Point.name, GeometryTypes.MultiPoint.name,
                                  GeometryTypes.LineString.name, GeometryTypes.MultiLineString.name,
                                  GeometryTypes.Polygon.name, GeometryTypes.MultiPolygon.name]
