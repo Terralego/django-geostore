@@ -430,7 +430,7 @@ class Layer(BaseUpdatableModel):
     @cached_property
     def layer_geometry(self):
         ''' Return the geometry type of the layer using the first feature in
-            the layer
+            the layer if the layer have no geom_type or the geom_type of the layer
         '''
         if not self.geom_type:
             feature = self.features.first()
