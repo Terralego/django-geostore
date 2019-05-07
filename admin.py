@@ -6,8 +6,8 @@ from . import models
 
 @admin.register(models.Layer)
 class LayerAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'group', 'type_geom')
-    list_filter = ('group', 'type_geom')
+    list_display = ('pk', 'name', 'group', 'geom_type')
+    list_filter = ('group', 'geom_type')
 
 
 @admin.register(models.Feature)

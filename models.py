@@ -29,8 +29,8 @@ from .mixins import BaseUpdatableModel
 from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
-from .validators import (validate_json_schema, validate_json_schema_data,
-                         validate_type_geom)
+from .validators import (validate_geom_type, validate_json_schema,
+                         validate_json_schema_data)
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class Layer(BaseUpdatableModel):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-    type_geom = models.IntegerField(choices=GeometryTypes.choices(), null=True)
+    geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {
@@ -244,12 +244,12 @@ class Layer(BaseUpdatableModel):
 
         with TemporaryDirectory() as shape_folder:
             shapes = {}
-            if not self.type_geom:
+            if not self.geom_type:
                 type_to_check = [GeometryTypes.Point.name, GeometryTypes.MultiPoint.name,
                                  GeometryTypes.LineString.name, GeometryTypes.MultiLineString.name,
                                  GeometryTypes.Polygon.name, GeometryTypes.MultiPolygon.name]
             else:
-                type_to_check = self.get_type_geom_display()
+                type_to_check = self.get_geom_type_display()
             # Create one shapefile by kind of geometry
             for geom_type in type_to_check:
                 schema = {
@@ -432,11 +432,11 @@ class Layer(BaseUpdatableModel):
         ''' Return the geometry type of the layer using the first feature in
             the layer
         '''
-        if not self.type_geom:
+        if not self.geom_type:
             feature = self.features.first()
             if feature:
                 return feature.geom.geom_typeid
-        return self.type_geom
+        return self.geom_type
 
     @cached_property
     def settings_with_default(self):
@@ -552,7 +552,7 @@ class Feature(BaseUpdatableModel):
         """
         Validate properties according schema if provided
         """
-        validate_type_geom(self.layer, self.geom)
+        validate_geom_type(self.layer, self.geom)
         validate_json_schema_data(self.properties, self.layer.schema)
 
     class Meta:
