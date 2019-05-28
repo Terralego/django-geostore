@@ -7,10 +7,12 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.status import (HTTP_200_OK, HTTP_204_NO_CONTENT,
-                                   HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN)
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
+                                   HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
+                                   HTTP_403_FORBIDDEN)
 from rest_framework.test import APIClient
 
+from terracommon.terra import GeometryTypes
 from terracommon.terra.models import Feature
 from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
                                                UserFactory)
@@ -457,3 +459,38 @@ class LayerDetailTest(TestCase):
 
         feature.refresh_from_db()
         self.assertDictEqual(feature.properties, updated_properties)
+
+
+class LayerCreationTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = UserFactory()
+        self.client.force_authenticate(user=self.user)
+
+        self.point_layer = LayerFactory(name="no schema point geom",
+                                        geom_type=GeometryTypes.Point)
+        self.null_layer = LayerFactory(name="no schema null geom", geom_type=None)
+
+    def test_point_layer_allow_point(self):
+        response = self.client.post(reverse('terra:feature-list', args=[self.point_layer.pk, ]),
+                                    data={"geom": "POINT(0 0)",
+                                          "properties": {"toto": "ok"}})
+        self.assertEqual(response.status_code, HTTP_201_CREATED, response.json())
+
+    def test_point_layer_disallow_other(self):
+        response = self.client.post(reverse('terra:feature-list', args=[self.point_layer.pk, ]),
+                                    data={"geom": "LINESTRING(0 0, 1 1)",
+                                          "properties": {"toto": "ok"}})
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST, response.json())
+
+    def test_null_layer_allow_points(self):
+        response = self.client.post(reverse('terra:feature-list', args=[self.null_layer.pk, ]),
+                                    data={"geom": "POINT(0 0)",
+                                          "properties": {"toto": "ok"}})
+        self.assertEqual(response.status_code, HTTP_201_CREATED, response.json())
+
+    def test_null_layer_allow_linestring(self):
+        response = self.client.post(reverse('terra:feature-list', args=[self.null_layer.pk, ]),
+                                    data={"geom": "LINESTRING(0 0, 1 1)",
+                                          "properties": {"toto": "ok"}})
+        self.assertEqual(response.status_code, HTTP_201_CREATED, response.json())

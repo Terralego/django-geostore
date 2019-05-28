@@ -12,7 +12,7 @@ class SchemaValidationTest(TestCase):
         self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
 
-        self.no_schema_layer = LayerFactory(name="no schema")
+        self.no_schema_layer = LayerFactory(name="no schema", geom_type=None)
         self.valid_schema = {
             "properties": {
                 "name": {

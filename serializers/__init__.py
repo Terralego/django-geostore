@@ -1,22 +1,41 @@
 from django.urls import reverse
 from django.utils.http import urlunquote
 from rest_framework import serializers
+from rest_framework.fields import empty
 
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
                                       LayerRelation)
-from terracommon.terra.validators import validate_json_schema_data, validate_json_schema
+from terracommon.terra.validators import validate_json_schema_data, validate_json_schema, validate_geom_type
 
 
 class FeatureSerializer(serializers.ModelSerializer):
     properties = serializers.JSONField(required=False)
 
+    def __init__(self, instance=None, data=empty, **kwargs):
+        super().__init__(instance=instance, data=data, **kwargs)
+        self.layer = None
+
+    def get_layer(self):
+        if self.instance:
+            self.layer = self.instance.layer
+        if not self.layer and self.context.get('layer_pk'):
+            self.layer = Layer.objects.get(pk=self.context.get('layer_pk'))
+        return self.layer
+
+    def validate_geom(self, data):
+        """
+        Validate geom exists
+        """
+        if self.get_layer():
+            validate_geom_type(self.get_layer().geom_type, data.geom_typeid)
+        return data
+
     def validate_properties(self, data):
         """
         Validate schema if exists
         """
-        if self.context.get('layer_pk'):
-            layer = Layer.objects.get(pk=self.context.get('layer_pk'))
-            validate_json_schema_data(data, layer.schema)
+        if self.get_layer():
+            validate_json_schema_data(data, self.get_layer().schema)
         return data
 
     class Meta:

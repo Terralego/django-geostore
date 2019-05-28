@@ -4,7 +4,6 @@ import logging
 import os
 import uuid
 from copy import deepcopy
-from enum import IntEnum
 from functools import reduce
 from tempfile import TemporaryDirectory
 
@@ -23,6 +22,7 @@ from django.utils.functional import cached_property
 from fiona.crs import from_epsg
 from mercantile import tiles
 
+from . import GeometryTypes
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .mixins import BaseUpdatableModel
@@ -70,21 +70,6 @@ def topology_update(func):
         return response
 
     return wrapper
-
-
-class GeometryTypes(IntEnum):
-    Point = 0
-    LineString = 1
-    # LinearRing 2
-    Polygon = 3
-    MultiPoint = 4
-    MultiLineString = 5
-    MultiPolygon = 6
-    GeometryCollection = 7
-
-    @classmethod
-    def choices(cls):
-        return [(geom_type, geom_type.value) for geom_type in cls]
 
 
 class Layer(BaseUpdatableModel):
@@ -552,7 +537,7 @@ class Feature(BaseUpdatableModel):
         """
         Validate properties according schema if provided
         """
-        validate_geom_type(self)
+        validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
         validate_json_schema_data(self.properties, self.layer.schema)
 
     class Meta:
