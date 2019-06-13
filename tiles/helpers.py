@@ -14,6 +14,14 @@ from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
 from .sigtools import SIGTools
 
 
+def get_cache_version(layer):
+    try:
+        return int(layer.features.order_by('-updated_at').first().updated_at.timestamp())
+    except AttributeError:
+        # This happens when a layer is empty
+        return 1
+
+
 def cached_tile(func):
     def wrapper(self, x, y, z,
                 pixel_buffer, features_filter, properties_filter,
@@ -23,11 +31,7 @@ def cached_tile(func):
             pixel_buffer, features_filter, properties_filter,
             features_limit)
 
-        try:
-            version = int(self.layer.features.order_by('-updated_at').first().updated_at.timestamp())
-        except AttributeError:
-            # This happens when a layer is empty
-            return 0, b''
+        version = get_cache_version(self.layer)
 
         expiration_factor = (log(5, z) ** 0.9)
 
@@ -40,7 +44,6 @@ def cached_tile(func):
                 pixel_buffer, features_filter, properties_filter,
                 features_limit, *args, **kwargs)
             return (a, b.tobytes())
-
         return cache.get_or_set(cache_key, build_tile, expiration, version=version)
 
     return wrapper
@@ -223,12 +226,13 @@ class VectorTile(object):
 
     def clean_tiles(self, tiles, pixel_buffer, features_filter,
                     properties_filter, features_limit):
-        return cache.delete_many([
-            self.get_tile_cache_key(
-                *tile, pixel_buffer, features_filter, properties_filter,
-                features_limit)
-            for tile in tiles
-        ])
+        return cache.delete_many(
+            [
+                self.get_tile_cache_key(
+                    *tile, pixel_buffer, features_filter, properties_filter,
+                    features_limit)
+                for tile in tiles
+            ], version=get_cache_version(self.layer))
 
 
 def guess_maxzoom(layer):
