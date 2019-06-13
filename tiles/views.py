@@ -84,14 +84,13 @@ class TilejsonView(APIView):
             404: 'The layer group does not exist'
             }
     )
-
     def get(self, request, group):
         self.layers = Layer.objects.filter(group=group)
 
         if self.layers.count() == 0:
             return HttpResponseNotFound()
 
-        last_update = Feature.objects.filter(layer__group=group).order_by('-updated_at').first()
+        last_update = Feature.objects.filter(layer__in=self.layers).order_by('-updated_at').first()
 
         if last_update:
             cache_key = f'tilejson-{group}'
@@ -107,7 +106,6 @@ class TilejsonView(APIView):
                 content_type='application/json')
 
         return HttpResponseNotFound()
-
 
 
 class MVTView(APIView):
