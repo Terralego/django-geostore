@@ -543,6 +543,8 @@ class Feature(BaseUpdatableModel):
     class Meta:
         ordering = ['id']
         indexes = [
+            models.Index(fields=['layer', ]),
+            models.Index(fields=['updated_at', ]),
             models.Index(fields=['identifier', ]),
             GistIndex(fields=['layer', 'geom']),
             ]
