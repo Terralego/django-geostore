@@ -2,14 +2,13 @@ import json
 from urllib.parse import unquote, urljoin
 
 from django.conf import settings
+from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 
-from ..models import Layer
+from ..models import Feature, Layer
 from .helpers import VectorTile
 
 
@@ -85,16 +84,30 @@ class TilejsonView(APIView):
             404: 'The layer group does not exist'
             }
     )
-    @method_decorator(cache_page(60 * 60 * 24 * 7))
+
     def get(self, request, group):
         self.layers = Layer.objects.filter(group=group)
 
         if self.layers.count() == 0:
             return HttpResponseNotFound()
 
-        return HttpResponse(
-            json.dumps(self.get_tilejson(group)),
-            content_type='application/json')
+        last_update = Feature.objects.filter(layer__group=group).order_by('-updated_at').first()
+
+        if last_update:
+            cache_key = f'tilejson-{group}'
+            version = int(last_update.updated_at.timestamp())
+            tilejson_data = cache.get(cache_key, version=version)
+
+            if tilejson_data is None:
+                tilejson_data = json.dumps(self.get_tilejson(group))
+                cache.set(cache_key, tilejson_data, version=version)
+
+            return HttpResponse(
+                tilejson_data,
+                content_type='application/json')
+
+        return HttpResponseNotFound()
+
 
 
 class MVTView(APIView):
