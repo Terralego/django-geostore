@@ -545,6 +545,7 @@ class Feature(BaseUpdatableModel):
         indexes = [
             models.Index(fields=['layer', ]),
             models.Index(fields=['updated_at', ]),
+            models.Index(fields=['updated_at', 'layer', ]),
             models.Index(fields=['identifier', ]),
             GistIndex(fields=['layer', 'geom']),
             ]
