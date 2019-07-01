@@ -1,6 +1,5 @@
 import json
 
-from django.core.cache import cache
 from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
@@ -11,8 +10,8 @@ from rest_framework.status import (HTTP_200_OK, HTTP_204_NO_CONTENT,
 from terracommon.terra.models import Layer
 from terracommon.terra.tests.factories import LayerFactory
 from terracommon.terra.tests.utils import get_files_tests
-from terracommon.terra.tiles.helpers import (VectorTile, get_cache_version,
-                                             guess_maxzoom, guess_minzoom)
+from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
+                                             guess_minzoom)
 
 
 @override_settings(DEBUG=True, CACHES={
@@ -154,54 +153,6 @@ class VectorTilesTestCase(TestCase):
             reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
         self.assertEqual(len(response.content), 0)
-
-    def test_caching_geometry(self):
-        features = self.layer.features.all()
-        tile = VectorTile(self.layer)
-        x, y, z = 16506, 11966, 15
-        pixel_buffer, features_filter, properties_filter, features_limit = \
-            4, None, None, 10000
-
-        cache_version = get_cache_version(self.layer)
-        cached_tile = tile.get_tile(
-            x, y, z,
-            pixel_buffer, features_filter, properties_filter, features_limit,
-            features)
-        self.assertEqual(
-            cached_tile,
-            cache.get(
-                tile.get_tile_cache_key(x, y, z, pixel_buffer, features_filter, properties_filter, features_limit),
-                version=cache_version
-            )
-        )
-        features.first().clean_vect_tile_cache()
-        self.assertIsNone(
-            cache.get(
-                tile.get_tile_cache_key(x, y, z, pixel_buffer, features_filter, properties_filter, features_limit),
-                version=cache_version
-            )
-        )
-
-    def test_caching_key(self):
-        features = self.layer.features.all()
-        tile = VectorTile(self.layer, "CACHINGCACHE")
-        x, y, z = 16506, 11966, 15
-        pixel_buffer, features_filter, properties_filter, features_limit = \
-            4, None, None, 10000
-
-        cache_version = get_cache_version(self.layer)
-        cached_tile = tile.get_tile(
-            x, y, z,
-            pixel_buffer, features_filter, properties_filter, features_limit,
-            features)
-
-        self.assertEqual(
-            cached_tile,
-            cache.get(
-                tile.get_tile_cache_key(x, y, z, pixel_buffer, features_filter, properties_filter, features_limit),
-                version=cache_version
-                )
-            )
 
     def test_filtering(self):
         features = self.layer.features.all()

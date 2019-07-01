@@ -226,13 +226,10 @@ class VectorTile(object):
 
     def clean_tiles(self, tiles, pixel_buffer, features_filter,
                     properties_filter, features_limit):
-        return cache.delete_many(
-            [
-                self.get_tile_cache_key(
-                    *tile, pixel_buffer, features_filter, properties_filter,
-                    features_limit)
-                for tile in tiles
-            ], version=get_cache_version(self.layer))
+        """
+        TODO Cleaning tiles must be rewrited but for the moment invalidating tiles is not necessary
+        """
+        pass
 
 
 def guess_maxzoom(layer):
