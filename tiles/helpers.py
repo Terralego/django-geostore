@@ -150,13 +150,11 @@ class VectorTile(object):
 
         layer_raw_query, args = layer_query.query.sql_with_params()
 
-        properties = "properties || json_build_object('_id', identifier)::jsonb"
-
         if properties_filter:
             filter = ', '.join([f"'{f}'" for f in properties_filter])
             properties = f'''
                 (
-                    ({properties})
+                    properties
                     - (
                         SELECT array_agg(k)
                         FROM jsonb_object_keys(properties) AS t(k)
@@ -165,7 +163,11 @@ class VectorTile(object):
                 )
                 '''
         elif properties_filter == []:
-            properties = 'NULL'
+            properties = "'{}'::jsonb"
+        else:
+            properties = "properties"
+
+        properties += " || json_build_object('_id', identifier)::jsonb"
 
         with connection.cursor() as cursor:
             sql_query = f'''
