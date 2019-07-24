@@ -4,10 +4,9 @@ from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from rest_framework.status import (HTTP_200_OK, HTTP_204_NO_CONTENT,
-                                   HTTP_404_NOT_FOUND)
+from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 
-from terracommon.terra.models import Layer
+from terracommon.terra.models import Layer, LayerGroup
 from terracommon.terra.tests.factories import LayerFactory
 from terracommon.terra.tests.utils import get_files_tests
 from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
@@ -23,7 +22,7 @@ class VectorTilesNoLayerTestCase(TestCase):
     group_name = 'mygroup'
 
     @override_settings(ALLOWED_HOSTS=['localhost'])
-    def test_tilejson_fail_no_layer(self):
+    def test_group_tilejson_fail_no_layer(self):
         response = self.client.get(
             reverse('terra:group-tilejson', args=[self.group_name]),
             HTTP_HOST='localhost')
@@ -34,7 +33,6 @@ class VectorTilesNoLayerTestCase(TestCase):
         response = self.client.get(
             reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
         self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
-        self.assertEqual(len(response.content), 0)
 
 
 @override_settings(DEBUG=True, CACHES={
@@ -48,7 +46,9 @@ class VectorTilesTestCase(TestCase):
     def setUp(self):
         settings = {'metadata': {'attribution': 'plop'}}
 
-        self.layer = LayerFactory(group=self.group_name, name="layerLine", settings=settings)
+        self.layer = LayerFactory(name="layerLine", settings=settings)
+        self.mygroup = LayerGroup.objects.create(name='mygroup', slug='mygroup')
+        self.mygroup.layers.add(self.layer)
 
         self.layer.from_geojson(
             geojson_data='''
@@ -79,7 +79,9 @@ class VectorTilesTestCase(TestCase):
             }
         ''')
 
-        self.layerPoint = LayerFactory(group="yourgroup", name="layerPoint", settings=settings)
+        self.layerPoint = LayerFactory(name="layerPoint", settings=settings)
+        self.yourgroup = LayerGroup.objects.create(name='yourgroup', slug='yourgroup')
+        self.yourgroup.layers.add(self.layerPoint)
 
         self.layerPoint.from_geojson(
 
@@ -105,7 +107,7 @@ class VectorTilesTestCase(TestCase):
         ''')
 
     @override_settings(ALLOWED_HOSTS=['localhost'])
-    def test_tilejson(self):
+    def test_group_tilejson(self):
         response = self.client.get(
             reverse('terra:group-tilejson', args=[self.group_name]),
             # HTTP_HOST required to build the tilejson descriptor
@@ -119,10 +121,27 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tilejson['vector_layers']), 0)
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
 
-    def test_vector_tiles_view(self):
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    def test_layer_tilejson(self):
+        response = self.client.get(
+            reverse('terra:layer-tilejson', args=[self.layer.pk]),
+            # HTTP_HOST required to build the tilejson descriptor
+            HTTP_HOST='localhost')
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertGreater(len(response.content), 0)
+
+        tilejson = json.loads(response.content)
+        self.assertTrue(tilejson['attribution'])
+        self.assertTrue(tilejson['description'] is None)
+        self.assertGreater(len(tilejson['vector_layers']), 0)
+        self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
+
+    def test_vector_group_tiles_view(self):
         # first query that generate the cache
         response = self.client.get(
-            reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
+            reverse(
+                'terra:group-tiles',
+                kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
         query_count = len(connection.queries)
@@ -130,7 +149,9 @@ class VectorTilesTestCase(TestCase):
 
         # verify data is cached
         response = self.client.get(
-            reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
+            reverse(
+                'terra:group-tiles',
+                kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(
             len(connection.queries),
             query_count - 2
@@ -144,15 +165,54 @@ class VectorTilesTestCase(TestCase):
             reverse('terra:group-tiles', args=[self.group_name, 10, 1, 1]))
 
         self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertFalse(len(response.content))
+
+    def test_vector_layer_tiles_view(self):
+        # first query that generate the cache
+        response = self.client.get(
+            reverse(
+                'terra:layer-tiles',
+                kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertGreater(len(response.content), 0)
+        query_count = len(connection.queries)
+        original_content = response.content
+
+        # verify data is cached
+        response = self.client.get(
+            reverse(
+                'terra:layer-tiles',
+                kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
+        self.assertEqual(
+            len(connection.queries),
+            query_count - 2
+        )
+        self.assertEqual(
+            original_content,
+            response.content
+        )
+
+        response = self.client.get(
+            reverse('terra:layer-tiles', kwargs={'pk': self.layer.pk, 'z': 10, 'x': 1, 'y': 1}))
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(b'', response.content)
 
     @override_settings(MAX_TILE_ZOOM=9)
-    def test_vector_tiles_view_max_tile_zoom_lower_actual_zoom(self):
+    def test_vector_group_tiles_view_max_tile_zoom_lower_actual_zoom(self):
         # first query that generate the cache
         response = self.client.get(
-            reverse('terra:group-tiles', args=[self.group_name, 10, 515, 373]))
-        self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
-        self.assertEqual(len(response.content), 0)
+            reverse('terra:group-tiles', args=[self.mygroup.slug, 10, 515, 373]))
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual(len(response.content), 113)
+
+    @override_settings(MAX_TILE_ZOOM=9)
+    def test_vector_layer_tiles_view_max_tile_zoom_lower_actual_zoom(self):
+        # first query that generate the cache
+        response = self.client.get(
+            reverse('terra:layer-tiles', args=[self.layer.pk, 10, 515, 373]))
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual(len(response.content), 113)
 
     def test_filtering(self):
         features = self.layer.features.all()
@@ -217,7 +277,9 @@ class VectorTilesSpecialTestCase(TestCase):
             'features_limit': 10000,
         }}
 
-        self.layer = LayerFactory(group=self.group_name, name="layerLine", settings=settings)
+        self.layer = LayerFactory(name="layerLine", settings=settings)
+        self.group = LayerGroup.objects.create(name='mygroup', slug='mygroup')
+        self.group.layers.add(self.layer)
 
         self.geojson_data = '''
             {
@@ -249,9 +311,24 @@ class VectorTilesSpecialTestCase(TestCase):
         self.layer.from_geojson(geojson_data=self.geojson_data)
 
     @override_settings(ALLOWED_HOSTS=['localhost'])
-    def test_tilejson_with_properties(self):
+    def test_group_tilejson_with_properties(self):
         response = self.client.get(
             reverse('terra:group-tilejson', args=[self.group_name]),
+            # HTTP_HOST required to build the tilejson descriptor
+            HTTP_HOST='localhost')
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertGreater(len(response.content), 0)
+
+        tilejson = json.loads(response.content)
+        self.assertTrue(tilejson['attribution'])
+        self.assertTrue(tilejson['description'] is None)
+        self.assertGreater(len(tilejson['vector_layers']), 0)
+        self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
+
+    @override_settings(ALLOWED_HOSTS=['localhost'])
+    def test_layer_tilejson_with_properties(self):
+        response = self.client.get(
+            reverse('terra:layer-tilejson', args=[self.layer.pk]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
         self.assertEqual(HTTP_200_OK, response.status_code)

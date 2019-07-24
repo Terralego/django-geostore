@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
-                                      LayerGroup, LayerRelation)
+                                      LayerRelation, LayerGroup)
 from terracommon.terra.validators import (validate_json_schema_data,
                                           validate_json_schema, validate_geom_type)
 
@@ -78,8 +78,11 @@ class LayerSerializer(serializers.ModelSerializer):
     def get_geojson_url(self, obj):
         return reverse('terra:layer-geojson', args=[obj.pk, ])
 
-    def get_group_intersect(self, obj):
+    def get_layer_intersects(self, obj):
         return reverse('terra:layer-intersects', args=[obj.name, ])
+
+    def get_layer_tilejson(self, obj):
+        return urlunquote(reverse('terra:layer-tilejson', args=[obj.pk]))
 
     class Meta:
         model = Layer

@@ -6,7 +6,8 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
 from rest_framework_jwt import views as auth_views
 
-from .tiles.views import MVTView, TilejsonView
+from .tiles.views import (LayerGroupTileDetailView, LayerTileDetailView,
+                          TilejsonView)
 from .views import (FeatureRelationViewSet, FeatureViewSet,
                     LayerRelationViewSet, LayerViewSet)
 
@@ -33,16 +34,26 @@ urlpatterns = [
     path('auth/refresh-token/',
          auth_views.refresh_jwt_token,
          name='token-refresh'),
-    path(r'layer/<str:group_slug>/tilejson',
+    path(r'group/<str:slug>/tilejson',
          TilejsonView.as_view(),
          name='group-tilejson'),
-    path(r'layer/<str:group_slug>/tiles/<int:z>/<int:x>/<int:y>/',
-         MVTView.as_view(),
+    path(r'layer/<int:pk>/tilejson',
+         TilejsonView.as_view(),
+         name='layer-tilejson'),
+    path(r'group/<str:slug>/tiles/<int:z>/<int:x>/<int:y>/',
+         LayerGroupTileDetailView.as_view(),
          name='group-tiles'),
     # Fake pattern to be able to reverse this
-    path(r'layer/<str:group_slug>/tiles/{z}/{x}/{y}/',
-         lambda request, group_slug: HttpResponseNotFound(),
+    path(r'group/<str:slug>/tiles/{z}/{x}/{y}/',
+         lambda request, **kwargs: HttpResponseNotFound(),
          name='group-tiles-pattern'),
+    path(r'layer/<int:pk>/tiles/<int:z>/<int:x>/<int:y>/',
+         LayerTileDetailView.as_view(),
+         name='layer-tiles'),
+    # Fake pattern to be able to reverse this
+    path(r'layer/<int:pk>/tiles/{z}/{x}/{y}/',
+         lambda request, **kwargs: HttpResponseNotFound(),
+         name='layer-tiles-pattern'),
 ]
 
 router = routers.SimpleRouter()
