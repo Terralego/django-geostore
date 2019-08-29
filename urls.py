@@ -7,7 +7,7 @@ from rest_framework import permissions, routers
 from rest_framework_jwt import views as auth_views
 
 from .tiles.views import (LayerGroupTileDetailView, LayerTileDetailView,
-                          TilejsonView)
+                          MultipleTileJsonView, TileJsonView)
 from .views import (FeatureRelationViewSet, FeatureViewSet,
                     LayerRelationViewSet, LayerViewSet)
 
@@ -35,10 +35,10 @@ urlpatterns = [
          auth_views.refresh_jwt_token,
          name='token-refresh'),
     path(r'group/<str:slug>/tilejson',
-         TilejsonView.as_view(),
+         MultipleTileJsonView.as_view(),
          name='group-tilejson'),
     path(r'layer/<int:pk>/tilejson',
-         TilejsonView.as_view(),
+         TileJsonView.as_view(),
          name='layer-tilejson'),
     path(r'group/<str:slug>/tiles/<int:z>/<int:x>/<int:y>/',
          LayerGroupTileDetailView.as_view(),
