@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
 from terracommon.terra.management.commands.mixins import LayerCommandMixin
+from terracommon.terra.models import LayerGroup
 from terracommon.terra.tiles.helpers import guess_maxzoom, guess_minzoom
 
 
@@ -24,9 +25,9 @@ class Command(LayerCommandMixin, BaseCommand):
                             type=argparse.FileType('r'),
                             action="store",
                             help=("Replace JSON settings file to override default"))
-        parser.add_argument('-gr', '--group',
-                            action="store",
-                            help=_("Group name of the created layer"))
+        parser.add_argument('-gr', '--groups',
+                            nargs='+',
+                            help=_("Group names of the created layer"))
         parser.add_argument('-gz', '--guess_zoom',
                             action='store_true',
                             help=_("Guess min and max zoom from data"))
@@ -41,12 +42,16 @@ class Command(LayerCommandMixin, BaseCommand):
 
     def _settings(self, layer, options):
         layer_name = options.get('layer')
-        group = options.get('group')
+        group_names = options.get('groups')
+
+        if group_names:
+            layer.layer_groups.clear()
+            for group_name in group_names:
+                group, created = LayerGroup.objects.get_or_create(name=group_name)
+                group.layers.add(layer)
 
         if layer_name:
             layer.name = layer_name
-        if group:
-            layer.group = group
 
         layer_settings = options.get('layer_settings')
         if layer_settings:

@@ -4,8 +4,9 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 
 from terracommon.terra.models import (Feature, FeatureRelation, Layer,
-                                      LayerRelation)
-from terracommon.terra.validators import validate_json_schema_data, validate_json_schema, validate_geom_type
+                                      LayerGroup, LayerRelation)
+from terracommon.terra.validators import (validate_json_schema_data,
+                                          validate_json_schema, validate_geom_type)
 
 
 class FeatureSerializer(serializers.ModelSerializer):
@@ -44,23 +45,29 @@ class FeatureSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'layer')
 
 
-class LayerSerializer(serializers.ModelSerializer):
-    group_intersect = serializers.SerializerMethodField()
+class GroupSerializer(serializers.ModelSerializer):
     group_tilejson = serializers.SerializerMethodField()
     group_tiles = serializers.SerializerMethodField()
+
+    def get_group_tilejson(self, obj):
+        return urlunquote(reverse('terra:group-tilejson', args=[obj.slug]))
+
+    def get_group_tiles(self, obj):
+        return urlunquote(reverse('terra:group-tiles-pattern', args=[obj.slug]))
+
+    class Meta:
+        model = LayerGroup
+        fields = '__all__'
+
+
+class LayerSerializer(serializers.ModelSerializer):
     routing_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
     schema = serializers.JSONField(required=False, validators=[validate_json_schema])
-
-    def get_group_intersect(self, obj):
-        return reverse('terra:layer-intersects', args=[obj.name, ])
-
-    def get_group_tilejson(self, obj):
-        return urlunquote(reverse('terra:group-tilejson', args=[obj.group]))
-
-    def get_group_tiles(self, obj):
-        return urlunquote(reverse('terra:group-tiles-pattern', args=[obj.group]))
+    layer_intersects = serializers.SerializerMethodField()
+    layer_tilejson = serializers.SerializerMethodField()
+    layer_groups = GroupSerializer(many=True, read_only=True)
 
     def get_routing_url(self, obj):
         return reverse('terra:layer-route', args=[obj.pk, ])
@@ -70,6 +77,9 @@ class LayerSerializer(serializers.ModelSerializer):
 
     def get_geojson_url(self, obj):
         return reverse('terra:layer-geojson', args=[obj.pk, ])
+
+    def get_group_intersect(self, obj):
+        return reverse('terra:layer-intersects', args=[obj.name, ])
 
     class Meta:
         model = Layer

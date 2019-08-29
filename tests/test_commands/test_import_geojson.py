@@ -19,7 +19,8 @@ class ImportGeojsonTest(TestCase):
         # Retrieve the layer
         layer = Layer.objects.first()
         self.assertIn(f'The created layer pk is {layer.pk}', output.getvalue())
-        self.assertEqual('__nogroup__', layer.group)
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'default')
 
     def test_default_group_nogroup_rollback(self):
         output = StringIO()

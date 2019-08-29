@@ -75,7 +75,6 @@ def topology_update(func):
 
 class Layer(BaseUpdatableModel):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
-    group = models.CharField(max_length=255, default="__nogroup__")
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
     geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
     # Settings scheam

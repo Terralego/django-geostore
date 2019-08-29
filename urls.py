@@ -33,15 +33,15 @@ urlpatterns = [
     path('auth/refresh-token/',
          auth_views.refresh_jwt_token,
          name='token-refresh'),
-    path(r'layer/<str:group>/tilejson',
+    path(r'layer/<str:group_slug>/tilejson',
          TilejsonView.as_view(),
          name='group-tilejson'),
-    path(r'layer/<str:group>/tiles/<int:z>/<int:x>/<int:y>/',
+    path(r'layer/<str:group_slug>/tiles/<int:z>/<int:x>/<int:y>/',
          MVTView.as_view(),
          name='group-tiles'),
     # Fake pattern to be able to reverse this
-    path(r'layer/<str:group>/tiles/{z}/{x}/{y}/',
-         lambda request, group: HttpResponseNotFound(),
+    path(r'layer/<str:group_slug>/tiles/{z}/{x}/{y}/',
+         lambda request, group_slug: HttpResponseNotFound(),
          name='group-tiles-pattern'),
 ]
 

@@ -13,7 +13,7 @@ from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
 from rest_framework.test import APIClient
 
 from terracommon.terra import GeometryTypes
-from terracommon.terra.models import Feature
+from terracommon.terra.models import Feature, LayerGroup
 from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
                                                UserFactory)
 from terracommon.terra.tests.utils import get_files_tests
@@ -170,15 +170,15 @@ class LayerFeatureIntersectionTest(TestCase):
             ]
         }
 
-        self.group_name = 'mygroup'
-        self.layer = LayerFactory.create(group=self.group_name,
-                                         add_features=5)
+        self.layer = LayerFactory.create(add_features=5)
+        self.group = LayerGroup.objects.create(name='mygroup', slug='mygroup')
+        self.group.layers.add(self.layer)
 
         self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_features_intersections(self):
-        layer = LayerFactory(group=self.group_name)
+        layer = LayerFactory()
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.intersect_ref_geometry)))

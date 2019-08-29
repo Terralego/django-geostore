@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from terracommon.terra.management.commands.mixins import LayerCommandMixin
-from terracommon.terra.models import Layer
+from terracommon.terra.models import Layer, LayerGroup
 
 
 class Command(LayerCommandMixin, BaseCommand):
@@ -46,7 +46,7 @@ class Command(LayerCommandMixin, BaseCommand):
                                  " be grouped on layer's operations")
         parser.add_argument('-gr', '--group',
                             action="store",
-                            default="__nogroup__",
+                            default="default",
                             help="Group name of the created layer")
         parser.add_argument('--dry-run',
                             action="store_true",
@@ -58,7 +58,7 @@ class Command(LayerCommandMixin, BaseCommand):
         layer_name = options.get('layer_name') or uuid.uuid4()
         file_path = options.get('file_path')
         dryrun = options.get('dry_run')
-        group = options.get('group')
+        group_name = options.get('group')
         identifier = options.get('identifier')
         layer_settings = options.get('layer_settings')
         generate_schema = options.get('generate_schema')
@@ -75,8 +75,11 @@ class Command(LayerCommandMixin, BaseCommand):
                 raise CommandError("Please provide a valid layer settings file")
 
             layer = Layer.objects.create(name=layer_name,
-                                         settings=settings,
-                                         group=group)
+                                         settings=settings)
+            if group_name:
+                group, created = LayerGroup.objects.get_or_create(name=group_name)
+                group.layers.add(layer)
+
             if options['verbosity'] > 0:
                 self.stdout.write(f"The created layer pk is {layer.pk}, "
                                   "it can be used to import more features"

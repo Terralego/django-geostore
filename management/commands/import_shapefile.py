@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from terracommon.terra.management.commands.mixins import LayerCommandMixin
-from terracommon.terra.models import Layer
+from terracommon.terra.models import Layer, LayerGroup
 
 
 class Command(LayerCommandMixin, BaseCommand):
@@ -50,7 +50,7 @@ class Command(LayerCommandMixin, BaseCommand):
                                  " be grouped on layer's operations")
         parser.add_argument('-gr', '--group',
                             action="store",
-                            default="__nogroup__",
+                            default="default",
                             help="Group name of the created layer")
         parser.add_argument('--dry-run',
                             action="store_true",
@@ -75,9 +75,11 @@ class Command(LayerCommandMixin, BaseCommand):
                 settings = json.loads(layer_settings.read()) if layer_settings else {}
             except (JSONDecodeError, UnicodeDecodeError):
                 raise CommandError("Please provide a valid layer settings file")
-            layer = Layer.objects.create(name=layer_name,
-                                         settings=settings,
-                                         group=group)
+
+            layer = Layer.objects.create(name=layer_name, settings=settings)
+            if group:
+                group, created = LayerGroup.objects.get_or_create(name=group)
+                group.layers.add(layer)
 
             if options['verbosity'] > 0:
                 self.stdout.write(

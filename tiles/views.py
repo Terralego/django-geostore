@@ -4,11 +4,12 @@ from urllib.parse import unquote, urljoin
 from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseNotFound
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 
-from ..models import Feature, Layer
+from ..models import Feature, VTGroup
 from .helpers import VectorTile
 
 
@@ -42,12 +43,12 @@ class TilejsonView(APIView):
             max(map(
                 lambda l: l.layer_settings_with_default('tiles', 'maxzoom'),
                 self.layers)))
-        tile_path = reverse("terra:group-tiles-pattern", args=[group])
+        tile_path = reverse("terra:group-tiles-pattern", args=[group.slug])
 
         # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
         return {
             'tilejson': '3.0.0',
-            'name': group,
+            'name': group.name,
             'tiles': [
                 unquote(urljoin(hostname, tile_path))
                 for hostname in settings.TERRA_TILES_HOSTNAMES
@@ -85,7 +86,8 @@ class TilejsonView(APIView):
             }
     )
     def get(self, request, group):
-        self.layers = Layer.objects.filter(group=group)
+        group_obj = get_object_or_404(VTGroup, slug=group)
+        self.layers = group_obj.layers.all()
 
         if self.layers.count() == 0:
             return HttpResponseNotFound()
@@ -93,12 +95,12 @@ class TilejsonView(APIView):
         last_update = Feature.objects.filter(layer__in=self.layers).order_by('-updated_at').first()
 
         if last_update:
-            cache_key = f'tilejson-{group}'
+            cache_key = f'tilejson-{group_obj.slug}'
             version = int(last_update.updated_at.timestamp())
             tilejson_data = cache.get(cache_key, version=version)
 
             if tilejson_data is None:
-                tilejson_data = json.dumps(self.get_tilejson(group))
+                tilejson_data = json.dumps(self.get_tilejson(group_obj))
                 cache.set(cache_key, tilejson_data, version=version)
 
             return HttpResponse(
@@ -148,7 +150,8 @@ class MVTView(APIView):
         self.x = x
         self.y = y
 
-        self.layers = Layer.objects.filter(group=group)
+        group_obj = get_object_or_404(VTGroup, slug=group)
+        self.layers = group_obj.layers.all()
 
         if self.layers.count() == 0:
             return HttpResponseNotFound()

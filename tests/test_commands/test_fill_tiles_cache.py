@@ -5,6 +5,7 @@ from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 
+from terracommon.terra.models import LayerGroup
 from terracommon.terra.tests.factories import LayerFactory
 from terracommon.terra.tiles.helpers import VectorTile, get_cache_version
 
@@ -15,10 +16,11 @@ from terracommon.terra.tiles.helpers import VectorTile, get_cache_version
                     '.locmem.LocMemCache')
     }})
 class FillTilesCacheTestCase(TestCase):
-    group_name = 'mygroup'
 
     def setUp(self):
-        self.layer = LayerFactory(group=self.group_name, name="layerLine")
+        self.layer = LayerFactory(name="layerLine")
+        self.group = LayerGroup.objects.create(name='mygroup', slug='mygroup')
+        self.group.layers.add(self.layer)
 
         self.layer.from_geojson(
             geojson_data='''

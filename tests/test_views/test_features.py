@@ -68,17 +68,14 @@ class FeaturesListViewTest(TestCase):
         ]
     }
 
-    group_name = 'mygroup'
-
     def setUp(self):
-        self.layer = LayerFactory.create(group=self.group_name,
-                                         add_features=5)
+        self.layer = LayerFactory.create(add_features=5)
 
         self.user = UserFactory()
         self.client.force_login(self.user)
 
     def test_features_filter_by_properties(self):
-        layer = LayerFactory(group=self.group_name)
+        layer = LayerFactory()
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
@@ -104,7 +101,7 @@ class FeaturesListViewTest(TestCase):
         self.assertEqual(len(json_response['results']), 1)
 
     def test_features_filter_by_properties_with_wrong_field(self):
-        layer = LayerFactory(group=self.group_name)
+        layer = LayerFactory()
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),

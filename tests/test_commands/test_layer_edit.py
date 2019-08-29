@@ -19,8 +19,9 @@ class LayerEditTest(TestCase):
         # Ensure old settings
         layer = Layer.objects.all()[0]
         self.assertNotEqual('new_name', layer.name)
-        self.assertNotEqual('new_group', layer.group)
         self.assertNotEqual({'foo': 'bar'}, layer.settings)
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'default')
 
         foo_bar_json = get_files_tests('foo_bar.json')
 
@@ -36,8 +37,9 @@ class LayerEditTest(TestCase):
         # Ensure new settings
         layer = Layer.objects.all()[0]
         self.assertEqual('new_name', layer.name)
-        self.assertEqual('new_group', layer.group)
         self.assertEqual({'foo': 'bar'}, layer.settings)
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'new_group')
 
     def test_layer_edit_fail_wrong_pk(self):
         # Ensure old settings

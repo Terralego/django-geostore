@@ -19,7 +19,8 @@ class ImportShapefileTest(TestCase):
 
         # Retrieve the layer
         layer = Layer.objects.all()[0]
-        self.assertEqual('__nogroup__', layer.group)
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'default')
 
         # Assert the identifier is not an UUID4
         self.assertTrue(len(str(layer.features.first().identifier)) < 32)
@@ -50,7 +51,8 @@ class ImportShapefileTest(TestCase):
 
         # Retrieve the layer
         layer = Layer.objects.all()[0]
-        self.assertEqual('__nogroup__', layer.group)
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'default')
 
         # assert data was reprojected
         bbox = layer.features.first().get_bounding_box()
@@ -73,7 +75,8 @@ class ImportShapefileTest(TestCase):
         # Ensure old settings
         layer = Layer.objects.all()[0]
         self.assertNotEqual('new_name', layer.name)
-        self.assertNotEqual('new_group', layer.group)
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'default')
         self.assertNotEqual({'foo': 'bar'}, layer.schema)
         self.assertNotEqual({'foo': 'bar'}, layer.settings)
 
@@ -89,7 +92,8 @@ class ImportShapefileTest(TestCase):
         # Ensure new settings
         layer = Layer.objects.all()[0]
         self.assertEqual('new_name', layer.name)
-        self.assertEqual('new_group', layer.group)
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'new_group')
         self.assertEqual({'foo': 'bar'}, layer.settings)
 
     def test_schema_generated(self):
