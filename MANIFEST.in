@@ -1,0 +1,4 @@
+include *.md
+recursive-include terra *.md
+recursive-include terra *.py
+recursive-exclude test_terra *
