@@ -1,0 +1,10 @@
+[report]
+omit =
+    */tests*
+    */migrations*
+    */lib*
+    test_terra/*
+    doc/*
+    manage.py
+
+ignore_errors = true
