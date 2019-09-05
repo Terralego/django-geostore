@@ -36,6 +36,7 @@ In your project :
     MAX_TILE_ZOOM = 15
     MIN_TILE_ZOOM = 10
 
+
 # urls
 
 ::
@@ -55,13 +56,10 @@ Run migrations
     ./manage.py migrate
 
 
-
-- ADMIN :
+# ADMIN :
 
 you can disable and / or customize admin
 
-
-- SETTINGS :
 
 # BACKWARD compatibility
 
@@ -78,4 +76,6 @@ you can disable and / or customize admin
     SERIALIZATION_MODULES = {
         'geojson': 'terra.serializers.geojson',
     }
+
     ```
+
