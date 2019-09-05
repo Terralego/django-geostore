@@ -1,10 +1,23 @@
-dist: xenial
+dist: bionic
 sudo: required
 language: python
 
 python:
 - '3.6'
 - '3.7'
+
+env:
+  matrix:
+  - DJANGO_VERSION=2.1 REST_VERSION=3.8
+  - DJANGO_VERSION=2.2 REST_VERSION=3.8
+  - DJANGO_VERSION=2.1 REST_VERSION=3.9
+  - DJANGO_VERSION=2.2 REST_VERSION=3.9
+  - DJANGO_VERSION=2.1 REST_VERSION=3.10
+  - DJANGO_VERSION=2.2 REST_VERSION=3.10
+  - DJANGO_VERSION=dev REST_VERSION=3.10
+  - DJANGO_VERSION=2.1 REST_VERSION=dev
+  - DJANGO_VERSION=2.2 REST_VERSION=dev
+  - DJANGO_VERSION=dev REST_VERSION=dev
 
 services:
   - postgresql
@@ -23,8 +36,18 @@ stages:
 
 install:
   - sudo apt-get -y install libproj-dev binutils gdal-bin
-  - python setup.py install
+  - pip install -e .[dev]
   - pip install coverage codecov
+  - if [[ $DJANGO_VERSION == dev ]]; then
+    pip install -e git+https://github.com/django/django@master#egg=django;
+    else
+    pip install -q Django==$DJANGO_VERSION;
+    fi
+  - if [[ $REST_VERSION == dev ]]; then
+    pip install -e git+https://github.com/encode/django-rest-framework.git@master#egg=django-rest-framework;
+    else
+    pip install -q djangorestframework==$REST_VERSION;
+    fi
 
 
 before_script:
