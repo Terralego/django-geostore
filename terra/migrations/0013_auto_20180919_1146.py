@@ -11,6 +11,7 @@ def update_name(apps, schema_editor):
         layer.name = uuid.uuid4()
         layer.save(update_fields=['name', ])
 
+
 class Migration(migrations.Migration):
 
     dependencies = [

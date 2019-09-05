@@ -15,13 +15,13 @@ from . import settings as app_settings
 app_name = 'terra'
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="Terra PI",
-      default_version='v1',
-      description="The future of Makina Corpus",
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny, ),
+    openapi.Info(
+        title="Terra PI",
+        default_version='v1',
+        description="The future of Makina Corpus",
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny, ),
 )
 
 urlpatterns = [

@@ -1,11 +1,11 @@
 import hashlib
-from math import ceil, floor, log, pi
 from random import uniform
 
 import mercantile
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F
+from math import ceil, floor, log, pi
 
 from . import EARTH_RADIUS, EPSG_3857
 from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
@@ -44,6 +44,7 @@ def cached_tile(func):
                 pixel_buffer, features_filter, properties_filter,
                 features_limit, *args, **kwargs)
             return (a, b.tobytes())
+
         return cache.get_or_set(cache_key, build_tile, expiration, version=version)
 
     return wrapper
@@ -120,23 +121,23 @@ class VectorTile(object):
         pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
 
         layer_query = features.annotate(
-                bbox=ST_MakeEnvelope(
-                    xmin,
-                    ymin,
-                    xmax,
-                    ymax,
-                    EPSG_3857),
-                # Intersects on internal data projection using pixel buffer
-                bbox_select=ST_Transform(ST_MakeEnvelope(
-                    xmin - pixel_width_x * pixel_buffer,
-                    ymin - pixel_width_y * pixel_buffer,
-                    xmax + pixel_width_x * pixel_buffer,
-                    ymax + pixel_width_y * pixel_buffer,
-                    EPSG_3857), app_settings.INTERNAL_GEOMETRY_SRID),
-                outgeom3857=ST_Transform('geom', EPSG_3857),
-            ).filter(
-                bbox_select__intersects=F('geom')
-            )
+            bbox=ST_MakeEnvelope(
+                xmin,
+                ymin,
+                xmax,
+                ymax,
+                EPSG_3857),
+            # Intersects on internal data projection using pixel buffer
+            bbox_select=ST_Transform(ST_MakeEnvelope(
+                xmin - pixel_width_x * pixel_buffer,
+                ymin - pixel_width_y * pixel_buffer,
+                xmax + pixel_width_x * pixel_buffer,
+                ymax + pixel_width_y * pixel_buffer,
+                EPSG_3857), app_settings.INTERNAL_GEOMETRY_SRID),
+            outgeom3857=ST_Transform('geom', EPSG_3857),
+        ).filter(
+            bbox_select__intersects=F('geom')
+        )
 
         # Filter features
         layer_query = self._filter_on_property(layer_query, features_filter)
@@ -196,7 +197,7 @@ class VectorTile(object):
                     tilegeom
             '''
 
-            cursor.execute(sql_query, args + (self.layer.name, ))
+            cursor.execute(sql_query, args + (self.layer.name,))
             row = cursor.fetchone()
 
             return row[0], row[1]
@@ -262,12 +263,12 @@ def guess_maxzoom(layer):
         avg = row[0]
 
         # total number of pixels to represent length `avg` (equator)
-        nb_pixels_total = 2*pi*EARTH_RADIUS/avg
+        nb_pixels_total = 2 * pi * EARTH_RADIUS / avg
 
-        tile_resolution = VectorTile.TILE_WIDTH_PIXEL*VectorTile.EXTENT_RATIO
+        tile_resolution = VectorTile.TILE_WIDTH_PIXEL * VectorTile.EXTENT_RATIO
 
         # zoom (ceil) to fit those pixels at `tile_resolution`
-        max_zoom = ceil(log(nb_pixels_total/tile_resolution, 2))
+        max_zoom = ceil(log(nb_pixels_total / tile_resolution, 2))
 
         return min(max_zoom, 22)
     except TypeError:
@@ -294,5 +295,5 @@ def guess_minzoom(layer):
         return 0
 
     tile_fraction = 8
-    min_zoom = floor(log((2*pi*EARTH_RADIUS)/(extent*tile_fraction), 2))
+    min_zoom = floor(log((2 * pi * EARTH_RADIUS) / (extent * tile_fraction), 2))
     return min(min_zoom, 22)

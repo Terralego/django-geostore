@@ -134,12 +134,12 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
             try:
                 features = layer.update_geometries(request.data['features'])
                 return Response(
-                            json.loads(serialize('geojson',
-                                       features,
-                                       fields=('properties',),
-                                       geometry_field='geom',
-                                       properties_field='properties'))
-                        )
+                    json.loads(serialize('geojson',
+                               features,
+                               fields=('properties',),
+                               geometry_field='geom',
+                               properties_field='properties'))
+                )
             except (ValueError, KeyError):
                 return HttpResponseBadRequest('An error occured parsing '
                                               'GeoJSON, verify your data')

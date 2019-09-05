@@ -8,7 +8,7 @@ from django.db.models import F, Value
 from ..tiles.funcs import ST_Distance, ST_LineLocatePoint, ST_LineSubstring
 
 
-def cached_segment(func, expiration=3600*24):
+def cached_segment(func, expiration=3600 * 24):
     def wrapper(self, from_point, to_point, *args, **kwargs):
         cache_key = (f'route_{self.layer.pk}'
                      f'_segment_{from_point.pk}_{from_point.fraction}'
@@ -86,8 +86,8 @@ class Routing(object):
 
     def _get_closest_geometry(self, point):
         return self.layer.features.all().annotate(
-                distance=ST_Distance(F('geom'), Value(str(point)))
-            ).order_by('distance').first()
+            distance=ST_Distance(F('geom'), Value(str(point)))
+        ).order_by('distance').first()
 
     def _snap_point_on_feature(self, point, feature):
         return self.layer.features.annotate(
@@ -125,10 +125,10 @@ class Routing(object):
 
     def _get_line_substring(self, feature, fractions):
         feature = self.layer.features.annotate(
-                        splitted_geom=ST_LineSubstring(F('geom'),
-                                                       float(min(fractions)),
-                                                       float(max(fractions)))
-                   ).get(pk=feature.pk)
+            splitted_geom=ST_LineSubstring(F('geom'),
+                                           float(min(fractions)),
+                                           float(max(fractions)))
+        ).get(pk=feature.pk)
 
         return {
             'geometry': feature.splitted_geom,
@@ -233,14 +233,14 @@ class Routing(object):
 
         with connection.cursor() as cursor:
             cursor.execute(q, [
-                                start_point.pk, float(start_point.fraction),
-                                start_point.pk, float(start_point.fraction),
-                                end_point.pk, float(end_point.fraction),
-                                end_point.pk, float(end_point.fraction),
-                                self.layer.pk,
-                                start_point.pk, float(start_point.fraction),
-                                end_point.pk, float(end_point.fraction),
-                                ])
+                start_point.pk, float(start_point.fraction),
+                start_point.pk, float(start_point.fraction),
+                end_point.pk, float(end_point.fraction),
+                end_point.pk, float(end_point.fraction),
+                self.layer.pk,
+                start_point.pk, float(start_point.fraction),
+                end_point.pk, float(end_point.fraction),
+            ])
 
             return [
                 {

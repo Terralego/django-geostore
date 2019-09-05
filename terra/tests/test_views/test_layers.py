@@ -266,7 +266,7 @@ class LayerShapefileTestCase(TestCase):
         self.assertListEqual(
             sorted(['prj', 'cpg', 'shx', 'shp', 'dbf']),
             sorted([f.split('.')[1] for f in zip.namelist()])
-            )
+        )
 
     def test_properties_serializations(self):
         layer = LayerFactory()
@@ -300,9 +300,9 @@ class LayerShapefileTestCase(TestCase):
                                        response.content)
         new_layer = LayerFactory()
         response = self.client.post(
-                reverse('terra:layer-shapefile', args=[new_layer.pk, ]),
-                {'shapefile': shapefile, }
-                )
+            reverse('terra:layer-shapefile', args=[new_layer.pk, ]),
+            {'shapefile': shapefile, }
+        )
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(self.layer.features.first().properties,
@@ -329,7 +329,7 @@ class LayerShapefileTestCase(TestCase):
         layer = LayerFactory()
 
         response = self.client.post(
-            reverse('terra:layer-shapefile', args=[layer.pk, ]),)
+            reverse('terra:layer-shapefile', args=[layer.pk, ]), )
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
@@ -346,7 +346,7 @@ class LayerShapefileTestCase(TestCase):
             response = self.client.post(
                 reverse('terra:layer-shapefile', args=[layer.pk, ]),
                 {'shapefile': shapefile, }
-                )
+            )
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(8, layer.features.all().count())
@@ -359,7 +359,7 @@ class LayerShapefileTestCase(TestCase):
         response = self.client.post(
             reverse('terra:layer-shapefile', args=[self.layer.pk, ]),
             {'shapefile': shapefile, }
-            )
+        )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
@@ -415,7 +415,6 @@ class LayerDetailTest(TestCase):
         self.client.force_authenticate(self.user)
 
     def test_no_permission(self):
-
         FeatureFactory(layer=self.layer, properties={'a': 'b'})
 
         response = self.client.patch(
@@ -435,7 +434,7 @@ class LayerDetailTest(TestCase):
         updated_properties = {
             'c': 'd',
             'a': 'd',
-            }
+        }
 
         response = self.client.patch(
             reverse('terra:layer-detail', args=[self.layer.name, ]),
@@ -455,7 +454,7 @@ class LayerDetailTest(TestCase):
         self.assertEqual(
             response['features'][0]['properties'],
             updated_properties
-            )
+        )
 
         feature.refresh_from_db()
         self.assertDictEqual(feature.properties, updated_properties)

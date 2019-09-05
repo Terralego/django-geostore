@@ -257,7 +257,7 @@ class Layer(BaseUpdatableModel):
                 shapes[feature.geom.geom_type].write({
                     'geometry': json.loads(feature.geom.json),
                     'properties': self._get_serialized_properties(feature.properties)
-                    })
+                })
 
             # Close fiona files
             for geom_type, shape in shapes.items():
@@ -559,7 +559,7 @@ class Feature(BaseUpdatableModel):
             models.Index(fields=['updated_at', 'layer', ]),
             models.Index(fields=['identifier', ]),
             GistIndex(fields=['layer', 'geom']),
-            ]
+        ]
 
 
 class LayerRelation(models.Model):

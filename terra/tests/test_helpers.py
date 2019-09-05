@@ -144,9 +144,9 @@ class GeometryDefinerTest(TestCase):
 class ChoicesTests(TestCase):
     def setUp(self):
         self.MY_CHOICES = Choices(
-            ('ONE', 1, u'One for the money'),
-            ('TWO', 2, u'Two for the show'),
-            ('THREE', 3, u'Three to get ready'),
+            ('ONE', 1, 'One for the money'),
+            ('TWO', 2, 'Two for the show'),
+            ('THREE', 3, 'Three to get ready'),
         )
         self.MY_CHOICES.add_subset("ODD", ("ONE", "THREE"))
 
@@ -155,20 +155,20 @@ class ChoicesTests(TestCase):
     """
     def test_simple_choice(self):
         self.assertEqual(self.MY_CHOICES.CHOICES,
-                         ((1, u"One for the money"),
-                          (2, u"Two for the show"),
-                          (3, u"Three to get ready"),))
+                         ((1, "One for the money"),
+                          (2, "Two for the show"),
+                          (3, "Three to get ready"),))
         self.assertEqual(self.MY_CHOICES.CHOICES_DICT,
                          {
-                             1: u'One for the money',
-                             2: u'Two for the show',
-                             3: u'Three to get ready'
+                             1: 'One for the money',
+                             2: 'Two for the show',
+                             3: 'Three to get ready'
                          })
         self.assertEqual(self.MY_CHOICES.REVERTED_CHOICES_DICT,
                          {
-                            u'One for the money': 1,
-                            u'Three to get ready': 3,
-                            u'Two for the show': 2
+                             'One for the money': 1,
+                             'Three to get ready': 3,
+                             'Two for the show': 2
                          })
 
     def test__contains__(self):
@@ -179,17 +179,17 @@ class ChoicesTests(TestCase):
 
     def test_unique_values(self):
         self.assertRaises(ValueError, Choices,
-                          ('TWO', 4, u'Deux'), ('FOUR', 4, u'Quatre'))
+                          ('TWO', 4, 'Deux'), ('FOUR', 4, 'Quatre'))
 
     def test_unique_constants(self):
         self.assertRaises(ValueError, Choices,
-                          ('TWO', 2, u'Deux'), ('TWO', 4, u'Quatre'))
+                          ('TWO', 2, 'Deux'), ('TWO', 4, 'Quatre'))
 
     def test_const_choice(self):
         self.assertEqual(self.MY_CHOICES.CONST_CHOICES,
-                         (("ONE", u"One for the money"),
-                          ("TWO", u"Two for the show"),
-                          ("THREE", u"Three to get ready"),))
+                         (("ONE", "One for the money"),
+                          ("TWO", "Two for the show"),
+                          ("THREE", "Three to get ready"),))
 
     def test_value_to_const(self):
         self.assertEqual(self.MY_CHOICES.VALUE_TO_CONST,
@@ -197,12 +197,12 @@ class ChoicesTests(TestCase):
 
     def test_add_should_add_in_correct_order(self):
         SOME_CHOICES = Choices(
-           ('ONE', 1, u'One'),
-           ('TWO', 2, u'Two'),
+            ('ONE', 1, 'One'),
+            ('TWO', 2, 'Two'),
         )
         OTHER_CHOICES = Choices(
-           ('THREE', 3, u'Three'),
-           ('FOUR', 4, u'Four'),
+            ('THREE', 3, 'Three'),
+            ('FOUR', 4, 'Four'),
         )
         # Adding a choices to choices
         tup = SOME_CHOICES + OTHER_CHOICES
@@ -223,37 +223,37 @@ class ChoicesTests(TestCase):
 
     def test_retrocompatibility(self):
         MY_CHOICES = Choices(
-           ('TWO', 2, u'Deux'),
-           ('FOUR', 4, u'Quatre'),
-           name="EVEN"
+            ('TWO', 2, 'Deux'),
+            ('FOUR', 4, 'Quatre'),
+            name="EVEN"
         )
         MY_CHOICES.add_choices("ODD",
-                               ('ONE', 1, u'Un'),
-                               ('THREE', 3, u'Trois'),)
-        self.assertEqual(MY_CHOICES.CHOICES, ((2, u'Deux'), (4, u'Quatre'),
-                                              (1, u'Un'), (3, u'Trois')))
-        self.assertEqual(MY_CHOICES.ODD, ((1, u'Un'), (3, u'Trois')))
-        self.assertEqual(MY_CHOICES.EVEN, ((2, u'Deux'), (4, u'Quatre')))
+                               ('ONE', 1, 'Un'),
+                               ('THREE', 3, 'Trois'),)
+        self.assertEqual(MY_CHOICES.CHOICES, ((2, 'Deux'), (4, 'Quatre'),
+                                              (1, 'Un'), (3, 'Trois')))
+        self.assertEqual(MY_CHOICES.ODD, ((1, 'Un'), (3, 'Trois')))
+        self.assertEqual(MY_CHOICES.EVEN, ((2, 'Deux'), (4, 'Quatre')))
 
 
 class SubsetTests(TestCase):
     def setUp(self):
         self.MY_CHOICES = Choices(
-            ('ONE', 1, u'One for the money'),
-            ('TWO', 2, u'Two for the show'),
-            ('THREE', 3, u'Three to get ready'),
+            ('ONE', 1, 'One for the money'),
+            ('TWO', 2, 'Two for the show'),
+            ('THREE', 3, 'Three to get ready'),
         )
         self.MY_CHOICES.add_subset("ODD", ("ONE", "THREE"))
         self.MY_CHOICES.add_subset("ODD_BIS", ("ONE", "THREE"))
 
     def test_basic(self):
-        self.assertEqual(self.MY_CHOICES.ODD, ((1, u'One for the money'),
-                                               (3, u'Three to get ready')))
+        self.assertEqual(self.MY_CHOICES.ODD, ((1, 'One for the money'),
+                                               (3, 'Three to get ready')))
 
     def test__contains__(self):
         self.failUnless(self.MY_CHOICES.ONE in self.MY_CHOICES.ODD)
 
     def test__eq__(self):
-        self.assertEqual(self.MY_CHOICES.ODD, ((1, u'One for the money'),
-                                               (3, u'Three to get ready')))
+        self.assertEqual(self.MY_CHOICES.ODD, ((1, 'One for the money'),
+                                               (3, 'Three to get ready')))
         self.assertEqual(self.MY_CHOICES.ODD, self.MY_CHOICES.ODD_BIS)

@@ -4,6 +4,7 @@ import django.contrib.postgres.indexes
 from django.db import migrations, models
 from django.contrib.postgres.operations import BtreeGistExtension
 
+
 class Migration(migrations.Migration):
 
     dependencies = [

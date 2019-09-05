@@ -5,31 +5,31 @@ from django.urls import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from terra.models import Layer, Routing
+from .. import settings as app_settings
 from ..tests.factories import FeatureFactory, UserFactory
 from ..tests.utils import get_files_tests
-from .. import settings as app_settings
 
 
 class RoutingTestCase(TestCase):
     points = [
         {
-          "type": "Point",
-          "coordinates": [
-            1.4534568786621094,
-            43.622127847162005
-          ]
+            "type": "Point",
+            "coordinates": [
+                1.4534568786621094,
+                43.622127847162005
+            ]
         }, {
-          "type": "Point",
-          "coordinates": [
-            1.4556884765625,
-            43.61839973326468
-          ]
+            "type": "Point",
+            "coordinates": [
+                1.4556884765625,
+                43.61839973326468
+            ]
         }, {
-          "type": "Point",
-          "coordinates": [
-            1.4647650718688965,
-            43.61916090863259
-          ]
+            "type": "Point",
+            "coordinates": [
+                1.4647650718688965,
+                43.61916090863259
+            ]
         }
     ]
 
@@ -49,24 +49,23 @@ class RoutingTestCase(TestCase):
 
     def test_points_in_line(self):
         routing = Routing(
-          [Point(
-            *p['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for p in self.points],
-          self.layer)
+            [Point(*p['coordinates'],
+                   srid=app_settings.INTERNAL_GEOMETRY_SRID) for p in self.points
+             ],
+            self.layer)
 
         self.assertIsInstance(routing.get_route(), dict)
 
     def test_routing_view_bad_geometry(self):
-        response = self.client.post(
-          reverse('terra:layer-route', args=[self.layer.pk]))
+        response = self.client.post(reverse('terra:layer-route',
+                                            args=[self.layer.pk]))
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
         bad_geometry = Point((1, 1))
-        response = self.client.post(
-          reverse('terra:layer-route', args=[self.layer.pk]),
-          {'geom': bad_geometry.geojson, }
-        )
+        response = self.client.post(reverse('terra:layer-route',
+                                            args=[self.layer.pk]),
+                                    {'geom': bad_geometry.geojson, })
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
     def test_routing_view(self):
@@ -76,10 +75,9 @@ class RoutingTestCase(TestCase):
 
         geometry = LineString(*points)
 
-        response = self.client.post(
-          reverse('terra:layer-route', args=[self.layer.pk]),
-          {'geom': geometry.geojson, }
-        )
+        response = self.client.post(reverse('terra:layer-route',
+                                            args=[self.layer.pk]),
+                                    {'geom': geometry.geojson, })
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
@@ -103,10 +101,9 @@ class RoutingTestCase(TestCase):
 
         geometry = LineString(*points)
 
-        response = self.client.post(
-          reverse('terra:layer-route', args=[self.layer.pk]),
-          {'geom': geometry.geojson, }
-        )
+        response = self.client.post(reverse('terra:layer-route',
+                                            args=[self.layer.pk]),
+                                    {'geom': geometry.geojson, })
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
@@ -128,16 +125,13 @@ class RoutingTestCase(TestCase):
             srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points])
 
         with self.settings(DEBUG=True,
-                           CACHES={
-                               'default': {
-                                   'BACKEND': ('django.core.cache.backends'
-                                               '.locmem.LocMemCache')
-                                }}):
+                           CACHES={'default': {
+                               'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
+                           }):
 
-            self.client.post(
-                reverse('terra:layer-route', args=[self.layer.pk]),
-                {'geom': geometry.geojson, }
-            )
+            self.client.post(reverse('terra:layer-route',
+                                     args=[self.layer.pk]),
+                             {'geom': geometry.geojson, })
 
             initial_count = len(connection.queries)
             counts = []

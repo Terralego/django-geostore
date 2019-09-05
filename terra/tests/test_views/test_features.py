@@ -12,21 +12,21 @@ class FeaturesListViewTest(TestCase):
     fake_geometry = {
         "type": "Point",
         "coordinates": [
-          2.,
-          45.
+            2.,
+            45.
         ]
     }
     intersect_geometry = {
         "type": "LineString",
         "coordinates": [
-          [
-            1.3839340209960938,
-            43.602521593464054
-          ],
-          [
-            1.4869308471679688,
-            43.60376465190968
-          ]
+            [
+                1.3839340209960938,
+                43.602521593464054
+            ],
+            [
+                1.4869308471679688,
+                43.60376465190968
+            ]
         ]
     }
     intersect_ref_geometry = {
