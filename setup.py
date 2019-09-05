@@ -15,7 +15,7 @@ setup(
     include_package_data=True,
     author="Makina Corpus",
     author_email="terralego-pypi@makina-corpus.com",
-    description='Additional template engines for Django.',
+    description='Terralego geographic store and tile generation',
     long_description=README + '\n\n' + CHANGES,
     description_content_type="text/markdown",
     long_description_content_type="text/markdown",
@@ -35,8 +35,8 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'django>=2.1,<2.2',
-        'djangorestframework>=3.8,<3.10', # breaking changes in 3.10
+        'django>=2.1',
+        'djangorestframework>=3.8', # breaking changes in 3.10
         "djangorestframework-gis>=0.14",
         "djangorestframework-jwt>=1.11",
         "drf-yasg>=1.9",
