@@ -1,6 +1,6 @@
 |Build Status| |Maintainability| |codecov|
 
-terra_crud
+terra
 =======================
 
 Terralego backend app
@@ -11,9 +11,9 @@ Terralego backend app
    configuration
    use
 
-.. |Build Status| image:: https://travis-ci.org/Terralego/terra.backend.crud.svg?branch=master
-   :target: https://travis-ci.org/Terralego//terra.backend.crud
+.. |Build Status| image:: https://travis-ci.org/Terralego/terralego.backend.terra.svg?branch=master
+   :target: https://travis-ci.org/Terralego//terralego.backend.terra
 .. |Maintainability| image:: https://api.codeclimate.com/v1/badges/e6e4cac2f8f1fc41c49a/maintainability
-   :target: https://codeclimate.com/github/Terralego//terra.backend.crud/maintainability
-.. |codecov| image:: https://codecov.io/gh/Terralego/terra.backend.crud/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/Terralego/terra.backend.crud
+   :target: https://codeclimate.com/github/Terralego/terralego.backend.terra/maintainability
+.. |codecov| image:: https://codecov.io/gh/Terralego/terralego.backend.terra/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/Terralego/terralego.backend.terra
