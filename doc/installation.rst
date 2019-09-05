@@ -27,5 +27,5 @@ With git
 ::
 
     git clone https://github.com/Terralego/terralego.backend.terra.git
-    cd terra.backend.terra
+    cd terralego.backend.terra
     python setup.py install
