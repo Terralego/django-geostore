@@ -3,8 +3,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from mercantile import tiles
 
-from terracommon.terra.models import Layer
-from terracommon.terra.tiles.helpers import VectorTile
+from terra.models import Layer
+from terra.tiles.helpers import VectorTile
 
 
 class Command(BaseCommand):

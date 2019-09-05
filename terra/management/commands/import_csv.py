@@ -6,7 +6,7 @@ from django.core.management import BaseCommand
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 
-from terracommon.terra.models import Layer
+from terra.models import Layer
 
 
 class Command(BaseCommand):

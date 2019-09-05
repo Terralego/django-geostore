@@ -1,7 +1,7 @@
 from django.test import TestCase
 
-from terracommon.terra.models import zoom_update
-from terracommon.terra.tests.factories import LayerFactory
+from terra.models import zoom_update
+from terra.tests.factories import LayerFactory
 
 
 class ZoomUpdateTest(TestCase):

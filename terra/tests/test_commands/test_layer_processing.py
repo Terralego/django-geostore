@@ -4,9 +4,9 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
-from terracommon.terra.models import Layer
-from terracommon.terra.tests.factories import FeatureFactory, LayerFactory
-from terracommon.terra.tests.utils import get_files_tests
+from terra.models import Layer
+from terra.tests.factories import FeatureFactory, LayerFactory
+from terra.tests.utils import get_files_tests
 
 
 def python_function(layers_in, layer_out, *args):
@@ -189,7 +189,7 @@ class LayerProcessingTestCase(TestCase):
         call_command(
             'layer_processing',
             f'--layer-name-ins={layer.name}',
-            f'--python=terracommon.terra.tests.test_commands.test_layer_processing.python_function',
+            f'--python=terra.tests.test_commands.test_layer_processing.python_function',
             verbosity=0)
         self.assertTrue(Layer.objects.filter(name="New_name").exists())
 
@@ -199,7 +199,7 @@ class LayerProcessingTestCase(TestCase):
             call_command(
                 'layer_processing',
                 f'--layer-name-ins={layer.name}',
-                f'--python=terracommon.terra.tests.test_commands.test_layer_processing.python_function_raise',
+                f'--python=terra.tests.test_commands.test_layer_processing.python_function_raise',
                 verbosity=0)
 
     def test_layer_processing_sql_like_simple_sql(self):

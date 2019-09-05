@@ -1,8 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from terracommon.terra.models import Layer
-from terracommon.terra.routing.helpers import Routing
+from terra.models import Layer, Routing
 
 
 class Command(BaseCommand):

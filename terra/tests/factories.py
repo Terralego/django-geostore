@@ -2,7 +2,7 @@ import factory
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
-from terracommon.terra.models import Feature, Layer
+from terra.models import Feature, Layer
 
 
 class LayerFactory(factory.DjangoModelFactory):
@@ -41,7 +41,7 @@ class UserFactory(factory.DjangoModelFactory):
     class Meta:
         model = UserModel
 
-    email = factory.Faker('email')
+    username = factory.Faker('email')
     is_active = True
 
     @classmethod

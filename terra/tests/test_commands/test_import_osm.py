@@ -6,9 +6,9 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
-from terracommon.terra.models import Feature
-from terracommon.terra.tests.factories import LayerFactory
-from terracommon.terra.tests.utils import get_files_tests
+from terra.models import Feature
+from terra.tests.factories import LayerFactory
+from terra.tests.utils import get_files_tests
 
 
 class ImportGeojsonTest(TestCase):
@@ -72,7 +72,7 @@ class ImportGeojsonTest(TestCase):
         self.assertEqual(layer.features.count(), 2)
 
     @mock.patch('requests.get')
-    @mock.patch('terracommon.terra.management.commands.import_osm.Command.launch_cmd_ogr2ogr')
+    @mock.patch('terra.management.commands.import_osm.Command.launch_cmd_ogr2ogr')
     def test_ogr2ogr_fail(self, mock_ogr2ogr_stdout, mocked_get):
         def command_ogr2ogr_fail(content, type_features):
             return '', 'Error'

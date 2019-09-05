@@ -5,9 +5,9 @@ from json.decoder import JSONDecodeError
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
-from terracommon.terra.management.commands.mixins import LayerCommandMixin
-from terracommon.terra.models import LayerGroup
-from terracommon.terra.tiles.helpers import guess_maxzoom, guess_minzoom
+from terra.management.commands.mixins import LayerCommandMixin
+from terra.models import LayerGroup
+from terra.tiles.helpers import guess_maxzoom, guess_minzoom
 
 
 class Command(LayerCommandMixin, BaseCommand):

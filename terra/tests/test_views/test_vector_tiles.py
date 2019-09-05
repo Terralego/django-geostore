@@ -6,11 +6,10 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 
-from terracommon.terra.models import Layer, LayerGroup
-from terracommon.terra.tests.factories import LayerFactory
-from terracommon.terra.tests.utils import get_files_tests
-from terracommon.terra.tiles.helpers import (VectorTile, guess_maxzoom,
-                                             guess_minzoom)
+from terra.models import Layer, LayerGroup
+from terra.tests.factories import LayerFactory
+from terra.tests.utils import get_files_tests
+from terra.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 
 
 @override_settings(DEBUG=True, CACHES={

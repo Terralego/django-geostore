@@ -2,8 +2,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 from django.utils.module_loading import import_string
 
-from terracommon.terra.management.commands.mixins import LayerCommandMixin
-from terracommon.terra.models import Feature, Layer
+from terra.management.commands.mixins import LayerCommandMixin
+from terra.models import Feature, Layer
 
 
 class Command(LayerCommandMixin, BaseCommand):

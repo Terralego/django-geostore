@@ -10,6 +10,7 @@ from .tiles.views import (LayerGroupTileDetailView, LayerTileDetailView,
                           MultipleTileJsonView, TileJsonView)
 from .views import (FeatureRelationViewSet, FeatureViewSet,
                     LayerRelationViewSet, LayerViewSet)
+from . import settings as app_settings
 
 app_name = 'terra'
 
@@ -67,7 +68,7 @@ router.register(r'layer_relation/(?P<layerrelation_pk>\d+)/feature_relation',
 
 urlpatterns += router.urls
 
-if settings.DEBUG or settings.SWAGGER_ENABLED:
+if settings.DEBUG or app_settings.SWAGGER_ENABLED:
     urlpatterns += [
         # schemas
         path('swagger/',

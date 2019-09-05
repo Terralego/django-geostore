@@ -12,11 +12,11 @@ from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
                                    HTTP_403_FORBIDDEN)
 from rest_framework.test import APIClient
 
-from terracommon.terra import GeometryTypes
-from terracommon.terra.models import Feature, LayerGroup
-from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
-                                               UserFactory)
-from terracommon.terra.tests.utils import get_files_tests
+from terra import GeometryTypes
+from terra.models import Feature, LayerGroup
+from terra.tests.factories import (FeatureFactory, LayerFactory,
+                                   UserFactory)
+from terra.tests.utils import get_files_tests
 
 
 class LayerLineIntersectionTestCase(TestCase):

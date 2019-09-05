@@ -5,10 +5,9 @@ import uuid
 import django.contrib.gis.db.models.fields
 import django.contrib.postgres.fields.jsonb
 import django.db.models.deletion
-from django.conf import settings
 from django.db import migrations, models
 
-import terracommon.terra.fields
+import terra.fields
 
 
 class Migration(migrations.Migration):
@@ -26,8 +25,8 @@ class Migration(migrations.Migration):
                 ('geom', django.contrib.gis.db.models.fields.GeometryField()),
                 ('identifier', models.CharField(default=uuid.uuid4, max_length=255)),
                 ('properties', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('from_date', terracommon.terra.fields.DateFieldYearLess(default='01-01', help_text='Layer validity period start')),
-                ('to_date', terracommon.terra.fields.DateFieldYearLess(default='12-31', help_text='Layer validity period end')),
+                ('from_date', terra.fields.DateFieldYearLess(default='01-01', help_text='Layer validity period start')),
+                ('to_date', terra.fields.DateFieldYearLess(default='12-31', help_text='Layer validity period end')),
             ],
         ),
         migrations.CreateModel(

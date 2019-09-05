@@ -3,10 +3,10 @@ from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
 
-from terracommon.terra.models import (Feature, FeatureRelation, Layer,
-                                      LayerRelation, LayerGroup)
-from terracommon.terra.validators import (validate_json_schema_data,
-                                          validate_json_schema, validate_geom_type)
+from terra.models import (Feature, FeatureRelation, Layer,
+                          LayerRelation, LayerGroup)
+from terra.validators import (validate_json_schema_data,
+                              validate_json_schema, validate_geom_type)
 
 
 class FeatureSerializer(serializers.ModelSerializer):

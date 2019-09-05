@@ -1,12 +1,12 @@
 import json
 from urllib.parse import unquote, urljoin
 
-from django.conf import settings
 from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 
 from ..models import Feature
+from .. import settings as app_settings
 from .helpers import VectorTile
 
 
@@ -29,7 +29,7 @@ class AbstractTileJsonMixin:
 
     def get_minzoom(self):
         return max(
-            settings.MIN_TILE_ZOOM,
+            app_settings.MIN_TILE_ZOOM,
             min([
                 l.layer_settings_with_default('tiles', 'minzoom')
                 for l in self.layers
@@ -37,7 +37,7 @@ class AbstractTileJsonMixin:
 
     def get_maxzoom(self):
         return min(
-            settings.MAX_TILE_ZOOM,
+            app_settings.MAX_TILE_ZOOM,
             max([
                 l.layer_settings_with_default('tiles', 'maxzoom')
                 for l in self.layers
@@ -95,7 +95,7 @@ class AbstractTileJsonMixin:
             'name': self.object.name,
             'tiles': [
                 unquote(urljoin(hostname, tile_path))
-                for hostname in settings.TERRA_TILES_HOSTNAMES
+                for hostname in app_settings.TERRA_TILES_HOSTNAMES
             ],
             'minzoom': minzoom,
             'maxzoom': maxzoom,

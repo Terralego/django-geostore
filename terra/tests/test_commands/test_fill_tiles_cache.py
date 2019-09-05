@@ -5,9 +5,9 @@ from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 
-from terracommon.terra.models import LayerGroup
-from terracommon.terra.tests.factories import LayerFactory
-from terracommon.terra.tiles.helpers import VectorTile, get_cache_version
+from terra.models import LayerGroup
+from terra.tests.factories import LayerFactory
+from terra.tiles.helpers import VectorTile, get_cache_version
 
 
 @override_settings(DEBUG=True, CACHES={

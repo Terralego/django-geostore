@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from terracommon.terra.tests.factories import LayerFactory, UserFactory
+from terra.tests.factories import LayerFactory, UserFactory
 
 
 class SchemaValidationTest(TestCase):

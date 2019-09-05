@@ -2,7 +2,7 @@
 
 import django.contrib.postgres.fields.jsonb
 from django.db import migrations
-import terracommon.terra.validators
+import terra.validators
 
 
 class Migration(migrations.Migration):
@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='layer',
             name='schema',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, validators=[terracommon.terra.validators.validate_json_schema]),
+            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, validators=[terra.validators.validate_json_schema]),
         ),
     ]

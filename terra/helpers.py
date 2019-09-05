@@ -4,10 +4,10 @@ import os
 import zipfile
 
 import magic
-from django.conf import settings
 from django.contrib.gis.geos.point import Point
 from django.core.files import File
 from django.http import HttpResponse, HttpResponseForbidden
+from terra import settings as app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def get_media_response(request, data, permissions=None, headers=None):
         for header, value in headers.items():
             response[header] = value
 
-    if settings.MEDIA_ACCEL_REDIRECT:
+    if app_settings.MEDIA_ACCEL_REDIRECT:
         response['X-Accel-Redirect'] = f'{url}'
     else:
         response.content = content.read()

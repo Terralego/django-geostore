@@ -5,8 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK
 
-from terracommon.terra.tests.factories import (FeatureFactory, LayerFactory,
-                                               UserFactory)
+from terra.tests.factories import (FeatureFactory, LayerFactory)
 
 
 class FeaturesListViewTest(TestCase):
@@ -71,9 +70,6 @@ class FeaturesListViewTest(TestCase):
     def setUp(self):
         self.layer = LayerFactory.create(add_features=5)
 
-        self.user = UserFactory()
-        self.client.force_login(self.user)
-
     def test_features_filter_by_properties(self):
         layer = LayerFactory()
         FeatureFactory(
@@ -97,8 +93,7 @@ class FeaturesListViewTest(TestCase):
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
-        self.assertEqual(json_response['count'], 1)
-        self.assertEqual(len(json_response['results']), 1)
+        self.assertEqual(len(json_response), 1)
 
     def test_features_filter_by_properties_with_wrong_field(self):
         layer = LayerFactory()
@@ -119,8 +114,7 @@ class FeaturesListViewTest(TestCase):
         self.assertEqual(response.status_code, HTTP_200_OK)
 
         json_response = response.json()
-        self.assertEqual(json_response['count'], 0)
-        self.assertEqual(len(json_response['results']), 0)
+        self.assertEqual(len(json_response), 0)
 
     def test_features_filter_by_properties_with_several_int_field(self):
         layer = LayerFactory()
@@ -145,8 +139,7 @@ class FeaturesListViewTest(TestCase):
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
-        self.assertEqual(json_response['count'], 1)
-        self.assertEqual(len(json_response['results']), 1)
+        self.assertEqual(len(json_response), 1)
 
     def test_features_filter_by_properties_with_several_string_field(self):
         layer = LayerFactory()
@@ -174,8 +167,7 @@ class FeaturesListViewTest(TestCase):
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
-        self.assertEqual(json_response['count'], 2)
-        self.assertEqual(len(json_response['results']), 2)
+        self.assertEqual(len(json_response), 2)
 
     def test_feature_from_layer_name(self):
         layer = LayerFactory()

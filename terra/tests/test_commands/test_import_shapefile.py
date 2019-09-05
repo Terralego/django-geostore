@@ -4,9 +4,9 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
-from terracommon.terra.models import Layer
-from terracommon.terra.tests.factories import LayerFactory
-from terracommon.terra.tests.utils import get_files_tests
+from terra.models import Layer
+from terra.tests.factories import LayerFactory
+from terra.tests.utils import get_files_tests
 
 
 class ImportShapefileTest(TestCase):

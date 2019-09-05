@@ -1,14 +1,13 @@
-from django.conf import settings
 from django.contrib.gis.geos import LineString, Point
 from django.db import connection
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
-from terracommon.terra.models import Layer
-from terracommon.terra.routing.helpers import Routing
-from terracommon.terra.tests.factories import FeatureFactory, UserFactory
-from terracommon.terra.tests.utils import get_files_tests
+from terra.models import Layer, Routing
+from ..tests.factories import FeatureFactory, UserFactory
+from ..tests.utils import get_files_tests
+from .. import settings as app_settings
 
 
 class RoutingTestCase(TestCase):
@@ -52,7 +51,7 @@ class RoutingTestCase(TestCase):
         routing = Routing(
           [Point(
             *p['coordinates'],
-            srid=settings.INTERNAL_GEOMETRY_SRID) for p in self.points],
+            srid=app_settings.INTERNAL_GEOMETRY_SRID) for p in self.points],
           self.layer)
 
         self.assertIsInstance(routing.get_route(), dict)
@@ -73,7 +72,7 @@ class RoutingTestCase(TestCase):
     def test_routing_view(self):
         points = [Point(
             *point['coordinates'],
-            srid=settings.INTERNAL_GEOMETRY_SRID) for point in self.points]
+            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points]
 
         geometry = LineString(*points)
 
@@ -99,7 +98,7 @@ class RoutingTestCase(TestCase):
     def test_routing_view_edge_case(self):
         points = [Point(
             *p['coordinates'],
-            srid=settings.INTERNAL_GEOMETRY_SRID) for p in
+            srid=app_settings.INTERNAL_GEOMETRY_SRID) for p in
             [self.points[0], self.points[0]]]
 
         geometry = LineString(*points)
@@ -126,7 +125,7 @@ class RoutingTestCase(TestCase):
     def test_routing_cache(self):
         geometry = LineString(*[Point(
             *point['coordinates'],
-            srid=settings.INTERNAL_GEOMETRY_SRID) for point in self.points])
+            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points])
 
         with self.settings(DEBUG=True,
                            CACHES={

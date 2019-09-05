@@ -8,8 +8,8 @@ import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
-from terracommon.terra.management.commands.mixins import LayerCommandMixin
-from terracommon.terra.models import Layer
+from terra.management.commands.mixins import LayerCommandMixin
+from terra.models import Layer
 
 
 class Command(LayerCommandMixin, BaseCommand):

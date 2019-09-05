@@ -7,8 +7,8 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from rest_framework import status
 
-from terracommon.terra.helpers import (Choices, ChunkIterator, GeometryDefiner,
-                                       get_media_response)
+from terra.helpers import (Choices, ChunkIterator, GeometryDefiner,
+                           get_media_response)
 
 
 class MediaResponseTest(TestCase):

@@ -10,7 +10,6 @@ from tempfile import TemporaryDirectory
 import fiona
 import fiona.transform
 from deepmerge import always_merger
-from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
@@ -23,7 +22,7 @@ from django.utils.text import slugify
 from fiona.crs import from_epsg
 from mercantile import tiles
 
-from . import GeometryTypes
+from . import GeometryTypes, settings as app_settings
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .mixins import BaseUpdatableModel
@@ -32,6 +31,7 @@ from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
+
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +249,7 @@ class Layer(BaseUpdatableModel):
                     driver='ESRI Shapefile',
                     schema=schema,
                     encoding='UTF-8',
-                    crs=from_epsg(settings.INTERNAL_GEOMETRY_SRID)
+                    crs=from_epsg(app_settings.INTERNAL_GEOMETRY_SRID)
                 )
 
             # Export features to each kind of geometry
@@ -319,7 +319,7 @@ class Layer(BaseUpdatableModel):
                 if reproject:
                     geometry = fiona.transform.transform_geom(
                         shape.crs,
-                        f'EPSG:{settings.INTERNAL_GEOMETRY_SRID}',
+                        f'EPSG:{app_settings.INTERNAL_GEOMETRY_SRID}',
                         geometry)
                 identifier = properties.get(id_field, uuid.uuid4())
 
@@ -495,7 +495,7 @@ class LayerGroup(BaseUpdatableModel):
 
 
 class Feature(BaseUpdatableModel):
-    geom = models.GeometryField(srid=settings.INTERNAL_GEOMETRY_SRID)
+    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID)
     identifier = models.CharField(max_length=255,
                                   blank=False,
                                   null=False,
@@ -529,7 +529,7 @@ class Feature(BaseUpdatableModel):
         )
 
     def get_intersected_tiles(self):
-        zoom_range = range(settings.MIN_TILE_ZOOM, settings.MAX_TILE_ZOOM + 1)
+        zoom_range = range(app_settings.MIN_TILE_ZOOM, app_settings.MAX_TILE_ZOOM + 1)
         try:
             return [(tile.x, tile.y, tile.z)
                     for tile in tiles(*self.get_bounding_box(), zoom_range)]

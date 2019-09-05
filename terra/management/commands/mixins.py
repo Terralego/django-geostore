@@ -1,6 +1,6 @@
 from django.core.management.base import CommandError
 
-from terracommon.terra.models import Layer
+from terra.models import Layer
 
 
 class LayerCommandMixin(object):
