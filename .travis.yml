@@ -14,10 +14,8 @@ env:
   - DJANGO_VERSION=2.2 REST_VERSION=3.9
   - DJANGO_VERSION=2.1 REST_VERSION=3.10
   - DJANGO_VERSION=2.2 REST_VERSION=3.10
-  - DJANGO_VERSION=dev REST_VERSION=3.10
   - DJANGO_VERSION=2.1 REST_VERSION=dev
   - DJANGO_VERSION=2.2 REST_VERSION=dev
-  - DJANGO_VERSION=dev REST_VERSION=dev
 
 services:
   - postgresql
@@ -41,12 +39,12 @@ install:
   - if [[ $DJANGO_VERSION == dev ]]; then
     pip install -e git+https://github.com/django/django@master#egg=django;
     else
-    pip install -q Django==$DJANGO_VERSION;
+    pip install Django==$DJANGO_VERSION -U;
     fi
   - if [[ $REST_VERSION == dev ]]; then
     pip install -e git+https://github.com/encode/django-rest-framework.git@master#egg=django-rest-framework;
     else
-    pip install -q djangorestframework==$REST_VERSION;
+    pip install djangorestframework==$REST_VERSION -U;
     fi
 
 
