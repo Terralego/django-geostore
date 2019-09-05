@@ -49,12 +49,6 @@ In your project :
 
 You can customize default url and namespace by including terra.views directly
 
-Run migrations
-
-::
-
-    ./manage.py migrate
-
 
 # ADMIN :
 
@@ -65,7 +59,8 @@ you can disable and / or customize admin
 
 ## settings to add :
 
-    ```python
+::
+
     import os
 
     #####
@@ -76,6 +71,4 @@ you can disable and / or customize admin
     SERIALIZATION_MODULES = {
         'geojson': 'terra.serializers.geojson',
     }
-
-    ```
 
