@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
@@ -27,8 +27,8 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
     serializer_class = LayerSerializer
     lookup_fields = ('pk', 'name')
 
-    @detail_route(methods=['get', 'post'],
-                  url_path='shapefile')
+    @action(methods=['get', 'post'],
+            url_name='shapefile', detail=True)
     def shapefile(self, request, pk=None):
         layer = self.get_object()
 
@@ -61,7 +61,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
                 self.permission_denied(request, 'Operation not allowed')
         return response
 
-    @detail_route(methods=['get'], url_path='geojson')
+    @action(detail=True, methods=['get'], url_name='geojson')
     def to_geojson(self, request, pk=None):
         if request.user.has_perm('terra.can_export_layers'):
             layer = self.get_object()
@@ -69,7 +69,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         else:
             self.permission_denied(request, 'Operation not allowed')
 
-    @detail_route(methods=['post'])
+    @action(detail=True, methods=['post'])
     def route(self, request, pk=None):
         layer = self.get_object()
         callbackid = self.request.data.get('callbackid', None)
@@ -99,7 +99,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
         return Response(response_data, content_type='application/json')
 
-    @detail_route(methods=['post'])
+    @action(detail=True, methods=['post'])
     def intersects(self, request, *args, **kwargs):
         layer = self.get_object()
         callbackid = self.request.data.get('callbackid', None)
