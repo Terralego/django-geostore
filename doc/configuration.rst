@@ -5,7 +5,6 @@ Configuration
 In your project :
 
 # settings
-
 ::
     # install required apps
     INSTALLED_APPS = [
@@ -38,7 +37,6 @@ In your project :
 
 
 # urls
-
 ::
 
     urlpatterns = [
@@ -55,10 +53,9 @@ You can customize default url and namespace by including terra.views directly
 you can disable and / or customize admin
 
 
-# BACKWARD compatibility
+- BACKWARD compatibility
 
-## settings to add :
-
+# settings to add :
 ::
 
     import os
