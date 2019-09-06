@@ -46,7 +46,6 @@ setup(
         "mercantile>=1.0",
         "psycopg2>=2.7",
         "Fiona>=1.7",
-        "python-magic>=0.4",
         "Pillow>=5.3.0",
         "jsonschema>=3.0",
     ],

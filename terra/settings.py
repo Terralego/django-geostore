@@ -1,6 +1,5 @@
 from django.conf import settings
 
-MEDIA_ACCEL_REDIRECT = getattr(settings, 'MEDIA_ACCEL_REDIRECT', False)
 HOSTNAME = getattr(settings, 'HOSTNAME', '')
 TERRA_TILES_HOSTNAMES = getattr(settings, 'TERRA_TILES_HOSTNAMES', [HOSTNAME, ])
 

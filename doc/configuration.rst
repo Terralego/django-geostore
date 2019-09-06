@@ -25,8 +25,6 @@ In your project :
     # optional overridable settings
     INTERNAL_GEOMETRY_SRID = 4326 (can be changed for another SRID, should not be changed after 1rst migration)
 
-    MEDIA_ACCEL_REDIRECT = False
-
     HOSTNAME = ''
     TERRA_TILES_HOSTNAMES = [HOSTNAME, ]
 
@@ -62,7 +60,7 @@ you can disable and / or customize admin
 
     #####
 
-    MEDIA_ACCEL_REDIRECT = os.getenv('MEDIA_ACCEL_REDIRECT', default="False") == "True"
+
     HOSTNAME = os.environ.get('HOSTNAME', '')
 
     SERIALIZATION_MODULES = {
