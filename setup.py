@@ -20,7 +20,7 @@ setup(
     description_content_type="text/markdown",
     long_description_content_type="text/markdown",
     packages=find_packages(),
-    #url='https://github.com/Terralego/terra.backend.crud.git',
+    url='https://github.com/Terralego/terralego.backend.terra.git',
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
