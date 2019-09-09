@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+default_app_config = 'terra.apps.TerraConfig'
 
 class GeometryTypes(IntEnum):
     Point = 0
