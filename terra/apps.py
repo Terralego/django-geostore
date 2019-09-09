@@ -4,7 +4,7 @@ from django.conf import settings
 
 class TerraConfig(AppConfig):
     name = 'terra'
-    verbose_name = "Terralego Geographic Store"
+    verbose_name = "TERRA: Geographic Store"
 
     def ready(self):
         # force use specific geojson serializer
