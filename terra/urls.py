@@ -4,7 +4,6 @@ from django.urls import path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions, routers
-from rest_framework_jwt import views as auth_views
 
 from .tiles.views import (LayerGroupTileDetailView, LayerTileDetailView,
                           MultipleTileJsonView, TileJsonView)
@@ -25,16 +24,6 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    # auth
-    path('auth/obtain-token/',
-         auth_views.obtain_jwt_token,
-         name='token-obtain'),
-    path('auth/verify-token/',
-         auth_views.verify_jwt_token,
-         name='token-verify'),
-    path('auth/refresh-token/',
-         auth_views.refresh_jwt_token,
-         name='token-refresh'),
     path(r'group/<str:slug>/tilejson',
          MultipleTileJsonView.as_view(),
          name='group-tilejson'),
