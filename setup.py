@@ -51,7 +51,7 @@ setup(
     extras_require={
         'dev': [
             'factory-boy',
-            'flake8',
+            'black',
             'coverage',
         ]
     }
