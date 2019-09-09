@@ -1,8 +1,12 @@
 from django.views.generic.detail import BaseDetailView
 
 from ..models import Layer, LayerGroup
-from .mixins import (MultipleTileJsonMixin, MultipleTileResponseMixin,
-                     TileJsonMixin, TileResponseMixin)
+from .mixins import (
+    MultipleTileJsonMixin,
+    MultipleTileResponseMixin,
+    TileJsonMixin,
+    TileResponseMixin,
+)
 
 
 class TileJsonView(TileJsonMixin, BaseDetailView):

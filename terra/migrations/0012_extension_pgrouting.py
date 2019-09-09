@@ -5,10 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0011_auto_20180711_0831'),
-    ]
+    dependencies = [("terra", "0011_auto_20180711_0831")]
 
-    operations = [
-        migrations.RunSQL("CREATE EXTENSION IF NOT EXISTS pgrouting")
-    ]
+    operations = [migrations.RunSQL("CREATE EXTENSION IF NOT EXISTS pgrouting")]

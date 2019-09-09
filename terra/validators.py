@@ -25,11 +25,13 @@ def validate_json_schema_data(value, schema):
     try:
         # check result schema
         if value and schema:
-            properties = schema.get('properties').keys()
+            properties = schema.get("properties").keys()
             unexpected_properties = value.keys() - properties
             if unexpected_properties:
                 # value key(s) not in expected properties
-                raise ValidationError(message=f"{unexpected_properties} not in schema properties")
+                raise ValidationError(
+                    message=f"{unexpected_properties} not in schema properties"
+                )
             jsonschema.validate(value, schema)
     except jsonschema.exceptions.ValidationError as e:
         raise ValidationError(message=e.message)
@@ -40,5 +42,5 @@ def validate_json_schema_data(value, schema):
 def validate_geom_type(layer_geom_type_id, feature_geom_type_id):
     if isinstance(layer_geom_type_id, int):
         if layer_geom_type_id != feature_geom_type_id:
-            raise ValidationError(message=f'Geometry type is not the same on the layer')
+            raise ValidationError(message=f"Geometry type is not the same on the layer")
     return feature_geom_type_id

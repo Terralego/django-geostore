@@ -8,26 +8,29 @@ from terra.tiles.helpers import VectorTile
 
 
 class Command(BaseCommand):
-    help = 'Generate tiles cache of all layers'
+    help = "Generate tiles cache of all layers"
 
     @transaction.atomic()
     def handle(self, *args, **options):
         for layer in Layer.objects.all():
-            if options['verbosity'] >= 1:
-                self.stdout.write(f'Generating {layer.name} tiles cache')
-            bbox = layer.features.aggregate(bbox=Extent('geom'))['bbox']
+            if options["verbosity"] >= 1:
+                self.stdout.write(f"Generating {layer.name} tiles cache")
+            bbox = layer.features.aggregate(bbox=Extent("geom"))["bbox"]
             if bbox:
                 vtile = VectorTile(layer)
                 zoom_range = range(
-                    layer.layer_settings_with_default('tiles', 'minzoom'),
-                    layer.layer_settings_with_default('tiles', 'maxzoom') + 1
+                    layer.layer_settings_with_default("tiles", "minzoom"),
+                    layer.layer_settings_with_default("tiles", "maxzoom") + 1,
                 )
 
                 for tile in tiles(*bbox, zoom_range):
                     vtile.get_tile(
-                        tile.x, tile.y, tile.z,
-                        layer.layer_settings_with_default('tiles', 'pixel_buffer'),
-                        layer.layer_settings_with_default('tiles', 'features_filter'),
-                        layer.layer_settings_with_default('tiles', 'properties_filter'),
-                        layer.layer_settings_with_default('tiles', 'features_limit'),
-                        layer.features.all())
+                        tile.x,
+                        tile.y,
+                        tile.z,
+                        layer.layer_settings_with_default("tiles", "pixel_buffer"),
+                        layer.layer_settings_with_default("tiles", "features_filter"),
+                        layer.layer_settings_with_default("tiles", "properties_filter"),
+                        layer.layer_settings_with_default("tiles", "features_limit"),
+                        layer.features.all(),
+                    )

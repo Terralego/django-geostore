@@ -2,9 +2,9 @@ from django.db import migrations, models
 
 
 def create_groups(apps, schema_editor):
-    LayerGroup = apps.get_model('terra', 'LayerGroup')
-    LayerGroup.objects.create(name='default', slug='default')
-    Layer = apps.get_model('terra', 'Layer')
+    LayerGroup = apps.get_model("terra", "LayerGroup")
+    LayerGroup.objects.create(name="default", slug="default")
+    Layer = apps.get_model("terra", "Layer")
     for layer in Layer.objects.all():
         group_name = layer.group
         group, created = LayerGroup.objects.get_or_create(name=group_name)
@@ -13,25 +13,33 @@ def create_groups(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0026_auto_20190613_1529'),
-    ]
+    dependencies = [("terra", "0026_auto_20190613_1529")]
 
     operations = [
         migrations.CreateModel(
-            name='LayerGroup',
+            name="LayerGroup",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True,
-                                        serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=256, unique=True)),
-                ('slug', models.SlugField(unique=True)),
-                ('layers', models.ManyToManyField(to='terra.Layer', related_name='layer_groups')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=256, unique=True)),
+                ("slug", models.SlugField(unique=True)),
+                (
+                    "layers",
+                    models.ManyToManyField(
+                        to="terra.Layer", related_name="layer_groups"
+                    ),
+                ),
             ],
-            options={
-                'abstract': False,
-            },
+            options={"abstract": False},
         ),
         migrations.RunPython(create_groups),
     ]

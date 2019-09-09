@@ -3,10 +3,12 @@ from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
 
-from terra.models import (Feature, FeatureRelation, Layer,
-                          LayerRelation, LayerGroup)
-from terra.validators import (validate_json_schema_data,
-                              validate_json_schema, validate_geom_type)
+from terra.models import Feature, FeatureRelation, Layer, LayerRelation, LayerGroup
+from terra.validators import (
+    validate_json_schema_data,
+    validate_json_schema,
+    validate_geom_type,
+)
 
 
 class FeatureSerializer(serializers.ModelSerializer):
@@ -19,8 +21,8 @@ class FeatureSerializer(serializers.ModelSerializer):
     def get_layer(self):
         if self.instance:
             self.layer = self.instance.layer
-        if not self.layer and self.context.get('layer_pk'):
-            self.layer = Layer.objects.get(pk=self.context.get('layer_pk'))
+        if not self.layer and self.context.get("layer_pk"):
+            self.layer = Layer.objects.get(pk=self.context.get("layer_pk"))
         return self.layer
 
     def validate_geom(self, data):
@@ -41,8 +43,8 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'identifier', 'layer', 'geom', 'properties', )
-        read_only_fields = ('id', 'layer')
+        fields = ("id", "identifier", "layer", "geom", "properties")
+        read_only_fields = ("id", "layer")
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -50,14 +52,14 @@ class GroupSerializer(serializers.ModelSerializer):
     group_tiles = serializers.SerializerMethodField()
 
     def get_group_tilejson(self, obj):
-        return urlunquote(reverse('terra:group-tilejson', args=[obj.slug]))
+        return urlunquote(reverse("terra:group-tilejson", args=[obj.slug]))
 
     def get_group_tiles(self, obj):
-        return urlunquote(reverse('terra:group-tiles-pattern', args=[obj.slug]))
+        return urlunquote(reverse("terra:group-tiles-pattern", args=[obj.slug]))
 
     class Meta:
         model = LayerGroup
-        fields = '__all__'
+        fields = "__all__"
 
 
 class LayerSerializer(serializers.ModelSerializer):
@@ -70,23 +72,23 @@ class LayerSerializer(serializers.ModelSerializer):
     layer_groups = GroupSerializer(many=True, read_only=True)
 
     def get_routing_url(self, obj):
-        return reverse('terra:layer-route', args=[obj.pk, ])
+        return reverse("terra:layer-route", args=[obj.pk])
 
     def get_shapefile_url(self, obj):
-        return reverse('terra:layer-shapefile', args=[obj.pk, ])
+        return reverse("terra:layer-shapefile", args=[obj.pk])
 
     def get_geojson_url(self, obj):
-        return reverse('terra:layer-geojson', args=[obj.pk, ])
+        return reverse("terra:layer-geojson", args=[obj.pk])
 
     def get_layer_intersects(self, obj):
-        return reverse('terra:layer-intersects', args=[obj.name, ])
+        return reverse("terra:layer-intersects", args=[obj.name])
 
     def get_layer_tilejson(self, obj):
-        return urlunquote(reverse('terra:layer-tilejson', args=[obj.pk]))
+        return urlunquote(reverse("terra:layer-tilejson", args=[obj.pk]))
 
     class Meta:
         model = Layer
-        fields = '__all__'
+        fields = "__all__"
 
 
 class GeoJSONLayerSerializer(serializers.JSONField):
@@ -97,10 +99,10 @@ class GeoJSONLayerSerializer(serializers.JSONField):
 class LayerRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = LayerRelation
-        fields = ('id', 'origin', 'destination', 'schema')
+        fields = ("id", "origin", "destination", "schema")
 
 
 class FeatureRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeatureRelation
-        fields = ('id', 'origin', 'destination')
+        fields = ("id", "origin", "destination")

@@ -5,13 +5,6 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0027_layergroup'),
-    ]
+    dependencies = [("terra", "0027_layergroup")]
 
-    operations = [
-        migrations.RemoveField(
-            model_name='layer',
-            name='group',
-        ),
-    ]
+    operations = [migrations.RemoveField(model_name="layer", name="group")]

@@ -3,13 +3,11 @@ from django.conf import settings
 
 
 class TerraConfig(AppConfig):
-    name = 'terra'
+    name = "terra"
     verbose_name = "Terralego Geographic Store"
 
     def ready(self):
         # force use specific geojson serializer
-        modules = getattr(settings, 'SERIALIZATION_MODULES', {})
-        modules.update({
-            'geojson': 'terra.serializers.geojson',
-        })
-        setattr(settings, 'SERIALIZATION_MODULES', modules)
+        modules = getattr(settings, "SERIALIZATION_MODULES", {})
+        modules.update({"geojson": "terra.serializers.geojson"})
+        setattr(settings, "SERIALIZATION_MODULES", modules)

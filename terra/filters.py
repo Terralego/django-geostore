@@ -9,9 +9,7 @@ class JSONFieldFilterBackend(BaseFilterBackend):
         query = Q()
         for param_name, param_value in request.query_params.items():
             try:
-                field = (queryset.model
-                                 ._meta
-                                 .get_field(param_name.split('__')[0]))
+                field = queryset.model._meta.get_field(param_name.split("__")[0])
             except FieldDoesNotExist:
                 pass
             else:

@@ -20,13 +20,15 @@ class LayerFactory(factory.DjangoModelFactory):
 
 class FeatureFactory(factory.DjangoModelFactory):
     layer = factory.SubFactory(LayerFactory)
-    geom = GEOSGeometry('''{
+    geom = GEOSGeometry(
+        """{
         "type": "Point",
         "coordinates": [
           2.4609375,
           45.583289756006316
         ]
-      }''')
+      }"""
+    )
     properties = {}
 
     class Meta:
@@ -37,15 +39,14 @@ UserModel = get_user_model()
 
 
 class UserFactory(factory.DjangoModelFactory):
-
     class Meta:
         model = UserModel
 
-    username = factory.Faker('email')
+    username = factory.Faker("email")
     is_active = True
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        kwargs.update({'password': kwargs.get('password', '123456')})
+        kwargs.update({"password": kwargs.get("password", "123456")})
         manager = cls._get_manager(model_class)
         return manager.create_user(*args, **kwargs)

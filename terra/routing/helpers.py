@@ -10,9 +10,11 @@ from ..tiles.funcs import ST_Distance, ST_LineLocatePoint, ST_LineSubstring
 
 def cached_segment(func, expiration=3600 * 24):
     def wrapper(self, from_point, to_point, *args, **kwargs):
-        cache_key = (f'route_{self.layer.pk}'
-                     f'_segment_{from_point.pk}_{from_point.fraction}'
-                     f'_{to_point.pk}_{to_point.fraction}')
+        cache_key = (
+            f"route_{self.layer.pk}"
+            f"_segment_{from_point.pk}_{from_point.fraction}"
+            f"_{to_point.pk}_{to_point.fraction}"
+        )
 
         def build_segment():
             return func(self, from_point, to_point, *args, **kwargs)
@@ -23,15 +25,14 @@ def cached_segment(func, expiration=3600 * 24):
 
 
 class Routing(object):
-
     def __init__(self, points, layer):
         if not layer.is_linestring or layer.is_multi:
-            raise ValueError('Layer is not routable')
+            raise ValueError("Layer is not routable")
 
         self.points, self.layer = points, layer
 
     def get_route(self):
-        '''Return the geometry of the route from the given points'''
+        """Return the geometry of the route from the given points"""
         self.points = self._get_points_in_lines()
 
         routes = self._points_route()
@@ -54,9 +55,10 @@ class Routing(object):
                             clean := %s)
                     """
 
-        cursor.execute(raw_query,
-                       [layer.features.model._meta.db_table, tolerance, clean])
-        return ('OK',) == cursor.fetchone()
+        cursor.execute(
+            raw_query, [layer.features.model._meta.db_table, tolerance, clean]
+        )
+        return ("OK",) == cursor.fetchone()
 
     def _serialize_routes(self, routes):
         return {
@@ -64,34 +66,35 @@ class Routing(object):
             "features": [
                 {
                     "type": "Feature",
-                    "geometry":
-                        json.loads(GEOSGeometry(route['geometry']).geojson),
-                    "properties": route['properties'],
+                    "geometry": json.loads(GEOSGeometry(route["geometry"]).geojson),
+                    "properties": route["properties"],
                 }
                 for route in routes
-            ]
+            ],
         }
 
     def _get_points_in_lines(self):
-        '''Returns position of the point in the closed geometry'''
+        """Returns position of the point in the closed geometry"""
         snapped_points = []
 
         for point in self.points:
             closest_feature = self._get_closest_geometry(point)
 
-            snapped_points.append(
-                self._snap_point_on_feature(point, closest_feature))
+            snapped_points.append(self._snap_point_on_feature(point, closest_feature))
 
         return snapped_points
 
     def _get_closest_geometry(self, point):
-        return self.layer.features.all().annotate(
-            distance=ST_Distance(F('geom'), Value(str(point)))
-        ).order_by('distance').first()
+        return (
+            self.layer.features.all()
+            .annotate(distance=ST_Distance(F("geom"), Value(str(point))))
+            .order_by("distance")
+            .first()
+        )
 
     def _snap_point_on_feature(self, point, feature):
         return self.layer.features.annotate(
-            fraction=ST_LineLocatePoint(F('geom'), Value(str(point))),
+            fraction=ST_LineLocatePoint(F("geom"), Value(str(point)))
         ).get(pk=feature.pk)
 
     def _points_route(self):
@@ -114,9 +117,11 @@ class Routing(object):
         if from_point.pk == to_point.pk:
             # If both points are on same edge we do not need pgRouting
             # just split the edge from point to point.
-            segment = [self._get_line_substring(from_point,
-                                                [from_point.fraction,
-                                                 to_point.fraction]), ]
+            segment = [
+                self._get_line_substring(
+                    from_point, [from_point.fraction, to_point.fraction]
+                )
+            ]
         else:
             # Ask pgRouting the route from point to the next point
             segment = self._get_raw_route(from_point, to_point)
@@ -125,15 +130,12 @@ class Routing(object):
 
     def _get_line_substring(self, feature, fractions):
         feature = self.layer.features.annotate(
-            splitted_geom=ST_LineSubstring(F('geom'),
-                                           float(min(fractions)),
-                                           float(max(fractions)))
+            splitted_geom=ST_LineSubstring(
+                F("geom"), float(min(fractions)), float(max(fractions))
+            )
         ).get(pk=feature.pk)
 
-        return {
-            'geometry': feature.splitted_geom,
-            'properties': feature.properties,
-        }
+        return {"geometry": feature.splitted_geom, "properties": feature.properties}
 
     def _get_raw_route(self, start_point, end_point):
         """Return raw route between two points from pgrouting's
@@ -232,21 +234,28 @@ class Routing(object):
         self._fix_point_fraction(end_point)
 
         with connection.cursor() as cursor:
-            cursor.execute(q, [
-                start_point.pk, float(start_point.fraction),
-                start_point.pk, float(start_point.fraction),
-                end_point.pk, float(end_point.fraction),
-                end_point.pk, float(end_point.fraction),
-                self.layer.pk,
-                start_point.pk, float(start_point.fraction),
-                end_point.pk, float(end_point.fraction),
-            ])
+            cursor.execute(
+                q,
+                [
+                    start_point.pk,
+                    float(start_point.fraction),
+                    start_point.pk,
+                    float(start_point.fraction),
+                    end_point.pk,
+                    float(end_point.fraction),
+                    end_point.pk,
+                    float(end_point.fraction),
+                    self.layer.pk,
+                    start_point.pk,
+                    float(start_point.fraction),
+                    end_point.pk,
+                    float(end_point.fraction),
+                ],
+            )
 
             return [
-                {
-                    'geometry': geometry,
-                    'properties': properties
-                } for geometry, properties in cursor.fetchall()
+                {"geometry": geometry, "properties": properties}
+                for geometry, properties in cursor.fetchall()
             ]
 
         return None

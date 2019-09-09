@@ -5,19 +5,21 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0021_auto_20190415_0945'),
-    ]
+    dependencies = [("terra", "0021_auto_20190415_0945")]
 
     operations = [
         migrations.AlterField(
-            model_name='feature',
-            name='source',
-            field=models.IntegerField(blank=True, help_text='Internal field used by pgRouting', null=True),
+            model_name="feature",
+            name="source",
+            field=models.IntegerField(
+                blank=True, help_text="Internal field used by pgRouting", null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='feature',
-            name='target',
-            field=models.IntegerField(blank=True, help_text='Internal field used by pgRouting', null=True),
+            model_name="feature",
+            name="target",
+            field=models.IntegerField(
+                blank=True, help_text="Internal field used by pgRouting", null=True
+            ),
         ),
     ]

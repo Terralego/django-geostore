@@ -6,14 +6,14 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0017_auto_20181114_0806'),
-    ]
+    dependencies = [("terra", "0017_auto_20181114_0806")]
 
     operations = [
         migrations.AlterField(
-            model_name='feature',
-            name='properties',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict),
-        ),
+            model_name="feature",
+            name="properties",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True, default=dict
+            ),
+        )
     ]

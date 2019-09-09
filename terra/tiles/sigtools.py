@@ -23,11 +23,11 @@ class SIGTools(object):
         # output might be a Point if single Point feature
         query = cls.get_bbox_layer(layer)
 
-        if isinstance(query['extent'], Polygon):
-            x1 = query['extent'].coords[0][0][0]
-            x2 = query['extent'].coords[0][2][0]
-            y1 = query['extent'].coords[0][0][1]
-            y2 = query['extent'].coords[0][2][1]
+        if isinstance(query["extent"], Polygon):
+            x1 = query["extent"].coords[0][0][0]
+            x2 = query["extent"].coords[0][2][0]
+            y1 = query["extent"].coords[0][0][1]
+            y2 = query["extent"].coords[0][2][1]
 
             min_extent_features = min(float(abs(x2 - x1)), float(abs(y2 - y1)))
 
@@ -43,10 +43,9 @@ class SIGTools(object):
         features = layer.features.all()
 
         query = features.annotate(
-            geom3857=Cast(ST_Transform('geom', EPSG_3857),
-                          GeometryField(srid=EPSG_3857))
-        ).aggregate(
-            extent=Cast(ST_Extent('geom3857'), GeometryField(srid=0))
-        )
+            geom3857=Cast(
+                ST_Transform("geom", EPSG_3857), GeometryField(srid=EPSG_3857)
+            )
+        ).aggregate(extent=Cast(ST_Extent("geom3857"), GeometryField(srid=0)))
 
         return query

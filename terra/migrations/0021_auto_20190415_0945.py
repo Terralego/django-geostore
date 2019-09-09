@@ -6,31 +6,33 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0020_auto_20190401_1139'),
-    ]
+    dependencies = [("terra", "0020_auto_20190401_1139")]
 
     operations = [
         migrations.AddField(
-            model_name='feature',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="feature",
+            name="created_at",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='feature',
-            name='updated_at',
+            model_name="feature",
+            name="updated_at",
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.AddField(
-            model_name='layer',
-            name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="layer",
+            name="created_at",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='layer',
-            name='updated_at',
+            model_name="layer",
+            name="updated_at",
             field=models.DateTimeField(auto_now=True),
         ),
     ]

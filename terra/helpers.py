@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 def make_zipfile_bytesio(base_dir):
     zip_file = io.BytesIO()
 
-    with zipfile.ZipFile(zip_file, "w",
-                         compression=zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_file, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         path = os.path.normpath(base_dir)
         if path != os.curdir and path != base_dir:
             zf.write(path, os.path.relpath(path, base_dir))
@@ -32,7 +31,6 @@ def make_zipfile_bytesio(base_dir):
 
 
 class ChunkIterator:
-
     def __init__(self, iterator, chunksize):
         self.iterator = iterator
         self.chunksize = chunksize
@@ -56,15 +54,17 @@ class ChunkIterator:
 
 
 class GeometryDefiner:
-    LONGITUDE = 'longitude'
-    LATITUDE = 'latitude'
+    LONGITUDE = "longitude"
+    LATITUDE = "latitude"
 
     @staticmethod
     def get_geometry(column_names, row):
         if not isinstance(column_names, dict):
             return None
-        if sorted(column_names.keys()) == [GeometryDefiner.LATITUDE,
-                                           GeometryDefiner.LONGITUDE]:
+        if sorted(column_names.keys()) == [
+            GeometryDefiner.LATITUDE,
+            GeometryDefiner.LONGITUDE,
+        ]:
             lat_column = column_names.get(GeometryDefiner.LATITUDE)
             long_column = column_names.get(GeometryDefiner.LONGITUDE)
             if all(row.get(column) for column in [long_column, lat_column]):

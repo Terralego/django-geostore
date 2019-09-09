@@ -6,14 +6,23 @@ import terra.models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0023_layer_type_geom'),
-    ]
+    dependencies = [("terra", "0023_layer_type_geom")]
 
     operations = [
         migrations.AlterField(
-            model_name='layer',
-            name='geom_type',
-            field=models.IntegerField(choices=[(0, terra.models.GeometryTypes(0)), (1, terra.models.GeometryTypes(1)), (3, terra.models.GeometryTypes(3)), (4, terra.models.GeometryTypes(4)), (5, terra.models.GeometryTypes(5)), (6, terra.models.GeometryTypes(6)), (7, terra.models.GeometryTypes(7))], null=True),
-        ),
+            model_name="layer",
+            name="geom_type",
+            field=models.IntegerField(
+                choices=[
+                    (0, terra.models.GeometryTypes(0)),
+                    (1, terra.models.GeometryTypes(1)),
+                    (3, terra.models.GeometryTypes(3)),
+                    (4, terra.models.GeometryTypes(4)),
+                    (5, terra.models.GeometryTypes(5)),
+                    (6, terra.models.GeometryTypes(6)),
+                    (7, terra.models.GeometryTypes(7)),
+                ],
+                null=True,
+            ),
+        )
     ]

@@ -5,13 +5,18 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0014_auto_20180918_1210'),
-    ]
+    dependencies = [("terra", "0014_auto_20180918_1210")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='layer',
-            options={'permissions': (('can_update_features_properties', 'Is able update geometries properties'),)},
-        ),
+            name="layer",
+            options={
+                "permissions": (
+                    (
+                        "can_update_features_properties",
+                        "Is able update geometries properties",
+                    ),
+                )
+            },
+        )
     ]

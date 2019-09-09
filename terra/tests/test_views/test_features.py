@@ -5,66 +5,37 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.status import HTTP_200_OK
 
-from terra.tests.factories import (FeatureFactory, LayerFactory)
+from terra.tests.factories import FeatureFactory, LayerFactory
 
 
 class FeaturesListViewTest(TestCase):
-    fake_geometry = {
-        "type": "Point",
-        "coordinates": [
-            2.,
-            45.
-        ]
-    }
+    fake_geometry = {"type": "Point", "coordinates": [2.0, 45.0]}
     intersect_geometry = {
         "type": "LineString",
         "coordinates": [
-            [
-                1.3839340209960938,
-                43.602521593464054
-            ],
-            [
-                1.4869308471679688,
-                43.60376465190968
-            ]
-        ]
+            [1.3839340209960938, 43.602521593464054],
+            [1.4869308471679688, 43.60376465190968],
+        ],
     }
     intersect_ref_geometry = {
         "type": "LineString",
         "coordinates": [
-            [
-                1.440925598144531,
-                43.64750394449096
-            ],
-            [
-                1.440582275390625,
-                43.574421623084234
-            ]
-        ]
+            [1.440925598144531, 43.64750394449096],
+            [1.440582275390625, 43.574421623084234],
+        ],
     }
     fake_linestring = {
         "type": "LineString",
-        "coordinates": [
-            [
-                1.3839340209960938,
-                43.602521593464054
-            ],
-        ]
+        "coordinates": [[1.3839340209960938, 43.602521593464054]],
     }
     fake_polygon = {
         "type": "Polygon",
         "coordinates": [
             [
-                [
-                    1.3839340209960938,
-                    43.602521593464054
-                ],
-                [
-                    1.440582275390625,
-                    43.574421623084234
-                ]
+                [1.3839340209960938, 43.602521593464054],
+                [1.440582275390625, 43.574421623084234],
             ]
-        ]
+        ],
     }
 
     def setUp(self):
@@ -75,21 +46,21 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 1, 'text': 'bar'},
+            properties={"number": 1, "text": "bar"},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 1, 'text': 'foo'},
+            properties={"number": 1, "text": "foo"},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 2, 'text': 'foo'},
+            properties={"number": 2, "text": "foo"},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
-            {'properties__number': 1, 'properties__text': 'foo'},
+            reverse("terra:feature-list", kwargs={"layer": layer.pk}),
+            {"properties__number": 1, "properties__text": "foo"},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
@@ -100,16 +71,16 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 1},
+            properties={"number": 1},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 2},
+            properties={"number": 2},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
-            {'properties__wrongfield': 'wrong value'},
+            reverse("terra:feature-list", kwargs={"layer": layer.pk}),
+            {"properties__wrongfield": "wrong value"},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
 
@@ -121,21 +92,21 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 2, 'digit': 42},
+            properties={"number": 2, "digit": 42},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 1, 'digit': 42},
+            properties={"number": 1, "digit": 42},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'number': 1, 'digit': 34},
+            properties={"number": 1, "digit": 34},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
-            {'properties__number': 1, 'properties__digit': 42},
+            reverse("terra:feature-list", kwargs={"layer": layer.pk}),
+            {"properties__number": 1, "properties__digit": 42},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
@@ -146,24 +117,21 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+            properties={"text": "foobar", "sentence": "foobar is here"},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'text': 'foo', 'sentence': 'foobar is missing'},
+            properties={"text": "foo", "sentence": "foobar is missing"},
         )
         FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+            properties={"text": "foobar", "sentence": "foobar is here"},
         )
         response = self.client.get(
-            reverse('terra:feature-list', kwargs={'layer': layer.pk}),
-            {
-                'properties__text': 'foobar',
-                'properties__sentence': 'foobar is here'
-            }
+            reverse("terra:feature-list", kwargs={"layer": layer.pk}),
+            {"properties__text": "foobar", "properties__sentence": "foobar is here"},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
@@ -174,14 +142,16 @@ class FeaturesListViewTest(TestCase):
         feature = FeatureFactory(
             layer=layer,
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
-            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+            properties={"text": "foobar", "sentence": "foobar is here"},
         )
 
         response = self.client.get(
             reverse(
-                'terra:feature-detail',
-                kwargs={'layer': str(layer.name),
-                        'identifier': str(feature.identifier)}
-            ),
+                "terra:feature-detail",
+                kwargs={
+                    "layer": str(layer.name),
+                    "identifier": str(feature.identifier),
+                },
+            )
         )
         self.assertEqual(response.status_code, HTTP_200_OK)

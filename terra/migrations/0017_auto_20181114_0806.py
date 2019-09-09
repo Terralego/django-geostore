@@ -6,14 +6,14 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0016_auto_20181120_1059'),
-    ]
+    dependencies = [("terra", "0016_auto_20181120_1059")]
 
     operations = [
         migrations.AddField(
-            model_name='layer',
-            name='settings',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict),
-        ),
+            model_name="layer",
+            name="settings",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True, default=dict
+            ),
+        )
     ]

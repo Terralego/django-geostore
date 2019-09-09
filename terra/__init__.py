@@ -1,6 +1,6 @@
 from enum import IntEnum
 
-default_app_config = 'terra.apps.TerraConfig'
+default_app_config = "terra.apps.TerraConfig"
 
 
 class GeometryTypes(IntEnum):
@@ -66,7 +66,7 @@ class Choices:
             self.parent = kwargs["parent"]
             self._CONSTS = kwargs["CONSTS"]
         else:
-            name = kwargs.get('name', 'CHOICES')  # retrocompatibility
+            name = kwargs.get("name", "CHOICES")  # retrocompatibility
             if name != "CHOICES":  # retrocompatibility
                 self._RAW_CHOICES = tuple()
                 self.add_choices(name, *raw_choices)
@@ -78,11 +78,15 @@ class Choices:
         for choice in raw_choices:
             const, value, string = choice
             if hasattr(self, const):
-                raise ValueError("You cannot declare two constants "
-                                 "with the same name! %s " % str(choice))
+                raise ValueError(
+                    "You cannot declare two constants "
+                    "with the same name! %s " % str(choice)
+                )
             if value in [getattr(self, c) for c in self._CONSTS]:
-                raise ValueError("You cannot declare two constants "
-                                 "with the same value! %s " % str(choice))
+                raise ValueError(
+                    "You cannot declare two constants "
+                    "with the same value! %s " % str(choice)
+                )
             setattr(self, const, value)
             self._CONSTS.append(const)
 
@@ -110,27 +114,33 @@ class Choices:
 
     def add_subset(self, name, constants):
         if hasattr(self, name):
-            raise ValueError("Cannot use %s as a subset name."
-                             "It's already an attribute." % name)
+            raise ValueError(
+                "Cannot use %s as a subset name." "It's already an attribute." % name
+            )
 
         subset = Choices(parent=self, CONSTS=constants)
         setattr(self, name, subset)
 
         # For retrocompatibility
-        setattr(self, '%s_DICT' % name, getattr(subset, "CHOICES_DICT"))
-        setattr(self, 'REVERTED_%s_DICT' % name,
-                getattr(subset, "REVERTED_CHOICES_DICT"))
+        setattr(self, "%s_DICT" % name, getattr(subset, "CHOICES_DICT"))
+        setattr(
+            self, "REVERTED_%s_DICT" % name, getattr(subset, "REVERTED_CHOICES_DICT")
+        )
 
     @property
     def RAW_CHOICES(self):
         if self._RAW_CHOICES is None:
             if self.parent:
-                self._RAW_CHOICES = tuple((c, k, v) for c, k, v
-                                          in self.parent.RAW_CHOICES
-                                          if c in self._CONSTS)
+                self._RAW_CHOICES = tuple(
+                    (c, k, v)
+                    for c, k, v in self.parent.RAW_CHOICES
+                    if c in self._CONSTS
+                )
             else:
-                raise ValueError("Implementation problem : first "
-                                 "ancestor should have a _RAW_CHOICES")
+                raise ValueError(
+                    "Implementation problem : first "
+                    "ancestor should have a _RAW_CHOICES"
+                )
         return self._RAW_CHOICES
 
     @property
@@ -139,8 +149,9 @@ class Choices:
         Tuple of tuples (value, display_value).
         """
         if self._CHOICES is None:
-            self._CHOICES = tuple((k, v) for c, k, v in self.RAW_CHOICES
-                                  if c in self._CONSTS)
+            self._CHOICES = tuple(
+                (k, v) for c, k, v in self.RAW_CHOICES if c in self._CONSTS
+            )
         return self._CHOICES
 
     @property
@@ -183,8 +194,9 @@ class Choices:
         Tuple of tuples (constant, display_value).
         """
         if self._CONST_CHOICES is None:
-            self._CONST_CHOICES = tuple((c, v) for c, k, v in self.RAW_CHOICES
-                                        if c in self._CONSTS)
+            self._CONST_CHOICES = tuple(
+                (c, v) for c, k, v in self.RAW_CHOICES if c in self._CONSTS
+            )
         return self._CONST_CHOICES
 
     def __contains__(self, item):
@@ -210,9 +222,11 @@ class Choices:
         Needed to make MY_CHOICES + OTHER_CHOICE
         """
         if not isinstance(item, (Choices, tuple)):
-            raise ValueError("This operand could only by evaluated "
-                             "with Choices or tuple instances. "
-                             "Got %s instead." % type(item))
+            raise ValueError(
+                "This operand could only by evaluated "
+                "with Choices or tuple instances. "
+                "Got %s instead." % type(item)
+            )
         return self.CHOICES + tuple(item)
 
     def __repr__(self):

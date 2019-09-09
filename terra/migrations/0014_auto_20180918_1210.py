@@ -5,17 +5,9 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0013_auto_20180919_1146'),
-    ]
+    dependencies = [("terra", "0013_auto_20180919_1146")]
 
     operations = [
-        migrations.RemoveField(
-            model_name='feature',
-            name='from_date',
-        ),
-        migrations.RemoveField(
-            model_name='feature',
-            name='to_date',
-        ),
+        migrations.RemoveField(model_name="feature", name="from_date"),
+        migrations.RemoveField(model_name="feature", name="to_date"),
     ]

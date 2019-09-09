@@ -8,41 +8,64 @@ from django.db.models import F
 from math import ceil, floor, log, pi
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
-                    ST_SimplifyPreserveTopology, ST_Transform)
+from .funcs import (
+    ST_Area,
+    ST_Length,
+    ST_MakeEnvelope,
+    ST_SimplifyPreserveTopology,
+    ST_Transform,
+)
 from .sigtools import SIGTools
 from .. import settings as app_settings
 
 
 def get_cache_version(layer):
     try:
-        return int(layer.features.order_by('-updated_at').first().updated_at.timestamp())
+        return int(
+            layer.features.order_by("-updated_at").first().updated_at.timestamp()
+        )
     except AttributeError:
         # This happens when a layer is empty
         return 1
 
 
 def cached_tile(func):
-    def wrapper(self, x, y, z,
-                pixel_buffer, features_filter, properties_filter,
-                features_limit, *args, **kwargs):
+    def wrapper(
+        self,
+        x,
+        y,
+        z,
+        pixel_buffer,
+        features_filter,
+        properties_filter,
+        features_limit,
+        *args,
+        **kwargs,
+    ):
         cache_key = self.get_tile_cache_key(
-            x, y, z,
-            pixel_buffer, features_filter, properties_filter,
-            features_limit)
+            x, y, z, pixel_buffer, features_filter, properties_filter, features_limit
+        )
 
         version = get_cache_version(self.layer)
 
-        expiration_factor = (log(5, z) ** 0.9)
+        expiration_factor = log(5, z) ** 0.9
 
         # Cache expiry calculation is based on a logarithmic function where we add a random factor of +-10%
         expiration = int(expiration_factor * (3600 * 24 * 7) * uniform(0.9, 1.1))
 
         def build_tile():
             (a, b) = func(
-                self, x, y, z,
-                pixel_buffer, features_filter, properties_filter,
-                features_limit, *args, **kwargs)
+                self,
+                x,
+                y,
+                z,
+                pixel_buffer,
+                features_filter,
+                properties_filter,
+                features_limit,
+                *args,
+                **kwargs,
+            )
             return (a, b.tobytes())
 
         return cache.get_or_set(cache_key, build_tile, expiration, version=version)
@@ -63,30 +86,28 @@ class VectorTile(object):
             # Grid step is pixel_width_x / EXTENT_RATIO and pixel_width_y / EXTENT_RATIO
             # Simplify to average half pixel width
             layer_query = layer_query.annotate(
-                outgeom3857=ST_SimplifyPreserveTopology('outgeom3857', (pixel_width_x + pixel_width_y) / 2 / 2)
+                outgeom3857=ST_SimplifyPreserveTopology(
+                    "outgeom3857", (pixel_width_x + pixel_width_y) / 2 / 2
+                )
             )
         return layer_query
 
     def _filter_on_property(self, layer_query, features_filter):
         if features_filter is not None:
-            layer_query = layer_query.filter(
-                properties__contains=features_filter
-            )
+            layer_query = layer_query.filter(properties__contains=features_filter)
         return layer_query
 
-    def _filter_on_geom_size(self, layer_query, layer_geometry, pixel_width_x, pixel_width_y):
+    def _filter_on_geom_size(
+        self, layer_query, layer_geometry, pixel_width_x, pixel_width_y
+    ):
         if self.layer.is_linestring:
             # Larger then a half of pixel
             layer_query = layer_query.annotate(
-                length3857=ST_Length('outgeom3857')
-            ).filter(
-                length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2
-            )
+                length3857=ST_Length("outgeom3857")
+            ).filter(length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2)
         elif self.layer.is_polygon:
             # Larger than a quarter of pixel
-            layer_query = layer_query.annotate(
-                area3857=ST_Area('outgeom3857')
-            ).filter(
+            layer_query = layer_query.annotate(area3857=ST_Area("outgeom3857")).filter(
                 area3857__gt=pixel_width_x * pixel_width_y / 4
             )
         return layer_query
@@ -95,53 +116,63 @@ class VectorTile(object):
         if features_limit is not None:
             # Order by feature size before limit
             if self.layer.is_linestring:
-                layer_query = layer_query.order_by('length3857')
+                layer_query = layer_query.order_by("length3857")
             elif self.layer.is_polygon:
-                layer_query = layer_query.order_by('area3857')
+                layer_query = layer_query.order_by("area3857")
 
             layer_query = layer_query[:features_limit]
         return layer_query
 
     def get_tile_bbox(self, x, y, z):
         bounds = mercantile.bounds(x, y, z)
-        return (*mercantile.xy(bounds.west, bounds.south), *mercantile.xy(bounds.east, bounds.north))
+        return (
+            *mercantile.xy(bounds.west, bounds.south),
+            *mercantile.xy(bounds.east, bounds.north),
+        )
 
     def pixel_widths(self, xmin, ymin, xmax, ymax):
         return (
             (xmax - xmin) / self.TILE_WIDTH_PIXEL,
-            (ymax - ymin) / self.TILE_WIDTH_PIXEL
+            (ymax - ymin) / self.TILE_WIDTH_PIXEL,
         )
 
     @cached_tile
-    def get_tile(self, x, y, z,
-                 pixel_buffer, features_filter, properties_filter,
-                 features_limit, features):
+    def get_tile(
+        self,
+        x,
+        y,
+        z,
+        pixel_buffer,
+        features_filter,
+        properties_filter,
+        features_limit,
+        features,
+    ):
 
         xmin, ymin, xmax, ymax = self.get_tile_bbox(x, y, z)
         pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
 
         layer_query = features.annotate(
-            bbox=ST_MakeEnvelope(
-                xmin,
-                ymin,
-                xmax,
-                ymax,
-                EPSG_3857),
+            bbox=ST_MakeEnvelope(xmin, ymin, xmax, ymax, EPSG_3857),
             # Intersects on internal data projection using pixel buffer
-            bbox_select=ST_Transform(ST_MakeEnvelope(
-                xmin - pixel_width_x * pixel_buffer,
-                ymin - pixel_width_y * pixel_buffer,
-                xmax + pixel_width_x * pixel_buffer,
-                ymax + pixel_width_y * pixel_buffer,
-                EPSG_3857), app_settings.INTERNAL_GEOMETRY_SRID),
-            outgeom3857=ST_Transform('geom', EPSG_3857),
-        ).filter(
-            bbox_select__intersects=F('geom')
-        )
+            bbox_select=ST_Transform(
+                ST_MakeEnvelope(
+                    xmin - pixel_width_x * pixel_buffer,
+                    ymin - pixel_width_y * pixel_buffer,
+                    xmax + pixel_width_x * pixel_buffer,
+                    ymax + pixel_width_y * pixel_buffer,
+                    EPSG_3857,
+                ),
+                app_settings.INTERNAL_GEOMETRY_SRID,
+            ),
+            outgeom3857=ST_Transform("geom", EPSG_3857),
+        ).filter(bbox_select__intersects=F("geom"))
 
         # Filter features
         layer_query = self._filter_on_property(layer_query, features_filter)
-        layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
+        layer_query = self._filter_on_geom_size(
+            layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y
+        )
 
         # Lighten geometry
         layer_query = self._simplify(layer_query, pixel_width_x, pixel_width_y)
@@ -152,8 +183,8 @@ class VectorTile(object):
         layer_raw_query, args = layer_query.query.sql_with_params()
 
         if properties_filter:
-            filter = ', '.join([f"'{f}'" for f in properties_filter])
-            properties = f'''
+            filter = ", ".join([f"'{f}'" for f in properties_filter])
+            properties = f"""
                 (
                     properties
                     - (
@@ -162,7 +193,7 @@ class VectorTile(object):
                         WHERE k NOT IN ({filter})
                     )
                 )
-                '''
+                """
         elif properties_filter == []:
             properties = "'{}'::jsonb"
         else:
@@ -171,7 +202,7 @@ class VectorTile(object):
         properties += " || json_build_object('_id', identifier)::jsonb"
 
         with connection.cursor() as cursor:
-            sql_query = f'''
+            sql_query = f"""
                 WITH
                 fullgeom AS ({layer_raw_query}),
                 tilegeom AS (
@@ -195,40 +226,39 @@ class VectorTile(object):
                     ) AS mvt
                 FROM
                     tilegeom
-            '''
+            """
 
             cursor.execute(sql_query, args + (self.layer.name,))
             row = cursor.fetchone()
 
             return row[0], row[1]
 
-    def get_tile_cache_key(self, x, y, z,
-                           pixel_buffer, features_filter, properties_filter,
-                           features_limit):
+    def get_tile_cache_key(
+        self, x, y, z, pixel_buffer, features_filter, properties_filter, features_limit
+    ):
         if self.cache_key:
             cache_key = self.cache_key
         else:
             cache_key = self.layer.pk
-        features_filter = ''
+        features_filter = ""
         if features_filter is not None:
-            features_filter_hash = \
-                hashlib.sha224(
-                    str(features_filter).encode('utf-8')
-                ).hexdigest()
-        properties_filter_hash = ''
+            features_filter_hash = hashlib.sha224(
+                str(features_filter).encode("utf-8")
+            ).hexdigest()
+        properties_filter_hash = ""
         if properties_filter is not None:
-            properties_filter_hash = \
-                hashlib.sha224(
-                    ','.join(properties_filter).encode('utf-8')
-                ).hexdigest()
+            properties_filter_hash = hashlib.sha224(
+                ",".join(properties_filter).encode("utf-8")
+            ).hexdigest()
         return (
-            f'tile_cache_{cache_key}_{x}_{y}_{z}'
-            f'_{pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
-            f'_{features_limit}'
+            f"tile_cache_{cache_key}_{x}_{y}_{z}"
+            f"_{pixel_buffer}_{features_filter_hash}_{properties_filter_hash}"
+            f"_{features_limit}"
         )
 
-    def clean_tiles(self, tiles, pixel_buffer, features_filter,
-                    properties_filter, features_limit):
+    def clean_tiles(
+        self, tiles, pixel_buffer, features_filter, properties_filter, features_limit
+    ):
         """
         TODO Cleaning tiles must be rewrited but for the moment invalidating tiles is not necessary
         """
@@ -237,15 +267,13 @@ class VectorTile(object):
 
 def guess_maxzoom(layer):
     features = layer.features.all()
-    layer_query = features.annotate(
-        geom3857=ST_Transform('geom', EPSG_3857)
-    )
+    layer_query = features.annotate(geom3857=ST_Transform("geom", EPSG_3857))
 
     layer_raw_query, args = layer_query.query.sql_with_params()
 
     try:
         with connection.cursor() as cursor:
-            sql_query = f'''
+            sql_query = f"""
                 WITH
                 q1 AS ({layer_raw_query}),
                 q2 AS (SELECT ST_X((ST_DumpPoints(geom3857)).geom) AS x FROM q1),
@@ -255,7 +283,7 @@ def guess_maxzoom(layer):
                     exp(sum(ln(dst))/count(dst)) AS avg
                 FROM
                     q4
-                '''
+                """
             cursor.execute(sql_query, args)
             row = cursor.fetchone()
 

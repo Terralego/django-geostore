@@ -7,18 +7,30 @@ import terra.validators
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('terra', '0019_merge_20190329_1056'),
-    ]
+    dependencies = [("terra", "0019_merge_20190329_1056")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='layer',
-            options={'ordering': ['id'], 'permissions': (('can_update_features_properties', 'Is able update geometries properties'), ('can_export_layers', 'Is able to export layers'), ('can_import_layers', 'Is able to import layers'))},
+            name="layer",
+            options={
+                "ordering": ["id"],
+                "permissions": (
+                    (
+                        "can_update_features_properties",
+                        "Is able update geometries properties",
+                    ),
+                    ("can_export_layers", "Is able to export layers"),
+                    ("can_import_layers", "Is able to import layers"),
+                ),
+            },
         ),
         migrations.AlterField(
-            model_name='layer',
-            name='schema',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, validators=[terra.validators.validate_json_schema]),
+            model_name="layer",
+            name="schema",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True,
+                default=dict,
+                validators=[terra.validators.validate_json_schema],
+            ),
         ),
     ]
