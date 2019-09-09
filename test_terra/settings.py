@@ -133,7 +133,3 @@ SWAGGER_ENABLED = False
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
-
-SERIALIZATION_MODULES = {
-    'geojson': 'terra.serializers.geojson',
-}

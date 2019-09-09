@@ -17,11 +17,6 @@ In your project :
         ...
     ]
 
-    # force serialization registration
-    SERIALIZATION_MODULES = {
-        'geojson': 'terra.serializers.geojson',
-    }
-
     # optional overridable settings
     INTERNAL_GEOMETRY_SRID = 4326 (can be changed for another SRID, should not be changed after 1rst migration)
 
@@ -60,10 +55,5 @@ you can disable and / or customize admin
 
     #####
 
-
     HOSTNAME = os.environ.get('HOSTNAME', '')
-
-    SERIALIZATION_MODULES = {
-        'geojson': 'terra.serializers.geojson',
-    }
-
+    TERRA_TILES_HOSTNAMES = [HOSTNAME, ]
