@@ -155,12 +155,9 @@ class VectorTile(object):
             filter = ', '.join([f"'{f}'" for f in properties_filter])
             properties = f'''
                 (
-                    properties
-                    - (
-                        SELECT array_agg(k)
-                        FROM jsonb_object_keys(properties) AS t(k)
-                        WHERE k NOT IN ({filter})
-                    )
+                    SELECT jsonb_object_agg(key, value) FROM
+                    jsonb_each(properties)
+                    WHERE key IN ({filter})
                 )
                 '''
         elif properties_filter == []:
