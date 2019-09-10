@@ -10,7 +10,7 @@ CHANGES = open(os.path.join(HERE, 'CHANGES.md')).read()
 
 
 setup(
-    name='terra',
+    name='terralego.backend.terra',
     version=open(os.path.join(HERE, 'terra', 'VERSION.md')).read().strip(),
     include_package_data=True,
     author="Makina Corpus",
