@@ -13,7 +13,7 @@ In your project :
         ...
         'rest_framework',
         'rest_framework_gis',
-        'terra',
+        'geostore',
         ...
     ]
 
@@ -34,11 +34,11 @@ In your project :
 
     urlpatterns = [
         ...
-        path('', include('terra.urls', namespace='terra')),
+        path('', include('geostore.urls', namespace='geostore')),
         ...
     ]
 
-You can customize default url and namespace by including terra.views directly
+You can customize default url and namespace by including geostore.views directly
 
 
 # ADMIN :

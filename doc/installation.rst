@@ -37,13 +37,13 @@ From Github:
 
 ::
 
-    pip install -e https://github.com/Terralego/terralego.backend.terra.git@master#egg=terra
+    pip install -e https://github.com/Terralego/django-geostore.git@master#egg=geostore
 
 With git
 --------
 
 ::
 
-    git clone https://github.com/Terralego/terralego.backend.terra.git
-    cd terralego.backend.terra
+    git clone https://github.com/Terralego/django-geostore.git
+    cd django-geostore
     python setup.py install

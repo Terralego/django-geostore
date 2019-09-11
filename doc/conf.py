@@ -19,12 +19,12 @@ sys.path.insert(0, root)
 
 # -- Project information -----------------------------------------------------
 
-project = 'terra-backend-crud'
+project = 'geostore-backend-crud'
 copyright = '2019, Makina Corpus'
 author = 'Makina Corpus'
 
 # The full version, including alpha/beta/rc tags
-release = open(os.path.join(root, 'terra', 'VERSION.md')).read()
+release = open(os.path.join(root, 'geostore', 'VERSION.md')).read()
 
 
 # -- General configuration ---------------------------------------------------
