@@ -69,7 +69,7 @@ jobs:
       install:
         - pip install flake8
       script:
-        - flake8 terra
+        - flake8 geostore
 
     - stage: deploy
       install: skip
