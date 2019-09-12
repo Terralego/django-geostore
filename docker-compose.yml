@@ -9,7 +9,7 @@ services:
   web:
     build:
       context: .
-    links:
+    depends_on:
       - postgres
     environment:
       - POSTGRES_HOST=postgres
