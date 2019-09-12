@@ -7,16 +7,12 @@
 ![Django Version](https://img.shields.io/badge/django-%3E%3D%202.1%2C<3.0-blue.svg)
 ![Rest Version](https://img.shields.io/badge/django--rest--framework-%3E%3D%203.8.0-blue)
 
-# BACKWARD compatibility
+# django-geostore
 
-## settings to add :
+Dynamic geo data store with json schema validation
 
-```python
-import os
+## Requirements
 
-....
-
-MEDIA_ACCEL_REDIRECT = os.getenv('MEDIA_ACCEL_REDIRECT', default="False") == "True"
-HOSTNAME = os.environ.get('HOSTNAME', '')
-
-```
+* Postgresql 10+
+* PostGIS 2.4+
+* Optionnal: PgRouting 2.5+
