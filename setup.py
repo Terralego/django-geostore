@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'django>=2.1,<3.0', # wait for restframework-gis, 0.14 doesnt support django 3.0
+        'django>=2.2,<3.0', # wait for restframework-gis, 0.14 doesnt support django 3.0
         'djangorestframework>=3.8',
         "djangorestframework-gis>=0.14",
         "drf-yasg>=1.9",
