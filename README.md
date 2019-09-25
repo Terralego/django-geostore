@@ -9,10 +9,10 @@
 
 # django-geostore
 
-Dynamic geo data store with json schema validation
+Dynamic geo data store with vector tiles generation and json schema definition / validation
 
 ## Requirements
 
 * Postgresql 10+
 * PostGIS 2.4+
-* Optionnal: PgRouting 2.5+
+* PgRouting 2.5+
