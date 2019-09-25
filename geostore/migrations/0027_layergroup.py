@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=256, unique=True)),
-                ('slug', models.SlugField(unique=True)),
+                ('slug', models.SlugField()),
                 ('layers', models.ManyToManyField(to='geostore.Layer', related_name='layer_groups')),
             ],
             options={

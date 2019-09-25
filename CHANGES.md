@@ -2,6 +2,14 @@
 CHANGELOG
 =========
 
+0.3.2      (2019-09-24)
+-----------------------
+
+### Fix
+
+* Fix migration file that prevent old terracommon app migration
+
+
 0.3.1      (2019-09-11)
 -----------------------
 
