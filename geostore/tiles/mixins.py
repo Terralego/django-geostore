@@ -50,7 +50,7 @@ class AbstractTileJsonMixin:
         return ','.join(set(
             [
                 l.layer_settings_with_default('metadata', 'attribution')
-                for l in self.layers
+                for l in self.layers if l.layer_settings_with_default('metadata', 'attribution')
             ])) or None
 
     def get_description(self):
