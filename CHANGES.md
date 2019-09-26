@@ -5,6 +5,10 @@ CHANGELOG
 0.3.3      (2019-09-25)
 -----------------------
 
+### Breaking Changes with front
+
+* key to access tilejson is changed from 'layer_tilejson' and 'group_tilejson' to 'tilejson' in both cases.
+
 ### Fix
 
 * Fix migration file that prevent old terracommon app migration
