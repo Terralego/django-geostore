@@ -1,7 +1,9 @@
-version: "3.7"
+version: "3"
 services:
   postgres:
     image: makinacorpus/pgrouting:10-2.5-2.6
+    volumes:
+      - postgres:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=travis_ci_test
       - POSTGRES_USER=travis_ci_test
@@ -18,3 +20,6 @@ services:
     ports:
       - "8000:8000"
     command: python3.7 ./manage.py runserver 0.0.0.0:8000
+
+volumes:
+  postgres:

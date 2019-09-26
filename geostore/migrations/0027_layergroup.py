@@ -6,8 +6,8 @@ def create_groups(apps, schema_editor):
     LayerGroup.objects.create(name='default', slug='default')
     Layer = apps.get_model('geostore', 'Layer')
     for layer in Layer.objects.all():
-        group_name = layer.group
-        group, created = LayerGroup.objects.get_or_create(name=group_name)
+        group_name = layer.group or 'default'
+        group, created = LayerGroup.objects.get_or_create(name=group_name, defaults={'slug': group_name})
         group.layers.add(layer)
 
 
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=256, unique=True)),
-                ('slug', models.SlugField()),
+                ('slug', models.SlugField(unique=True)),
                 ('layers', models.ManyToManyField(to='geostore.Layer', related_name='layer_groups')),
             ],
             options={

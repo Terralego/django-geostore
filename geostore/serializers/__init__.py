@@ -46,10 +46,10 @@ class FeatureSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    group_tilejson = serializers.SerializerMethodField()
+    tilejson = serializers.SerializerMethodField()
     group_tiles = serializers.SerializerMethodField()
 
-    def get_group_tilejson(self, obj):
+    def get_tilejson(self, obj):
         return urlunquote(reverse('geostore:group-tilejson', args=[obj.slug]))
 
     def get_group_tiles(self, obj):
@@ -66,7 +66,7 @@ class LayerSerializer(serializers.ModelSerializer):
     geojson_url = serializers.SerializerMethodField()
     schema = serializers.JSONField(required=False, validators=[validate_json_schema])
     layer_intersects = serializers.SerializerMethodField()
-    layer_tilejson = serializers.SerializerMethodField()
+    tilejson = serializers.SerializerMethodField()
     layer_groups = GroupSerializer(many=True, read_only=True)
 
     def get_routing_url(self, obj):
@@ -81,7 +81,7 @@ class LayerSerializer(serializers.ModelSerializer):
     def get_layer_intersects(self, obj):
         return reverse('geostore:layer-intersects', args=[obj.name, ])
 
-    def get_layer_tilejson(self, obj):
+    def get_tilejson(self, obj):
         return urlunquote(reverse('geostore:layer-tilejson', args=[obj.pk]))
 
     class Meta:
