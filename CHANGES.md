@@ -2,6 +2,14 @@
 CHANGELOG
 =========
 
+0.3.      (2019-10-02)
+-----------------------
+
+### Fixes
+
+* Fix bug with shapefile export on geometry defined layer.
+
+
 0.3.4      (2019-09-26)
 -----------------------
 
