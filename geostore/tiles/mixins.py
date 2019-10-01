@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseNotFound
 from django.urls import reverse
 
-from ..models import Feature
+from ..models import Feature, Layer
 from .. import settings as app_settings
 from .helpers import VectorTile
 
@@ -107,11 +107,14 @@ class AbstractTileJsonMixin:
         }
 
     def get_last_update(self):
-        return (
-            Feature.objects
-            .filter(layer__in=self.layers)
-            .order_by('-updated_at').first()
-        )
+        features = Feature.objects.filter(layer__in=self.layers).order_by('-updated_at')
+
+        if features.exists():
+            ref_object = features.first()
+        else:
+            ref_object = Layer.objects.filter(pk__in=self.layers).order_by('-updated_at').first()
+
+        return ref_object.updated_at
 
     def render_to_response(self, context, **response_kwargs):
         self.object = self.get_object()
@@ -119,7 +122,7 @@ class AbstractTileJsonMixin:
 
         if last_update:
             cache_key = f'tilejson-{self.object.name}'
-            version = int(last_update.updated_at.timestamp())
+            version = int(last_update.timestamp())
             tilejson_data = cache.get(cache_key, version=version)
 
             if tilejson_data is None:
