@@ -140,6 +140,11 @@ class VectorTilesTestCase(TestCase):
         self.assertTrue(tilejson['description'] is None)
         self.assertGreater(len(tilejson['vector_layers']), 0)
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
+        self.assertEqual(
+            tilejson['tiles'][0],
+            urlunquote(reverse('geostore:layer-tiles-pattern',
+                               args=[self.layer.pk]))
+        )
 
     def test_vector_group_tiles_view(self):
         # first query that generate the cache
