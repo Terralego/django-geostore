@@ -8,6 +8,7 @@ CHANGELOG
 ### Fixes
 
 * Fix bug with shapefile export on geometry defined layer.
+* Return a tilejson even if it has no feature
 
 
 0.3.4      (2019-09-26)
