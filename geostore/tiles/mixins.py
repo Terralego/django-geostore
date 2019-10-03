@@ -27,6 +27,9 @@ class AbstractTileJsonMixin:
     def layers(self):
         raise NotImplementedError()
 
+    def get_tile_path(self):
+        raise NotImplementedError()
+
     def get_minzoom(self):
         return max(
             app_settings.MIN_TILE_ZOOM,
@@ -42,9 +45,6 @@ class AbstractTileJsonMixin:
                 l.layer_settings_with_default('tiles', 'maxzoom')
                 for l in self.layers
             ]))
-
-    def get_tile_path(self):
-        return reverse("geostore:layer-tiles-pattern", args=[self.object.pk])
 
     def get_attribution(self):
         return ','.join(set(
@@ -140,12 +140,18 @@ class AbstractTileJsonMixin:
 
 class TileJsonMixin(AbstractTileJsonMixin):
 
+    def get_tile_path(self):
+        return reverse("geostore:layer-tiles-pattern", args=[self.object.pk])
+
     @property
     def layers(self):
         return [self.object]
 
 
 class MultipleTileJsonMixin(AbstractTileJsonMixin):
+
+    def get_tile_path(self):
+        return reverse("geostore:group-tiles-pattern", args=[self.object.slug])
 
     @property
     def layers(self):

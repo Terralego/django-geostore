@@ -4,6 +4,7 @@ from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.http import urlunquote
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from rest_framework.test import APITestCase
 
@@ -107,7 +108,7 @@ class VectorTilesTestCase(TestCase):
 
     def test_group_tilejson(self):
         response = self.client.get(
-            reverse('geostore:group-tilejson', args=[self.group_name]),
+            reverse('geostore:group-tilejson', args=[self.mygroup.slug]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost'
         )
@@ -115,10 +116,16 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(response.content), 0)
 
         tile_json = response.json()
+
         self.assertTrue(tile_json['attribution'])
         self.assertTrue(tile_json['description'] is None)
         self.assertGreater(len(tile_json['vector_layers']), 0)
         self.assertGreater(len(tile_json['vector_layers'][0]['fields']), 0)
+        self.assertEqual(
+            tile_json['tiles'][0],
+            urlunquote(reverse('geostore:group-tiles-pattern',
+                               args=[self.mygroup.slug]))
+        )
 
     def test_layer_tilejson(self):
         response = self.client.get(
@@ -133,6 +140,11 @@ class VectorTilesTestCase(TestCase):
         self.assertTrue(tilejson['description'] is None)
         self.assertGreater(len(tilejson['vector_layers']), 0)
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
+        self.assertEqual(
+            tilejson['tiles'][0],
+            urlunquote(reverse('geostore:layer-tiles-pattern',
+                               args=[self.layer.pk]))
+        )
 
     def test_vector_group_tiles_view(self):
         # first query that generate the cache

@@ -8,6 +8,8 @@ CHANGELOG
 ### Fixes
 
 * Fix bug with shapefile export on geometry defined layer.
+* Fix group's tiles URLs in tilejson
+* Fix tilejson when Layer has no Feature
 * Return a tilejson even if it has no feature
 
 
