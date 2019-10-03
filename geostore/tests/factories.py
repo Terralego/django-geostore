@@ -20,7 +20,7 @@ class LayerFactory(factory.DjangoModelFactory):
 
 
 class LayerSchemaFactory(factory.DjangoModelFactory):
-    geom_type = GeometryTypes.Point,
+    geom_type = GeometryTypes.Point
     schema = {
         "type": "object",
         "required": ["name", ],
