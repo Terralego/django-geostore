@@ -7,6 +7,7 @@ Manage layers
 *************
 
 .. code-block:: python
+
   from geostore.models import Layer
 
   layer = Layer.objects.create(name='Mushroom spot',
@@ -19,13 +20,16 @@ Geometry type validation
 Supported types
 ---------------
 
-.. automodule:: geostore.GeometryTypes
+.. autoclass:: geostore.GeometryTypes
+  :members:
+  :undoc-members:
 
 
 Without validation
 -------------------
 
 .. code-block:: python
+
   from geostore.models import Layer, Feature
   from geostore import GeometryTypes
   from django.contrib.geos.geometries import GEOSGeometry
@@ -43,6 +47,7 @@ With validation
 ---------------
 
 .. code-block:: python
+
   from geostore.models import Layer, Feature
   from geostore import GeometryTypes
   from django.contrib.geos.geometries import GEOSGeometry
