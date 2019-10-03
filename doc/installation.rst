@@ -4,6 +4,9 @@ Installation
 Requirements
 ------------
 
+DATABASE
+^^^^^^^^
+
 Minimum configuration :
  * Postgresql 10
  * PostGIS 2.4
@@ -22,6 +25,23 @@ USING docker image :
 Prebuilt docker image builded by makinacorpus
 
 https://cloud.docker.com/u/makinacorpus/repository/docker/makinacorpus/pgrouting/general
+
+SYSTEM REQUIREMENTS
+^^^^^^^^^^^^^^^^^^^
+
+For django
+""""""""""
+
+libpq-dev
+gettext
+
+
+For geodjango
+"""""""""""""
+
+gdal-bin
+binutils
+libproj-dev
 
 
 With pip
