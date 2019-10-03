@@ -16,3 +16,19 @@ Dynamic geo data store with vector tiles generation and json schema definition /
 * Postgresql 10+
 * PostGIS 2.4+
 * PgRouting 2.5+
+
+## Development
+
+### with docker :
+```bash
+$ docker-compose build
+$ docker-compose up
+$ docker-compose run web /code/venv/bin/python3.7 ./manage.py test
+```
+
+### with pip :
+```bash
+$ python3.7 -m venv venv
+$ source activate venv/bin/activate
+pip install -e .[dev]
+```

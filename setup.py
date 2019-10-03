@@ -8,6 +8,11 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(HERE, 'README.md')).read()
 CHANGES = open(os.path.join(HERE, 'CHANGES.md')).read()
 
+test_require = [
+    'factory-boy',
+    'flake8',
+    'coverage',
+]
 
 setup(
     name='django-geostore',
@@ -48,11 +53,10 @@ setup(
         "Pillow>=5.3.0",
         "jsonschema>=3.0",
     ],
+    tests_require=test_require,
     extras_require={
-        'dev': [
-            'factory-boy',
-            'flake8',
-            'coverage',
+        'dev': test_require + [
+            'django-debug-toolbar'
         ]
     }
 )

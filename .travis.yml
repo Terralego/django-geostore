@@ -24,7 +24,7 @@ stages:
 install:
 - sudo apt-get -y install libproj-dev binutils gdal-bin
 - pip install -e .[dev]
-- pip install coverage codecov
+- pip install codecov
 - if [[ $DJANGO_VERSION == dev ]]; then pip install -e git+https://github.com/django/django@master#egg=django;
   else pip install Django==$DJANGO_VERSION -U; fi
 - if [[ $REST_VERSION == dev ]]; then pip install -e git+https://github.com/encode/django-rest-framework.git@master#egg=django-rest-framework;
