@@ -28,10 +28,14 @@ class LayerModelTestCase(TestCase):
         self.assertEqual(self.layer_schema.get_property_title(prop),
                          prop)
 
-    def test_get_property_type(self):
+    def test_get_property_type_defined(self):
         """ method should return property type """
         self.assertEqual(self.layer_schema.get_property_type('age'),
                          self.layer_schema.schema['properties']['age']['type'])
+
+    def test_get_property_type_undefined(self):
+        """ method should return None """
+        self.assertIsNone(self.layer_schema.get_property_type('unknown'))
 
 
 class LayerFromCSVDictReaderTestCase(TestCase):
