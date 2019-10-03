@@ -381,6 +381,7 @@ class Layer(BaseUpdatableModel):
         }
 
     def get_property_title(self, prop):
+        """ Get json property title with its name. Return its name if not defined. """
         json_form_properties = self.schema.get('properties', {})
 
         if prop in json_form_properties:
@@ -389,6 +390,17 @@ class Layer(BaseUpdatableModel):
             return title
 
         return prop
+
+    def get_property_type(self, prop):
+        """ Get json property type with its name """
+        prop_type = None
+        json_form_properties = self.schema.get('properties', {})
+
+        if prop in json_form_properties:
+            data = json_form_properties[prop]
+            prop_type = data.get('type')
+
+        return prop_type
 
     @property
     def is_point(self):
