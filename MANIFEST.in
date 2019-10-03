@@ -4,4 +4,4 @@ recursive-include geostore *.py
 recursive-exclude test_geostore *
 recursive-exclude geostore/tests/ *
 include geostore/tests/factories.py
-
+include geostore/tests/__init__.py
