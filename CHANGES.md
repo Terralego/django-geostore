@@ -5,6 +5,10 @@ CHANGELOG
 0.3.5.dev0      (XXXX-XX-XX)
 ----------------------------
 
+### News
+
+* Add a method to get json schema property type by its name
+
 ### Fixes
 
 * Fix bug with shapefile export on geometry defined layer.

@@ -2,6 +2,7 @@ import factory
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
+from geostore import GeometryTypes
 from geostore.models import Feature, Layer
 
 
@@ -16,6 +17,30 @@ class LayerFactory(factory.DjangoModelFactory):
 
         for feature in range(features):
             FeatureFactory(layer=self)
+
+
+class LayerSchemaFactory(factory.DjangoModelFactory):
+    geom_type = GeometryTypes.Point,
+    schema = {
+        "type": "object",
+        "required": ["name", ],
+        "properties": {
+            "name": {
+                'type': "string",
+            },
+            "age": {
+                'type': "integer",
+                "title": "Age",
+            },
+            "country": {
+                'type': "string",
+                "title": "Country"
+            },
+        }
+    }
+
+    class Meta:
+        model = Layer
 
 
 class FeatureFactory(factory.DjangoModelFactory):
