@@ -5,6 +5,9 @@ CHANGELOG
 0.3.6.dev0      (XXXX-XX-XX)
 ----------------------------
 
+### Fixes
+
+* Fix deprecation warning : "ST_Line_Substring signature was deprecated in 2.1.0. Please use ST_LineSubstring"
 
 
 0.3.5      (2019-10-03)
