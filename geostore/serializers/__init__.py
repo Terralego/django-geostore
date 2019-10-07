@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Group
 from django.urls import reverse
 from django.utils.http import urlunquote
 from rest_framework import serializers
@@ -68,6 +69,7 @@ class LayerSerializer(serializers.ModelSerializer):
     layer_intersects = serializers.SerializerMethodField()
     tilejson = serializers.SerializerMethodField()
     layer_groups = GroupSerializer(many=True, read_only=True)
+    authorized_groups = serializers.PrimaryKeyRelatedField(required=False, many=True, queryset=Group.objects.all())
 
     def get_routing_url(self, obj):
         return reverse('geostore:layer-route', args=[obj.pk, ])

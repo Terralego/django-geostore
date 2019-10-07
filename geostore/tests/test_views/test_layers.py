@@ -23,7 +23,7 @@ class LayerLineIntersectionTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.client = APIClient()
-        self.user = UserFactory()
+        self.user = UserFactory(permissions=[])
         self.client.force_authenticate(user=self.user)
 
     def test_intersect_bad_geometry(self):
@@ -424,7 +424,7 @@ class LayerDetailTest(TestCase):
 
     def test_update(self):
         self.user.user_permissions.add(
-            Permission.objects.get(codename='can_update_features_properties')
+            Permission.objects.get(codename='can_manage_layers')
         )
         geom = GEOSGeometry(json.dumps(self.geometry))
         feature = FeatureFactory(layer=self.layer,

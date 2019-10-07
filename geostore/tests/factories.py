@@ -1,9 +1,20 @@
 import factory
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
 from geostore import GeometryTypes
 from geostore.models import Feature, Layer
+
+
+def _get_perm(perm_name):
+    """
+    Returns permission instance with given name.
+    Permission name is a string like 'auth.add_user'.
+    """
+    app_label, codename = perm_name.split('.')
+    return Permission.objects.get(
+        content_type__app_label=app_label, codename=codename)
 
 
 class LayerFactory(factory.DjangoModelFactory):
@@ -74,3 +85,9 @@ class UserFactory(factory.DjangoModelFactory):
         kwargs.update({'password': kwargs.get('password', '123456')})
         manager = cls._get_manager(model_class)
         return manager.create_user(*args, **kwargs)
+
+    @factory.post_generation
+    def permissions(self, create, extracted, **kwargs):
+        if create and extracted:
+            # We have a saved object and a list of permission names
+            self.user_permissions.add(*[_get_perm(pn) for pn in extracted])
