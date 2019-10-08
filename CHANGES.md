@@ -5,6 +5,7 @@ CHANGELOG
 0.3.6.dev0      (XXXX-XX-XX)
 ----------------------------
 
+* Fix tilejson when Layer has no Feature
 
 
 0.3.5      (2019-10-03)

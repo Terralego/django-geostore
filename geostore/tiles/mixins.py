@@ -139,22 +139,22 @@ class AbstractTileJsonMixin:
 
 
 class TileJsonMixin(AbstractTileJsonMixin):
-
     def get_tile_path(self):
         return reverse("geostore:layer-tiles-pattern", args=[self.object.pk])
 
     @property
     def layers(self):
-        return [self.object]
+        # keep a qs result here
+        return type(self.object).objects.filter(pk__in=[self.object.pk])
 
 
 class MultipleTileJsonMixin(AbstractTileJsonMixin):
-
     def get_tile_path(self):
         return reverse("geostore:group-tiles-pattern", args=[self.object.slug])
 
     @property
     def layers(self):
+        # keep a qs result here
         return self.object.layers.all()
 
 
