@@ -178,8 +178,7 @@ class TileResponseMixin:
         minzoom = layer.layer_settings_with_default('tiles', 'minzoom')
         maxzoom = layer.layer_settings_with_default('tiles', 'maxzoom')
         if self.kwargs['z'] >= minzoom and self.kwargs['z'] <= maxzoom:
-            feature_count, tile = self.get_tile_for_layer(layer)
-        if feature_count:
+            _, tile = self.get_tile_for_layer(layer)
             return tile
         return b''
 
