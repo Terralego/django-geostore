@@ -148,9 +148,9 @@ class Routing(object):
             SELECT
                 points.pid,
                 points.edge_id,
-                ST_Line_Substring(geostore_feature.geom,
-                                    points.fraction_start,
-                                    points.fraction_end) AS geom
+                ST_LineSubstring(geostore_feature.geom,
+                                 points.fraction_start,
+                                 points.fraction_end) AS geom
             FROM
                 (VALUES
                     (1, %s, 0, %s::float),
