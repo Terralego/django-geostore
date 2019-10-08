@@ -142,7 +142,7 @@ class TileJsonMixin(AbstractTileJsonMixin):
     @property
     def layers(self):
         # keep a qs result here
-        return type(self.object).objects.filter(pk__in=[self.object.pk])
+        return type(self.object).objects.filter(pk=self.object.pk)
 
 
 class MultipleTileJsonMixin(AbstractTileJsonMixin):
