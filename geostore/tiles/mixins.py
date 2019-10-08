@@ -120,22 +120,19 @@ class AbstractTileJsonMixin:
         self.object = self.get_object()
         last_update = self.get_last_update()
 
-        if last_update:
-            cache_key = f'tilejson-{self.object.name}'
-            version = int(last_update.timestamp())
-            tilejson_data = cache.get(cache_key, version=version)
+        cache_key = f'tilejson-{self.object.name}'
+        version = int(last_update.timestamp())
+        tilejson_data = cache.get(cache_key, version=version)
 
-            if tilejson_data is None:
-                tilejson_data = json.dumps(self.get_tilejson())
-                cache.set(cache_key, tilejson_data, version=version)
+        if tilejson_data is None:
+            tilejson_data = json.dumps(self.get_tilejson())
+            cache.set(cache_key, tilejson_data, version=version)
 
-            response_kwargs.setdefault('content_type', self.content_type)
-            return self.response_class(
-                content=tilejson_data,
-                **response_kwargs,
-            )
-
-        return HttpResponseNotFound()
+        response_kwargs.setdefault('content_type', self.content_type)
+        return self.response_class(
+            content=tilejson_data,
+            **response_kwargs,
+        )
 
 
 class TileJsonMixin(AbstractTileJsonMixin):
