@@ -2,7 +2,7 @@ import json
 from urllib.parse import unquote, urljoin
 
 from django.core.cache import cache
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse
 from django.urls import reverse
 
 from ..models import Feature, Layer
