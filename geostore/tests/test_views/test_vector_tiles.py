@@ -135,7 +135,7 @@ class VectorTilesTestCase(TestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
 
-        tilejson = json.loads(response.content)
+        tilejson = response.json()
         self.assertTrue(tilejson['attribution'])
         self.assertTrue(tilejson['description'] is None)
         self.assertGreater(len(tilejson['vector_layers']), 0)
@@ -145,6 +145,19 @@ class VectorTilesTestCase(TestCase):
             urlunquote(reverse('geostore:layer-tiles-pattern',
                                args=[self.layer.pk]))
         )
+
+    def test_layer_tilejson_without_features(self):
+        self.layer.features.all().delete()
+        response = self.client.get(
+            reverse('geostore:layer-tilejson', args=[self.layer.pk]),
+            # HTTP_HOST required to build the tilejson descriptor
+            HTTP_HOST='localhost')
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertGreater(len(response.content), 0)
+
+        tilejson = response.json()
+        self.assertTrue(tilejson['attribution'])
+        self.assertTrue(tilejson['description'] is None)
 
     def test_vector_group_tiles_view(self):
         # first query that generate the cache

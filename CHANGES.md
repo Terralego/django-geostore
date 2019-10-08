@@ -7,6 +7,7 @@ CHANGELOG
 
 ### Fixes
 
+* Fix tilejson when Layer has no Feature
 * Fix deprecation warning : "ST_Line_Substring signature was deprecated in 2.1.0. Please use ST_LineSubstring"
 * Fix tile generation when no feature is present in the layer
 
