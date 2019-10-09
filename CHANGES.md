@@ -2,6 +2,14 @@
 CHANGELOG
 =========
 
+0.3.7      (XXXX-XX-XX)
+----------------------------
+
+### Fixes
+
+* Fix tilejson's layer attribution and description parsing
+
+
 0.3.6      (2019-10-09)
 ----------------------------
 
