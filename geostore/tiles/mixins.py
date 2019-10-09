@@ -46,22 +46,26 @@ class AbstractTileJsonMixin:
                 for l in self.layers
             ]))
 
-    def get_attribution(self):
-        return ','.join(set(
-            [
-                l.layer_settings_with_default('metadata', 'attribution')
-                for l in self.layers if l.layer_settings_with_default('metadata', 'attribution')
-            ])) or None
-
-    def get_description(self):
+    def _join_group_settings_link(self, layers, *args):
         return ','.join(set([
-            a
-            for a in [
-                layer.layer_settings_with_default('metadata', 'description')
-                for layer in self.layers
-            ]
+            a if 'link' not in a else
+            '<a href="{0}"/>{1}</a>'.format(a['link'].replace('"', '&quot;'), a['name'].replace('"', '&quot;'))
+            for a in [layer.layer_settings_with_default(*args) for layer in self.layers]
             if a
         ])) or None
+
+    def _join_group_settings_string(self, layers, *args):
+        return ','.join(set([
+            a
+            for a in [layer.layer_settings_with_default(*args) for layer in self.layers]
+            if a
+        ])) or None
+
+    def get_attribution(self):
+        return self._join_group_settings_link(self.layers, 'metadata', 'attribution')
+
+    def get_description(self):
+        return self._join_group_settings_string(self.layers, 'metadata', 'description')
 
     @staticmethod
     def layer_fields(layer):
