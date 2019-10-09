@@ -4,6 +4,8 @@ from urllib.parse import unquote, urljoin
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.urls import reverse
+from django.utils.encoding import escape_uri_path
+from django.utils.html import escape
 
 from ..models import Feature, Layer
 from .. import settings as app_settings
@@ -19,8 +21,9 @@ class AbstractTileJsonMixin:
         layer_settings = layer.layer_settings_with_default(*args)
         if 'link' in layer_settings:
             return '<a href="{0}"/>{1}</a>'.format(
-                layer_settings['link'].replace('"', '&quot;'),
-                layer_settings['name'].replace('"', '&quot;'))
+                escape_uri_path(layer_settings['link']),
+                escape(layer_settings['name'])
+            )
         return layer_settings
 
     @property
@@ -49,7 +52,7 @@ class AbstractTileJsonMixin:
     def _join_group_settings_link(self, layers, *args):
         return ','.join(set([
             a if 'link' not in a else
-            '<a href="{0}"/>{1}</a>'.format(a['link'].replace('"', '&quot;'), a['name'].replace('"', '&quot;'))
+            '<a href="{0}"/>{1}</a>'.format(escape_uri_path(a['link']), escape(a['name']))
             for a in [layer.layer_settings_with_default(*args) for layer in self.layers]
             if a
         ])) or None
