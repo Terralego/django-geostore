@@ -17,18 +17,20 @@ from rest_framework.response import Response
 from .filters import JSONFieldFilterBackend
 from .mixins import MultipleFieldLookupMixin
 from .models import FeatureRelation, Layer, LayerRelation
+from .permissions import LayerPermission
 from .routing.helpers import Routing
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
 
 
 class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
+    permission_classes = (LayerPermission, )
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
     lookup_fields = ('pk', 'name')
 
     @action(methods=['get', 'post'],
-            url_name='shapefile', detail=True)
+            url_name='shapefile', detail=True, permission_classes=[])
     def shapefile(self, request, pk=None):
         layer = self.get_object()
 
@@ -61,7 +63,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
                 self.permission_denied(request, 'Operation not allowed')
         return response
 
-    @action(detail=True, methods=['get'], url_name='geojson')
+    @action(detail=True, methods=['get'], url_name='geojson', permission_classes=[])
     def to_geojson(self, request, pk=None):
         if request.user.has_perm('geostore.can_export_layers'):
             layer = self.get_object()
@@ -69,7 +71,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         else:
             self.permission_denied(request, 'Operation not allowed')
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[])
     def route(self, request, pk=None):
         layer = self.get_object()
         callbackid = self.request.data.get('callbackid', None)
@@ -99,7 +101,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
         return Response(response_data, content_type='application/json')
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[])
     def intersects(self, request, *args, **kwargs):
         layer = self.get_object()
         callbackid = self.request.data.get('callbackid', None)
@@ -125,9 +127,6 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
         return Response(response)
 
     def partial_update(self, request, *args, **kwargs):
-        if not request.user.has_perm('geostore.can_update_features_properties'):
-            self.permission_denied(request, 'Operation not allowed')
-
         layer = self.get_object()
 
         if 'features' in request.data:

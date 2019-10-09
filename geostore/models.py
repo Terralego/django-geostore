@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 import fiona
 import fiona.transform
 from deepmerge import always_merger
+from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
@@ -77,6 +78,8 @@ class Layer(BaseUpdatableModel):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
     geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
+    authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers')
+
     # Settings scheam
     SETTINGS_DEFAULT = {
         'metadata': {
@@ -487,8 +490,7 @@ class Layer(BaseUpdatableModel):
     class Meta:
         ordering = ['id']
         permissions = (
-            ('can_update_features_properties', 'Is able update geometries '
-                                               'properties'),
+            ('can_manage_layers', 'Has all permissions on layers'),
             ('can_export_layers', 'Is able to export layers'),
             ('can_import_layers', 'Is able to import layers'),
         )

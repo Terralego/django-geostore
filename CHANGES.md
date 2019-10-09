@@ -10,6 +10,7 @@ CHANGELOG
 * Fix tilejson when Layer has no Feature
 * Fix deprecation warning : "ST_Line_Substring signature was deprecated in 2.1.0. Please use ST_LineSubstring"
 * Fix tile generation when no feature is present in the layer
+* Fix permission management of layers
 
 0.3.5      (2019-10-03)
 -----------------------
