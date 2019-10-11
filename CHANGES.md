@@ -2,14 +2,14 @@
 CHANGELOG
 =========
 
-0.3.8      (XXXX-XX-XX)
+0.3.8      (2019-10-11)
 ----------------------------
 
 ### Fixes
 
 * Add permission management on FeatureViewset
 
-0.3.7      (2010-10-09)
+0.3.7      (2019-10-09)
 ----------------------------
 
 ### Fixes
