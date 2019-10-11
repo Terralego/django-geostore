@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from .filters import JSONFieldFilterBackend
 from .mixins import MultipleFieldLookupMixin
 from .models import FeatureRelation, Layer, LayerRelation
-from .permissions import LayerPermission
+from .permissions import FeaturePermission, LayerPermission
 from .routing.helpers import Routing
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
@@ -147,6 +147,7 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 
 
 class FeatureViewSet(viewsets.ModelViewSet):
+    permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
     filter_backends = (JSONFieldFilterBackend, )
     filter_fields = ('properties', )

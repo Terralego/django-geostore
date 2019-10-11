@@ -2,13 +2,19 @@
 CHANGELOG
 =========
 
+0.3.8      (XXXX-XX-XX)
+----------------------------
+
+### Fixes
+
+* Add permission management on FeatureViewset
+
 0.3.7      (2010-10-09)
 ----------------------------
 
 ### Fixes
 
 * Fix tilejson's layer attribution and description parsing
-
 
 0.3.6      (2019-10-09)
 ----------------------------

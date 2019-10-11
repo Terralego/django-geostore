@@ -463,7 +463,7 @@ class LayerDetailTest(TestCase):
 class LayerCreationTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = UserFactory()
+        self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
         self.client.force_authenticate(user=self.user)
 
         self.point_layer = LayerFactory(name="no schema point geom",

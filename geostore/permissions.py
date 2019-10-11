@@ -16,19 +16,18 @@ class LayerPermission(BasePermission):
 
         if obj.authorized_groups.exists():
             # Checking permissions if the layer has group authorizations
-            is_authorized = any(map(
-                lambda group: group in obj.authorized_groups.all(),
-                request.user.groups()
-            ))
+            if request.method not in SAFE_METHODS and not has_perm:
+                return False
 
-            if request.method not in SAFE_METHODS:
-                return is_authorized and has_perm
-
-            return is_authorized
+            return request.user.groups.filter(
+                pk__in=list(obj.authorized_groups.values_list('pk', flat=True))
+            ).exists()
 
         else:
             # else we check normal privileges
-            if request.method in SAFE_METHODS:
-                return True
-            else:
-                return has_perm
+            return (request.method in SAFE_METHODS) or has_perm
+
+
+class FeaturePermission(LayerPermission):
+    def has_object_permission(self, request, view, obj):
+        return super().has_object_permission(request, view, obj.layer)
