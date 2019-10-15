@@ -5,7 +5,8 @@ CHANGELOG
 0.3.9.dev0      (XXXX-XX-XX)
 ----------------------------
 
-* Admin is now disabled by default
+* Admin part is removed. Please use your own admin in project.
+* DRF yasg is removed. COnfigure it in your project if required.
 
 
 0.3.8      (2019-10-11)
