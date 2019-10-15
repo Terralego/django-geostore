@@ -44,9 +44,6 @@ setup(
         'django-token-tools',
         'djangorestframework>=3.8',
         "djangorestframework-gis>=0.14",
-        'django-terra-utils>0.3.6',
-        "drf-yasg>=1.9",
-        "packaging",  # wait for drf-yasg fix
         "deepmerge",
         "requests>=2.19",
         "mercantile>=1.0",
