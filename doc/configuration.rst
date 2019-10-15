@@ -23,8 +23,6 @@ In your project :
     HOSTNAME = ''
     TERRA_TILES_HOSTNAMES = [HOSTNAME, ]
 
-    SWAGGER_ENABLED = False
-
     MAX_TILE_ZOOM = 15
     MIN_TILE_ZOOM = 10
 
