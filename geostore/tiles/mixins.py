@@ -1,20 +1,50 @@
+from datetime import datetime
 import json
 from urllib.parse import unquote, urljoin
 
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.db.models import Q
+from django.http import HttpResponse, QueryDict
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.encoding import escape_uri_path
 from django.utils.html import escape
 
 from ..models import Feature, Layer
 from .. import settings as app_settings
+from ..tokens import tiles_token_generator
 from .helpers import VectorTile
 
 
-class AbstractTileJsonMixin:
+class AuthenticatedGroupsMixin:
+
+    IDB64_QUERY_ARG = 'idb64'
+    TOKEN_QUERY_ARG = 'token'
+
+    @cached_property
+    def authenticated_groups(self):
+        token, idb64 = self.request.GET.get(self.TOKEN_QUERY_ARG), self.request.GET.get(self.IDB64_QUERY_ARG)
+        if token and idb64:
+            groups, layergroup = tiles_token_generator.decode_idb64(idb64)
+
+            if groups and layergroup and tiles_token_generator.check_token(token, groups, layergroup):
+                return groups
+        return []
+
+
+class AbstractTileJsonMixin(AuthenticatedGroupsMixin):
     response_class = HttpResponse
     content_type = 'application/json'
+
+    def get_tokenized_url(self, url):
+        if self.authenticated_groups:
+            querystring = QueryDict(mutable=True)
+            querystring.update({
+                self.IDB64_QUERY_ARG: self.request.GET.get(self.IDB64_QUERY_ARG),
+                self.TOKEN_QUERY_ARG: self.request.GET.get(self.TOKEN_QUERY_ARG)
+            })
+            return f'{url}?{querystring.urlencode()}'
+        return url
 
     @staticmethod
     def settings_link(layer, *args):
@@ -39,7 +69,7 @@ class AbstractTileJsonMixin:
             min([
                 l.layer_settings_with_default('tiles', 'minzoom')
                 for l in self.layers
-            ]))
+            ], default=app_settings.MIN_TILE_ZOOM))
 
     def get_maxzoom(self):
         return min(
@@ -47,7 +77,7 @@ class AbstractTileJsonMixin:
             max([
                 l.layer_settings_with_default('tiles', 'maxzoom')
                 for l in self.layers
-            ]))
+            ], default=app_settings.MAX_TILE_ZOOM))
 
     def _join_group_settings_link(self, layers, *args):
         return ','.join(set([
@@ -121,13 +151,16 @@ class AbstractTileJsonMixin:
         else:
             ref_object = Layer.objects.filter(pk__in=self.layers).order_by('-updated_at').first()
 
-        return ref_object.updated_at
+        if ref_object:
+            return ref_object.updated_at
+
+        return datetime.now()
 
     def render_to_response(self, context, **response_kwargs):
         self.object = self.get_object()
         last_update = self.get_last_update()
 
-        cache_key = f'tilejson-{self.object.name}'
+        cache_key = f'tilejson-{self.object.name}' + '-'.join([g.name for g in self.authenticated_groups])
         version = int(last_update.timestamp())
         tilejson_data = cache.get(cache_key, version=version)
 
@@ -144,25 +177,37 @@ class AbstractTileJsonMixin:
 
 class TileJsonMixin(AbstractTileJsonMixin):
     def get_tile_path(self):
-        return reverse("geostore:layer-tiles-pattern", args=[self.object.pk])
+        return self.get_tokenized_url(
+            reverse("geostore:layer-tiles-pattern", args=[self.object.pk])
+        )
 
-    @property
+    @cached_property
     def layers(self):
         # keep a qs result here
-        return type(self.object).objects.filter(pk=self.object.pk)
+        return type(self.object).objects.filter(
+            Q(pk=self.object.pk) &
+            (
+                Q(authorized_groups__isnull=True) | Q(authorized_groups__in=self.authenticated_groups)
+            )
+        )
 
 
 class MultipleTileJsonMixin(AbstractTileJsonMixin):
     def get_tile_path(self):
-        return reverse("geostore:group-tiles-pattern", args=[self.object.slug])
+        return self.get_tokenized_url(
+            reverse("geostore:group-tiles-pattern", args=[self.object.slug])
+        )
 
-    @property
+    @cached_property
     def layers(self):
-        # keep a qs result here
-        return self.object.layers.all()
+        # Get the non authentified layers
+        return self.object.layers.filter(
+            Q(authorized_groups__isnull=True) |
+            Q(authorized_groups__in=self.authenticated_groups)
+        )
 
 
-class TileResponseMixin:
+class TileResponseMixin(AuthenticatedGroupsMixin):
     response_class = HttpResponse
     content_type = 'application/vnd.mapbox-vector-tile'
 
@@ -178,10 +223,15 @@ class TileResponseMixin:
             features,
         )
 
+    def is_authorized(self, layer):
+        if layer.authorized_groups.exists():
+            return layer.authorized_groups.filter(pk__in=self.authenticated_groups).exists()
+        return True
+
     def get_tile(self, layer):
         minzoom = layer.layer_settings_with_default('tiles', 'minzoom')
         maxzoom = layer.layer_settings_with_default('tiles', 'maxzoom')
-        if self.kwargs['z'] >= minzoom and self.kwargs['z'] <= maxzoom:
+        if self.kwargs['z'] >= minzoom and self.kwargs['z'] <= maxzoom and self.is_authorized(layer):
             _, tile = self.get_tile_for_layer(layer)
             return tile
         return b''
