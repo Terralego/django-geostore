@@ -2,11 +2,12 @@
 CHANGELOG
 =========
 
-0.3.9.dev0      (XXXX-XX-XX)
+0.3.9      (2019-10-15)
 ----------------------------
 
 * Admin part is removed. Please use your own admin in project.
 * DRF yasg is removed. COnfigure it in your project if required.
+* Add authentication management on layers
 
 
 0.3.8      (2019-10-11)
