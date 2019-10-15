@@ -41,13 +41,14 @@ setup(
     ],
     install_requires=[
         'django>=2.2,<3.0',  # wait for restframework-gis, 0.14 doesnt support django 3.0
+        'django-token-tools',
         'djangorestframework>=3.8',
         "djangorestframework-gis>=0.14",
         "deepmerge",
         "requests>=2.19",
         "mercantile>=1.0",
         "psycopg2>=2.7",
-        "Fiona>=1.7",
+        "Fiona>=1.8,<1.9",
         "Pillow>=5.3.0",
         "jsonschema>=3.0",
     ],
