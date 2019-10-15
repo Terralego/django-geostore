@@ -43,7 +43,6 @@ setup(
         'django>=2.2,<3.0',  # wait for restframework-gis, 0.14 doesnt support django 3.0
         'djangorestframework>=3.8',
         "djangorestframework-gis>=0.14",
-        "drf-yasg>=1.9",
         "deepmerge",
         "requests>=2.19",
         "mercantile>=1.0",
