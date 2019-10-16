@@ -5,6 +5,9 @@ CHANGELOG
 0.3.10.dev0     (XXXX-XX-XX)
 ---------------------------
 
+Fixes
+
+* Add missing migration file
 
 
 0.3.9      (2019-10-15)
