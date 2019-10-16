@@ -32,5 +32,5 @@ class JSONFieldOrderingFilter(OrderingFilter):
         if layer:
             # allow filter by property name
             for prop in layer.layer_properties:
-                fields.append((f'properties__{prop}', prop.title()))
+                fields.append((f'properties__{prop}', layer.get_property_title(prop)))
         return fields
