@@ -1,18 +1,14 @@
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 
 from geostore.tests.factories import LayerFactory, UserFactory
 
 
-class SchemaValidationTest(TestCase):
+class SchemaValidationTest(APITestCase):
     def setUp(self):
-        self.client = APIClient()
         self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
-
         self.client.force_authenticate(user=self.user)
-
         self.no_schema_layer = LayerFactory(name="no schema", geom_type=None)
         self.valid_schema = {
             "properties": {
