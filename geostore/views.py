@@ -151,6 +151,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
     serializer_class = FeatureSerializer
     filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter)
     filter_fields = ('properties', )
+    ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')
     lookup_field = 'identifier'
 
     def __init__(self, *args, **kwargs):
