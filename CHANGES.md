@@ -5,6 +5,10 @@ CHANGELOG
 0.3.10.dev0     (XXXX-XX-XX)
 ---------------------------
 
+News
+
+* Ability to sort API feature results with property key content
+
 Fixes
 
 * Add missing migration file
