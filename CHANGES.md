@@ -11,7 +11,7 @@ CHANGELOG
 ----------------------------
 
 * Admin part is removed. Please use your own admin in project.
-* DRF yasg is removed. COnfigure it in your project if required.
+* DRF yasg is removed. Configure it in your project if required.
 * Add authentication management on layers
 
 
