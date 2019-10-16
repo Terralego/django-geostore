@@ -14,7 +14,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
-from .filters import JSONFieldFilterBackend
+from .filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from .mixins import MultipleFieldLookupMixin
 from .models import FeatureRelation, Layer, LayerRelation
 from .permissions import FeaturePermission, LayerPermission
@@ -149,32 +149,38 @@ class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
 class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
-    filter_backends = (JSONFieldFilterBackend, )
+    filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter)
     filter_fields = ('properties', )
     lookup_field = 'identifier'
 
-    def _get_layer(self):
-        queryfilter = Q(name=self.kwargs.get('layer'))
-        if self.kwargs.get('layer').isdigit():
-            queryfilter |= Q(pk=self.kwargs.get('layer'))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.layer = None
 
-        return get_object_or_404(Layer, queryfilter)
+    def get_layer(self):
+        if not self.layer:
+            queryfilter = Q(name=self.kwargs.get('layer'))
+            if self.kwargs.get('layer').isdigit():
+                queryfilter |= Q(pk=self.kwargs.get('layer'))
+
+            self.layer = get_object_or_404(Layer, queryfilter)
+        return self.layer
 
     def get_serializer_context(self):
         """
         Layer access in serializer (pk to insure schema generation)
         """
         context = super().get_serializer_context()
-        layer = self._get_layer()
+        layer = self.get_layer()
         context.update({'layer_pk': layer.pk})
         return context
 
     def get_queryset(self):
-        layer = self._get_layer()
+        layer = self.get_layer()
         return layer.features.all()
 
     def perform_create(self, serializer):
-        layer = self._get_layer()
+        layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
 
 
