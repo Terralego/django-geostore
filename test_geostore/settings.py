@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_gis',
     'geostore',
+    'test_geostore.test_app'
 ]
 
 INTERNAL_GEOMETRY_SRID = 4326
