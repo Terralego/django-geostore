@@ -1,7 +1,7 @@
 from django.contrib.postgres.fields.jsonb import JSONField
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
-from rest_framework.filters import BaseFilterBackend
+from rest_framework.filters import BaseFilterBackend, OrderingFilter
 
 
 class JSONFieldFilterBackend(BaseFilterBackend):
@@ -23,3 +23,14 @@ class JSONFieldFilterBackend(BaseFilterBackend):
                         pass
                     query &= sub_query
         return queryset.filter(query)
+
+
+class JSONFieldOrderingFilter(OrderingFilter):
+    def get_valid_fields(self, queryset, view, context={}):
+        fields = super().get_valid_fields(queryset, view, context=context)
+        layer = view.get_layer()
+        if layer:
+            # allow filter by property name
+            for prop in layer.layer_properties:
+                fields.append((f'properties__{prop}', prop.title()))
+        return fields
