@@ -16,14 +16,20 @@ from rest_framework.response import Response
 
 from .filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from .mixins import MultipleFieldLookupMixin
-from .models import FeatureRelation, Layer, LayerRelation
+from .models import FeatureRelation, Layer, LayerGroup, LayerRelation
 from .permissions import FeaturePermission, LayerPermission
 from .routing.helpers import Routing
 from .serializers import (FeatureRelationSerializer, FeatureSerializer,
                           LayerRelationSerializer, LayerSerializer)
+from .tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
 
-class LayerViewSet(MultipleFieldLookupMixin, viewsets.ModelViewSet):
+class LayerGroupViewsSet(MultipleMVTViewMixin, viewsets.ReadOnlyModelViewSet):
+    queryset = LayerGroup.objects.all()
+    lookup_field = 'slug'
+
+
+class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet):
     permission_classes = (LayerPermission, )
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer

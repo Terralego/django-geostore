@@ -341,7 +341,7 @@ class VectorTilesSpecialTestCase(TestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
 
-        tilejson = json.loads(response.content)
+        tilejson = response.json()
         self.assertTrue(tilejson['attribution'])
         self.assertTrue(tilejson['description'] is None)
         self.assertGreater(len(tilejson['vector_layers']), 0)
