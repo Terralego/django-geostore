@@ -1,5 +1,3 @@
-from datetime import datetime
-import json
 from urllib.parse import unquote, urljoin
 
 from django.core.cache import cache
@@ -9,6 +7,9 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.encoding import escape_uri_path
 from django.utils.html import escape
+from django.utils.timezone import now
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from ..models import Feature, Layer
 from .. import settings as app_settings
@@ -31,10 +32,78 @@ class AuthenticatedGroupsMixin:
                 return groups
         return []
 
+    def is_authorized(self, layer):
+        if layer.authorized_groups.exists():
+            return layer.authorized_groups.filter(pk__in=self.authenticated_groups).exists()
+        return True
 
-class AbstractTileJsonMixin(AuthenticatedGroupsMixin):
-    response_class = HttpResponse
-    content_type = 'application/json'
+
+class MVTViewMixin(AuthenticatedGroupsMixin):
+    tile_response_class = HttpResponse
+    tile_content_type = 'application/vnd.mapbox-vector-tile'
+
+    @action(detail=True, url_path=r'tiles/\{z\}/\{x\}/\{y\}', permission_classes=[], url_name='tiles-pattern')
+    def tiles_pattern(self, request, *args, **kwargs):
+        """ Fake pattern to reverse tile url """
+        return Response(status=404)
+
+    @action(detail=True, permission_classes=[])
+    def tilejson(self, request, *args, **kwargs):
+        """ MVT layer tilejson """
+        last_update = self.get_last_update()
+        cache_key = f'tilejson-{self.get_object().name}' + '-'.join([g.name for g in self.authenticated_groups])
+        version = int(last_update.timestamp())
+        tilejson_data = cache.get(cache_key, version=version)
+
+        if not tilejson_data:
+            tilejson_data = self.get_tilejson()
+            cache.set(cache_key, tilejson_data, version=version)
+        return Response(tilejson_data)
+
+    @action(detail=True, url_path=r'tiles/(?P<z>[\d-]+)/(?P<x>[\d-]+)/(?P<y>[\d-]+)', url_name='tiles', permission_classes=[])
+    def tiles(self, request, z, x, y, **kwargs):
+        return self.tile_response_class(
+            self.get_tile(int(z), int(x), int(y)),
+            content_type=self.tile_content_type
+        )
+
+    def get_tile_for_layer(self, layer, z, x, y):
+        tile = VectorTile(layer)
+        features = layer.features.all()
+        return tile.get_tile(
+            x, y, z,
+            layer.layer_settings_with_default('tiles', 'pixel_buffer'),
+            layer.layer_settings_with_default('tiles', 'features_filter'),
+            layer.layer_settings_with_default('tiles', 'properties_filter'),
+            layer.layer_settings_with_default('tiles', 'features_limit'),
+            features,
+        )
+
+    def get_tile(self, z, x, y):
+        tiles_array = []
+        for layer in self.layers:
+            minzoom = layer.layer_settings_with_default('tiles', 'minzoom')
+            maxzoom = layer.layer_settings_with_default('tiles', 'maxzoom')
+            if minzoom <= z <= int(maxzoom) and self.is_authorized(layer):
+                _, tile = self.get_tile_for_layer(layer, z, x, y)
+                tiles_array.append(tile)
+        return b''.join(tiles_array)
+
+    def get_tile_path(self):
+        return self.get_tokenized_url(
+            reverse("geostore:layer-tiles-pattern", args=[self.get_object().pk])
+        )
+
+    @cached_property
+    def layers(self):
+        # keep a qs result here
+
+        return type(self.get_object()).objects.filter(
+            Q(pk=self.get_object().pk) &
+            (
+                Q(authorized_groups__isnull=True) | Q(authorized_groups__in=self.authenticated_groups)
+            )
+        )
 
     def get_tokenized_url(self, url):
         if self.authenticated_groups:
@@ -56,14 +125,7 @@ class AbstractTileJsonMixin(AuthenticatedGroupsMixin):
             )
         return layer_settings
 
-    @property
-    def layers(self):
-        raise NotImplementedError()
-
-    def get_tile_path(self):
-        raise NotImplementedError()
-
-    def get_minzoom(self):
+    def get_min_zoom(self):
         return max(
             app_settings.MIN_TILE_ZOOM,
             min([
@@ -71,7 +133,7 @@ class AbstractTileJsonMixin(AuthenticatedGroupsMixin):
                 for l in self.layers
             ], default=app_settings.MIN_TILE_ZOOM))
 
-    def get_maxzoom(self):
+    def get_max_zoom(self):
         return min(
             app_settings.MAX_TILE_ZOOM,
             max([
@@ -121,15 +183,15 @@ class AbstractTileJsonMixin(AuthenticatedGroupsMixin):
             } for l in self.layers]
 
     def get_tilejson(self):
-        minzoom = self.get_minzoom()
-        maxzoom = self.get_maxzoom()
+        minzoom = self.get_min_zoom()
+        maxzoom = self.get_max_zoom()
 
         tile_path = self.get_tile_path()
 
         # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
         return {
             'tilejson': '3.0.0',
-            'name': self.object.name,
+            'name': self.get_object().name,
             'tiles': [
                 unquote(urljoin(hostname, tile_path))
                 for hostname in app_settings.TERRA_TILES_HOSTNAMES
@@ -154,113 +216,19 @@ class AbstractTileJsonMixin(AuthenticatedGroupsMixin):
         if ref_object:
             return ref_object.updated_at
 
-        return datetime.now()
-
-    def render_to_response(self, context, **response_kwargs):
-        self.object = self.get_object()
-        last_update = self.get_last_update()
-
-        cache_key = f'tilejson-{self.object.name}' + '-'.join([g.name for g in self.authenticated_groups])
-        version = int(last_update.timestamp())
-        tilejson_data = cache.get(cache_key, version=version)
-
-        if tilejson_data is None:
-            tilejson_data = json.dumps(self.get_tilejson())
-            cache.set(cache_key, tilejson_data, version=version)
-
-        response_kwargs.setdefault('content_type', self.content_type)
-        return self.response_class(
-            content=tilejson_data,
-            **response_kwargs,
-        )
+        return now()
 
 
-class TileJsonMixin(AbstractTileJsonMixin):
+class MultipleMVTViewMixin(MVTViewMixin):
     def get_tile_path(self):
         return self.get_tokenized_url(
-            reverse("geostore:layer-tiles-pattern", args=[self.object.pk])
-        )
-
-    @cached_property
-    def layers(self):
-        # keep a qs result here
-        return type(self.object).objects.filter(
-            Q(pk=self.object.pk) &
-            (
-                Q(authorized_groups__isnull=True) | Q(authorized_groups__in=self.authenticated_groups)
-            )
-        )
-
-
-class MultipleTileJsonMixin(AbstractTileJsonMixin):
-    def get_tile_path(self):
-        return self.get_tokenized_url(
-            reverse("geostore:group-tiles-pattern", args=[self.object.slug])
+            reverse("geostore:group-tiles-pattern", args=[self.get_object().slug])
         )
 
     @cached_property
     def layers(self):
         # Get the non authentified layers
-        return self.object.layers.filter(
+        return self.get_object().layers.filter(
             Q(authorized_groups__isnull=True) |
             Q(authorized_groups__in=self.authenticated_groups)
-        )
-
-
-class TileResponseMixin(AuthenticatedGroupsMixin):
-    response_class = HttpResponse
-    content_type = 'application/vnd.mapbox-vector-tile'
-
-    def get_tile_for_layer(self, layer):
-        tile = VectorTile(layer)
-        features = layer.features.all()
-        return tile.get_tile(
-            self.kwargs['x'], self.kwargs['y'], self.kwargs['z'],
-            layer.layer_settings_with_default('tiles', 'pixel_buffer'),
-            layer.layer_settings_with_default('tiles', 'features_filter'),
-            layer.layer_settings_with_default('tiles', 'properties_filter'),
-            layer.layer_settings_with_default('tiles', 'features_limit'),
-            features,
-        )
-
-    def is_authorized(self, layer):
-        if layer.authorized_groups.exists():
-            return layer.authorized_groups.filter(pk__in=self.authenticated_groups).exists()
-        return True
-
-    def get_tile(self, layer):
-        minzoom = layer.layer_settings_with_default('tiles', 'minzoom')
-        maxzoom = layer.layer_settings_with_default('tiles', 'maxzoom')
-        if self.kwargs['z'] >= minzoom and self.kwargs['z'] <= maxzoom and self.is_authorized(layer):
-            _, tile = self.get_tile_for_layer(layer)
-            return tile
-        return b''
-
-    def render_to_response(self, context, **response_kwargs):
-        layer = context['object']
-        tile = self.get_tile(layer)
-
-        response_kwargs.setdefault('content_type', self.content_type)
-        return self.response_class(
-            content=tile,
-            **response_kwargs,
-        )
-
-
-class MultipleTileResponseMixin(TileResponseMixin):
-
-    def get_tile(self, layers):
-        return b''.join([
-            super(MultipleTileResponseMixin, self).get_tile(layer)
-            for layer in layers
-        ])
-
-    def render_to_response(self, context, **response_kwargs):
-        layers = context['object'].layers.all()
-        tile = self.get_tile(layers)
-
-        response_kwargs.setdefault('content_type', self.content_type)
-        return self.response_class(
-            content=tile,
-            **response_kwargs,
         )
