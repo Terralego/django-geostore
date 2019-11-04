@@ -24,14 +24,14 @@ class VectorTilesNoLayerTestCase(APITestCase):
     @override_settings(ALLOWED_HOSTS=['localhost'])
     def test_group_tilejson_fail_no_layer(self):
         response = self.client.get(
-            reverse('geostore:group-tilejson', args=[self.group_slug]),
+            reverse('group-tilejson', args=[self.group_slug]),
             HTTP_HOST='localhost')
         self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
 
     def test_vector_tiles_view_without_layer(self):
         # first query that generate the cache
         response = self.client.get(
-            reverse('geostore:group-tiles', args=[self.group_slug, 10, 515, 373]))
+            reverse('group-tiles', args=[self.group_slug, 10, 515, 373]))
         self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
 
 
@@ -108,7 +108,7 @@ class VectorTilesTestCase(TestCase):
 
     def test_group_tilejson(self):
         response = self.client.get(
-            reverse('geostore:group-tilejson', args=[self.mygroup.slug]),
+            reverse('group-tilejson', args=[self.mygroup.slug]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost'
         )
@@ -123,13 +123,13 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tile_json['vector_layers'][0]['fields']), 0)
         self.assertEqual(
             tile_json['tiles'][0],
-            urlunquote(reverse('geostore:group-tiles-pattern',
+            urlunquote(reverse('group-tiles-pattern',
                                args=[self.mygroup.slug]))
         )
 
     def test_layer_tilejson(self):
         response = self.client.get(
-            reverse('geostore:layer-tilejson', args=[self.layer.pk]),
+            reverse('layer-tilejson', args=[self.layer.pk]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -142,14 +142,14 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
         self.assertEqual(
             tilejson['tiles'][0],
-            urlunquote(reverse('geostore:layer-tiles-pattern',
+            urlunquote(reverse('layer-tiles-pattern',
                                args=[self.layer.pk]))
         )
 
     def test_layer_tilejson_without_features(self):
         self.layer.features.all().delete()
         response = self.client.get(
-            reverse('geostore:layer-tilejson', args=[self.layer.pk]),
+            reverse('layer-tilejson', args=[self.layer.pk]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -163,7 +163,7 @@ class VectorTilesTestCase(TestCase):
         # first query that generate the cache
         response = self.client.get(
             reverse(
-                'geostore:group-tiles',
+                'group-tiles',
                 kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
@@ -173,7 +173,7 @@ class VectorTilesTestCase(TestCase):
         # verify data is cached
         response = self.client.get(
             reverse(
-                'geostore:group-tiles',
+                'group-tiles',
                 kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(
             len(connection.queries),
@@ -185,7 +185,7 @@ class VectorTilesTestCase(TestCase):
         )
 
         response = self.client.get(
-            reverse('geostore:group-tiles', args=[self.group_name, 10, 1, 1]))
+            reverse('group-tiles', args=[self.group_name, 10, 1, 1]))
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertFalse(len(response.content))
@@ -194,7 +194,7 @@ class VectorTilesTestCase(TestCase):
         # first query that generate the cache
         response = self.client.get(
             reverse(
-                'geostore:layer-tiles',
+                'layer-tiles',
                 kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
@@ -204,7 +204,7 @@ class VectorTilesTestCase(TestCase):
         # verify data is cached
         response = self.client.get(
             reverse(
-                'geostore:layer-tiles',
+                'layer-tiles',
                 kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(
             len(connection.queries),
@@ -216,7 +216,7 @@ class VectorTilesTestCase(TestCase):
         )
 
         response = self.client.get(
-            reverse('geostore:layer-tiles', kwargs={'pk': self.layer.pk, 'z': 10, 'x': 1, 'y': 1}))
+            reverse('layer-tiles', kwargs={'pk': self.layer.pk, 'z': 10, 'x': 1, 'y': 1}))
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(b'', response.content)
@@ -225,7 +225,7 @@ class VectorTilesTestCase(TestCase):
     def test_vector_group_tiles_view_max_tile_zoom_lower_actual_zoom(self):
         # first query that generate the cache
         response = self.client.get(
-            reverse('geostore:group-tiles', args=[self.mygroup.slug, 10, 515, 373]))
+            reverse('group-tiles', args=[self.mygroup.slug, 10, 515, 373]))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(len(response.content), 113)
 
@@ -233,7 +233,7 @@ class VectorTilesTestCase(TestCase):
     def test_vector_layer_tiles_view_max_tile_zoom_lower_actual_zoom(self):
         # first query that generate the cache
         response = self.client.get(
-            reverse('geostore:layer-tiles', args=[self.layer.pk, 10, 515, 373]))
+            reverse('layer-tiles', args=[self.layer.pk, 10, 515, 373]))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(len(response.content), 113)
 
@@ -335,7 +335,7 @@ class VectorTilesSpecialTestCase(TestCase):
 
     def test_group_tilejson_with_properties(self):
         response = self.client.get(
-            reverse('geostore:group-tilejson', args=[self.group_name]),
+            reverse('group-tilejson', args=[self.group_name]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -349,7 +349,7 @@ class VectorTilesSpecialTestCase(TestCase):
 
     def test_layer_tilejson_with_properties(self):
         response = self.client.get(
-            reverse('geostore:layer-tilejson', args=[self.layer.pk]),
+            reverse('layer-tilejson', args=[self.layer.pk]),
             # HTTP_HOST required to build the tilejson descriptor
             HTTP_HOST='localhost')
         self.assertEqual(HTTP_200_OK, response.status_code)

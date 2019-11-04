@@ -36,7 +36,7 @@ class LayerLineIntersectionTestCase(TestCase):
             ]
         }
         response = self.client.post(
-            reverse('geostore:layer-intersects', kwargs={'pk': self.layer.pk}),
+            reverse('layer-intersects', kwargs={'pk': self.layer.pk}),
             {'geom': json.dumps(linestring)},
             format='json',
         )
@@ -98,7 +98,7 @@ class LayerPolygonIntersectTestCase(TestCase):
         )
 
         response = self.client.post(
-            reverse('geostore:layer-intersects', kwargs={'pk': layer.pk}),
+            reverse('layer-intersects', kwargs={'pk': layer.pk}),
             {'geom': json.dumps(self.polygon)},
             format='json',
         )
@@ -185,7 +185,7 @@ class LayerFeatureIntersectionTest(TestCase):
 
         """The layer below must intersect"""
         response = self.client.post(
-            reverse('geostore:layer-intersects', args=[layer.pk, ]),
+            reverse('layer-intersects', args=[layer.pk, ]),
             {
                 'geom': json.dumps(self.intersect_geometry)
             }
@@ -204,7 +204,7 @@ class LayerFeatureIntersectionTest(TestCase):
 
         """The layer below must NOT intersect"""
         response = self.client.post(
-            reverse('geostore:layer-intersects', args=[layer.name, ]),
+            reverse('layer-intersects', args=[layer.name, ]),
             {
                 'geom': json.dumps(self.fake_geometry)
             }
@@ -219,7 +219,7 @@ class LayerFeatureIntersectionTest(TestCase):
            invalid
         """
         response = self.client.post(
-            reverse('geostore:layer-intersects', args=[layer.pk, ]),
+            reverse('layer-intersects', args=[layer.pk, ]),
             {
                 'geom': '''Invalid geometry'''
             }
@@ -228,7 +228,7 @@ class LayerFeatureIntersectionTest(TestCase):
 
     def test_features_linestring_format(self):
         response = self.client.post(
-            reverse('geostore:layer-intersects', args=[self.layer.pk, ]),
+            reverse('layer-intersects', args=[self.layer.pk, ]),
             {
                 'geom': json.dumps(self.fake_linestring)
             }
@@ -238,7 +238,7 @@ class LayerFeatureIntersectionTest(TestCase):
 
     def test_features_polygon_format(self):
         response = self.client.post(
-            reverse('geostore:layer-intersects', args=[self.layer.pk, ]),
+            reverse('layer-intersects', args=[self.layer.pk, ]),
             {
                 'geom': json.dumps(self.fake_polygon)
             }
@@ -258,7 +258,7 @@ class LayerShapefileTestCase(TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer)
 
-        shape_url = reverse('geostore:layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
@@ -292,7 +292,7 @@ class LayerShapefileTestCase(TestCase):
             }]
         })
 
-        shape_url = reverse('geostore:layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
@@ -300,7 +300,7 @@ class LayerShapefileTestCase(TestCase):
                                        response.content)
         new_layer = LayerFactory()
         response = self.client.post(
-            reverse('geostore:layer-shapefile', args=[new_layer.pk, ]),
+            reverse('layer-shapefile', args=[new_layer.pk, ]),
             {'shapefile': shapefile, }
         )
 
@@ -312,12 +312,12 @@ class LayerShapefileTestCase(TestCase):
         # Create en ampty layer to test its behavior
         LayerFactory()
         self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        shape_url = reverse('geostore:layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
     def test_shapefile_no_permission(self):
-        shape_url = reverse('geostore:layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
 
         self.assertEqual(
             self.client.get(shape_url).status_code,
@@ -329,7 +329,7 @@ class LayerShapefileTestCase(TestCase):
         layer = LayerFactory()
 
         response = self.client.post(
-            reverse('geostore:layer-shapefile', args=[layer.pk, ]), )
+            reverse('layer-shapefile', args=[layer.pk, ]), )
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
@@ -344,7 +344,7 @@ class LayerShapefileTestCase(TestCase):
                                            fd.read())
 
             response = self.client.post(
-                reverse('geostore:layer-shapefile', args=[layer.pk, ]),
+                reverse('layer-shapefile', args=[layer.pk, ]),
                 {'shapefile': shapefile, }
             )
 
@@ -357,7 +357,7 @@ class LayerShapefileTestCase(TestCase):
                                        b'bad bad data')
 
         response = self.client.post(
-            reverse('geostore:layer-shapefile', args=[self.layer.pk, ]),
+            reverse('layer-shapefile', args=[self.layer.pk, ]),
             {'shapefile': shapefile, }
         )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
@@ -374,7 +374,7 @@ class LayerGeojsonTestCase(TestCase):
         self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer)
 
-        geojson_url = reverse('geostore:layer-geojson', args=[self.layer.pk, ])
+        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
         response = self.client.get(geojson_url)
 
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -388,7 +388,7 @@ class LayerGeojsonTestCase(TestCase):
         # Create at least one feature in the layer, so it's not empty
         FeatureFactory(layer=self.layer)
 
-        geojson_url = reverse('geostore:layer-geojson', args=[self.layer.pk, ])
+        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
         response = self.client.get(geojson_url)
 
         self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
@@ -418,7 +418,7 @@ class LayerDetailTest(TestCase):
         FeatureFactory(layer=self.layer, properties={'a': 'b'})
 
         response = self.client.patch(
-            reverse('geostore:layer-detail', args=[self.layer.name, ]), {})
+            reverse('layer-detail', args=[self.layer.name, ]), {})
 
         self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
 
@@ -437,7 +437,7 @@ class LayerDetailTest(TestCase):
         }
 
         response = self.client.patch(
-            reverse('geostore:layer-detail', args=[self.layer.name, ]),
+            reverse('layer-detail', args=[self.layer.name, ]),
             {
                 "type": "FeatureCollection",
                 "features": [
@@ -471,25 +471,25 @@ class LayerCreationTest(TestCase):
         self.null_layer = LayerFactory(name="no schema null geom", geom_type=None)
 
     def test_point_layer_allow_point(self):
-        response = self.client.post(reverse('geostore:feature-list', args=[self.point_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.point_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"toto": "ok"}})
         self.assertEqual(response.status_code, HTTP_201_CREATED, response.json())
 
     def test_point_layer_disallow_other(self):
-        response = self.client.post(reverse('geostore:feature-list', args=[self.point_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.point_layer.pk, ]),
                                     data={"geom": "LINESTRING(0 0, 1 1)",
                                           "properties": {"toto": "ok"}})
         self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST, response.json())
 
     def test_null_layer_allow_points(self):
-        response = self.client.post(reverse('geostore:feature-list', args=[self.null_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.null_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"toto": "ok"}})
         self.assertEqual(response.status_code, HTTP_201_CREATED, response.json())
 
     def test_null_layer_allow_linestring(self):
-        response = self.client.post(reverse('geostore:feature-list', args=[self.null_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.null_layer.pk, ]),
                                     data={"geom": "LINESTRING(0 0, 1 1)",
                                           "properties": {"toto": "ok"}})
         self.assertEqual(response.status_code, HTTP_201_CREATED, response.json())

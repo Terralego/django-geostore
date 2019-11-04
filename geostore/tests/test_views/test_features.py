@@ -88,7 +88,7 @@ class FeaturesListViewTest(TestCase):
             properties={'number': 2, 'text': 'foo'},
         )
         response = self.client.get(
-            reverse('geostore:feature-list', kwargs={'layer': layer.pk}),
+            reverse('feature-list', kwargs={'layer': layer.pk}),
             {'properties__number': 1, 'properties__text': 'foo'},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -108,7 +108,7 @@ class FeaturesListViewTest(TestCase):
             properties={'number': 2},
         )
         response = self.client.get(
-            reverse('geostore:feature-list', kwargs={'layer': layer.pk}),
+            reverse('feature-list', kwargs={'layer': layer.pk}),
             {'properties__wrongfield': 'wrong value'},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -134,7 +134,7 @@ class FeaturesListViewTest(TestCase):
             properties={'number': 1, 'digit': 34},
         )
         response = self.client.get(
-            reverse('geostore:feature-list', kwargs={'layer': layer.pk}),
+            reverse('feature-list', kwargs={'layer': layer.pk}),
             {'properties__number': 1, 'properties__digit': 42},
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
@@ -159,7 +159,7 @@ class FeaturesListViewTest(TestCase):
             properties={'text': 'foobar', 'sentence': 'foobar is here'},
         )
         response = self.client.get(
-            reverse('geostore:feature-list', kwargs={'layer': layer.pk}),
+            reverse('feature-list', kwargs={'layer': layer.pk}),
             {
                 'properties__text': 'foobar',
                 'properties__sentence': 'foobar is here'
@@ -179,7 +179,7 @@ class FeaturesListViewTest(TestCase):
 
         response = self.client.get(
             reverse(
-                'geostore:feature-detail',
+                'feature-detail',
                 kwargs={'layer': str(layer.name),
                         'identifier': str(feature.identifier)}
             ),

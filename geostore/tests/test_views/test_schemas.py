@@ -28,7 +28,7 @@ class SchemaValidationTest(APITestCase):
         """
         Try to create layer with valid schema
         """
-        response = self.client.post(reverse('geostore:layer-list'),
+        response = self.client.post(reverse('layer-list'),
                                     data={})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -36,7 +36,7 @@ class SchemaValidationTest(APITestCase):
         """
         Try to create layer with valid schema
         """
-        response = self.client.post(reverse('geostore:layer-list'),
+        response = self.client.post(reverse('layer-list'),
                                     data={"schema": self.valid_schema})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -44,7 +44,7 @@ class SchemaValidationTest(APITestCase):
         """
         Try to create layer with unvalid schema
         """
-        response = self.client.post(reverse('geostore:layer-list'),
+        response = self.client.post(reverse('layer-list'),
                                     data={"schema": {"type": "unknown"}})
         response_json = response.json()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -54,7 +54,7 @@ class SchemaValidationTest(APITestCase):
         """
         If no schema defined (or empty), all properties are accepted
         """
-        response = self.client.post(reverse('geostore:feature-list', args=[self.no_schema_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.no_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"toto": "ok"}})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.json())
@@ -63,7 +63,7 @@ class SchemaValidationTest(APITestCase):
         """
         If schema defined, allow features with properties in schema
         """
-        response = self.client.post(reverse('geostore:feature-list', args=[self.property_schema_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"name": "ok",
                                                          "age": 10}})
@@ -73,7 +73,7 @@ class SchemaValidationTest(APITestCase):
         """
         If schema defined, deny unvalid data
         """
-        response = self.client.post(reverse('geostore:feature-list', args=[self.property_schema_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"name": 20,
                                                          "age": "wrong data"}})
@@ -86,7 +86,7 @@ class SchemaValidationTest(APITestCase):
         """
         If schema defined, deny properties not in schema
         """
-        response = self.client.post(reverse('geostore:feature-list', args=[self.property_schema_layer.pk, ]),
+        response = self.client.post(reverse('feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"toto": "ok"}})
         response_json = response.json()

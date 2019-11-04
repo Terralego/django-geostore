@@ -91,7 +91,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
 
     def get_tile_path(self):
         return self.get_tokenized_url(
-            reverse("geostore:layer-tiles-pattern", args=[self.get_object().pk])
+            reverse("layer-tiles-pattern", args=[self.get_object().pk])
         )
 
     @cached_property
@@ -222,7 +222,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
 class MultipleMVTViewMixin(MVTViewMixin):
     def get_tile_path(self):
         return self.get_tokenized_url(
-            reverse("geostore:group-tiles-pattern", args=[self.get_object().slug])
+            reverse("group-tiles-pattern", args=[self.get_object().slug])
         )
 
     @cached_property
