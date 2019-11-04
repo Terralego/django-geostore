@@ -5,6 +5,10 @@ CHANGELOG
 0.3.11.dev0    (XXXX-XX-XX)
 ---------------------------
 
+Fixes
+
+* Prevent token group id decoding error
+
 
 0.3.10         (2019-10-16)
 ---------------------------
