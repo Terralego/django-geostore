@@ -20,11 +20,11 @@ class GroupTilesToken(TokenGenerator):
         decoded = super().decode_idb64(idb64)
         if decoded is not None and '-' in decoded:
             gids, lid = decoded.rsplit('-', 1)
-            gids = [int(gid) for gid in gids.split('-')]
 
             try:
+                gids = [int(gid) for gid in gids.split('-') if gid]
                 return Group.objects.filter(pk__in=gids), LayerGroup.objects.get(pk=lid)
-            except ObjectDoesNotExist:
+            except (ObjectDoesNotExist, ValueError):
                 pass
         return None, None
 
