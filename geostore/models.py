@@ -582,3 +582,39 @@ class FeatureExtraGeom(BaseUpdatableModel):
         unique_together = (
             ('feature', 'layer_extra_geom'),
         )
+
+
+class SchemaObjectProperty(models.Model):
+    PROPERTY_TYPES = (
+        ('string', _('String')),
+        ('integer', _('Integer')),
+        ('number', _('Number')),
+        ('boolean', _('Boolean')),
+        ('array_integer', _('Array Integer')),
+        ('array_string', _('Array string')),
+        ('array_number', _('Array number')),
+        ('array_object', _('Array object')),
+    )
+    slug = models.SlugField()
+    title = models.CharField(max_length=250)
+    prop_type = models.CharField(max_length=50, choices=PROPERTY_TYPES)
+    options = JSONField(default=dict, help_text=_("Define extra options to json schema property"))
+
+    class Meta:
+        abstract = True
+
+
+class LayerSchemaProperty(SchemaObjectProperty):
+    layer = models.ForeignKey(Layer, related_name='schema_properties', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = _("Schema property")
+        verbose_name_plural = _("Schema properties")
+
+
+class ArrayObjectProperty(SchemaObjectProperty):
+    array_property = models.ForeignKey(LayerSchemaProperty, related_name='array_properties', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = _("Array object schema property")
+        verbose_name_plural = _("Array object schema properties")
