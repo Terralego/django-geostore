@@ -41,7 +41,7 @@ class LayerFeatureListOrderingTestCase(APITestCase):
 
     def test_filtering_order_asc_integer(self):
         """ Test order by integer asc. Should order in 1,2,10 """
-        response = self.client.get(reverse('geostore:feature-list',
+        response = self.client.get(reverse('feature-list',
                                            args=(self.property_schema_layer.pk, )),
                                    data={'ordering': 'properties__age'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -53,7 +53,7 @@ class LayerFeatureListOrderingTestCase(APITestCase):
 
     def test_filtering_order_desc_integer(self):
         """ Test order by integer desc. Should order in 10,2,1 """
-        response = self.client.get(reverse('geostore:feature-list',
+        response = self.client.get(reverse('feature-list',
                                            args=(self.property_schema_layer.pk, )),
                                    data={'ordering': '-properties__age'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -65,7 +65,7 @@ class LayerFeatureListOrderingTestCase(APITestCase):
 
     def test_filtering_order_asc_string(self):
         """ Test order by string asc. Should order in 1,10,2 """
-        response = self.client.get(reverse('geostore:feature-list',
+        response = self.client.get(reverse('feature-list',
                                            args=(self.property_schema_layer.pk, )),
                                    data={'ordering': 'properties__name'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -77,7 +77,7 @@ class LayerFeatureListOrderingTestCase(APITestCase):
 
     def test_filtering_order_desc_string(self):
         """ Test order by string desc. Should order in 2,10,1 """
-        response = self.client.get(reverse('geostore:feature-list',
+        response = self.client.get(reverse('feature-list',
                                            args=(self.property_schema_layer.pk, )),
                                    data={'ordering': '-properties__name'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)

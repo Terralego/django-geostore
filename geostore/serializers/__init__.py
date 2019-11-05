@@ -51,10 +51,10 @@ class GroupSerializer(serializers.ModelSerializer):
     group_tiles = serializers.SerializerMethodField()
 
     def get_tilejson(self, obj):
-        return urlunquote(reverse('geostore:group-tilejson', args=[obj.slug]))
+        return urlunquote(reverse('group-tilejson', args=[obj.slug]))
 
     def get_group_tiles(self, obj):
-        return urlunquote(reverse('geostore:group-tiles-pattern', args=[obj.slug]))
+        return urlunquote(reverse('group-tiles-pattern', args=[obj.slug]))
 
     class Meta:
         model = LayerGroup
@@ -72,19 +72,19 @@ class LayerSerializer(serializers.ModelSerializer):
     authorized_groups = serializers.PrimaryKeyRelatedField(required=False, many=True, queryset=Group.objects.all())
 
     def get_routing_url(self, obj):
-        return reverse('geostore:layer-route', args=[obj.pk, ])
+        return reverse('layer-route', args=[obj.pk, ])
 
     def get_shapefile_url(self, obj):
-        return reverse('geostore:layer-shapefile', args=[obj.pk, ])
+        return reverse('layer-shapefile', args=[obj.pk, ])
 
     def get_geojson_url(self, obj):
-        return reverse('geostore:layer-geojson', args=[obj.pk, ])
+        return reverse('layer-geojson', args=[obj.pk, ])
 
     def get_layer_intersects(self, obj):
-        return reverse('geostore:layer-intersects', args=[obj.name, ])
+        return reverse('layer-intersects', args=[obj.name, ])
 
     def get_tilejson(self, obj):
-        return urlunquote(reverse('geostore:layer-tilejson', args=[obj.pk]))
+        return urlunquote(reverse('layer-tilejson', args=[obj.pk]))
 
     class Meta:
         model = Layer
