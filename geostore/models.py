@@ -16,6 +16,7 @@ from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GistIndex
+from django.core.exceptions import ValidationError
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
@@ -362,6 +363,58 @@ class Layer(LayerBasedModelMixin):
     def __str__(self):
         return f"{self.name}"
 
+    @property
+    def generated_schema(self):
+        """ Generate JSON schema according to linked schema properties  """
+        schema = {}  # keep empty schema if no property defined to avoid validation
+        schema_properties = self.schema_properties.all().prefetch_related('array_properties')
+
+        if schema_properties.exists():
+            # default schema structure if property exists
+            schema = {
+                "type": "object",
+                "required": [],
+                "properties": {}
+            }
+        for prop in schema_properties:
+            if prop.required:
+                schema['required'].append(prop.slug)
+
+            prop_schema = {
+                prop.slug: {
+                    "type": prop.prop_type,
+                    "title": prop.title,
+                    **prop.options
+                }
+            }
+
+            if prop.prop_type == 'array':
+                # specify final type for arrays
+                array_items = {
+                    "items": {
+                        "type": prop.array_type,
+                    }
+                }
+                if prop.array_type == 'object':
+                    # add sub-items for array objects
+                    array_items['items'].update({
+                        'required': [],
+                        'properties': {}
+                    })
+                    for sub_prop in prop.array_properties.all():
+                        if sub_prop.required:
+                            array_items['items']['required'].append(sub_prop.slug)
+
+                        array_items['items']['properties'][sub_prop.slug] = {
+                            "type": sub_prop.prop_type,
+                            "title": sub_prop.title,
+                            **sub_prop.options
+                        }
+                prop_schema[prop.slug].update(array_items)
+
+            schema['properties'].update(prop_schema)
+        return schema
+
     class Meta:
         ordering = ['id']
         permissions = (
@@ -590,15 +643,34 @@ class SchemaObjectProperty(models.Model):
         ('integer', _('Integer')),
         ('number', _('Number')),
         ('boolean', _('Boolean')),
-        ('array_integer', _('Array Integer')),
-        ('array_string', _('Array string')),
-        ('array_number', _('Array number')),
-        ('array_object', _('Array object')),
+        ('array', _('Array')),
+    )
+    ARRAY_TYPES = (
+        ('string', _('String')),
+        ('integer', _('Integer')),
+        ('number', _('Number')),
+        ('boolean', _('Boolean')),
+        ('object', _('Object')),
     )
     slug = models.SlugField()
     title = models.CharField(max_length=250)
     prop_type = models.CharField(max_length=50, choices=PROPERTY_TYPES)
-    options = JSONField(default=dict, help_text=_("Define extra options to json schema property"))
+    array_type = models.CharField(max_length=50, choices=ARRAY_TYPES, blank=True)
+    required = models.BooleanField(default=False)
+    options = JSONField(default=dict, help_text=_("Define extra options to json schema property"), blank=True)
+
+    def clean(self):
+        """ Called in admin and each ModelForm validation validation """
+        if self.prop_type == 'array' and not self.array_type:
+            raise ValidationError(_("Array type is mandatory for array"))
+
+        if self.array_type and self.prop_type != "array":
+            raise ValidationError(_(f"Array type is only for array properties"))
+
+    def save(self, *args, **kwargs):
+        # force clean
+        self.clean()
+        super().save(*args, **kwargs)
 
     class Meta:
         abstract = True
@@ -607,6 +679,12 @@ class SchemaObjectProperty(models.Model):
 class LayerSchemaProperty(SchemaObjectProperty):
     layer = models.ForeignKey(Layer, related_name='schema_properties', on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"{self.layer}: {self.slug} ({self.prop_type})"
+
+    def clean(self):
+        validate_json_schema(self.layer.generated_schema)
+
     class Meta:
         verbose_name = _("Schema property")
         verbose_name_plural = _("Schema properties")
@@ -614,6 +692,12 @@ class LayerSchemaProperty(SchemaObjectProperty):
 
 class ArrayObjectProperty(SchemaObjectProperty):
     array_property = models.ForeignKey(LayerSchemaProperty, related_name='array_properties', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.array_property}: {self.slug} ({self.prop_type})"
+
+    def clean(self):
+        validate_json_schema(self.array_property.layer.generated_schema)
 
     class Meta:
         verbose_name = _("Array object schema property")
