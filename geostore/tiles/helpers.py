@@ -201,9 +201,7 @@ class VectorTile(object):
 
         if self.features_filter is None:
             self.features_filter = ''
-        features_filter_hash = hashlib.sha224(
-                str(self.features_filter).encode('utf-8')
-            ).hexdigest()
+        features_filter_hash = hashlib.sha224(str(self.features_filter).encode('utf-8')).hexdigest()
         properties_filter_hash = ''
         if self.properties_filter is not None:
             properties_filter_hash = \
