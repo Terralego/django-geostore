@@ -74,13 +74,8 @@ def topology_update(func):
     return wrapper
 
 
-class Layer(BaseUpdatableModel):
-    name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
-    schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-    geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
-    authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers')
-
-    # Settings scheam
+class LayerBasedModelMixin(BaseUpdatableModel):
+    # Settings schema
     SETTINGS_DEFAULT = {
         'metadata': {
             'attribution': None,  # Json, eg. {'name': 'OSM contributors', href='http://openstreetmap.org'}
@@ -98,6 +93,93 @@ class Layer(BaseUpdatableModel):
         }
     }
     settings = JSONField(default=dict, blank=True)
+    geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
+
+    @property
+    def is_point(self):
+        return self.layer_geometry in (GeometryTypes.Point,
+                                       GeometryTypes.MultiPoint)
+
+    @property
+    def is_linestring(self):
+        return self.layer_geometry in (GeometryTypes.LineString,
+                                       GeometryTypes.MultiLineString)
+
+    @property
+    def is_polygon(self):
+        return self.layer_geometry in (GeometryTypes.Polygon,
+                                       GeometryTypes.MultiPolygon)
+
+    @property
+    def is_multi(self):
+        return self.layer_geometry in (GeometryTypes.MultiPoint,
+                                       GeometryTypes.MultiLineString,
+                                       GeometryTypes.MultiPolygon)
+
+    @cached_property
+    def layer_geometry(self):
+        """
+        Return the geometry type of the layer using the first feature in
+        the layer if the layer have no geom_type or the geom_type of the layer
+        """
+        if self.geom_type is None:
+            feature = self.features.first()
+            if feature:
+                return feature.geom.geom_typeid
+        return self.geom_type
+
+    @cached_property
+    def settings_with_default(self):
+        return always_merger.merge(deepcopy(self.SETTINGS_DEFAULT), self.settings)
+
+    def layer_settings(self, *json_path):
+        ''' Return the nested value of settings at path json_path.
+            Raise an KeyError if not defined.
+        '''
+        # Dives into settings using args
+        return reduce(
+            lambda a, v: a[v],  # Let raise KeyError on missing key
+            json_path,
+            self.settings) if self.settings is not None else None
+
+    def layer_settings_with_default(self, *json_path):
+        ''' Return the nested value of settings with SETTINGS_DEFAULT as
+            fallback at path json_path.
+            Raise an KeyError if not defined.
+        '''
+        # Dives into settings using args
+        return reduce(
+            lambda a, v: a[v],  # Let raise KeyError on missing key
+            json_path,
+            self.settings_with_default)
+
+    def set_layer_settings(self, *json_path_value):
+        '''Set last parameter as value at the path place into settings
+        '''
+        json_path, value = json_path_value[:-1], json_path_value[-1]
+        # Dive into settings until the last key of path,
+        # and set the corresponding value
+        settings = self.settings
+        for key in json_path[:-1]:
+            s = settings.get(key, {})
+            settings[key] = s
+            settings = s
+        settings[json_path[-1]] = value
+
+        try:
+            # Delete the cached property
+            del self.settings_with_default
+        except AttributeError:
+            pass  # Let's continue, cache was not set
+
+    class Meta:
+        abstract = True
+
+
+class Layer(LayerBasedModelMixin):
+    name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
+    schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
+    authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers')
 
     def _initial_import_from_csv(self, chunks, options, operations):
         for chunk in chunks:
@@ -405,82 +487,6 @@ class Layer(BaseUpdatableModel):
 
         return prop_type
 
-    @property
-    def is_point(self):
-        return self.layer_geometry in (GeometryTypes.Point,
-                                       GeometryTypes.MultiPoint)
-
-    @property
-    def is_linestring(self):
-        return self.layer_geometry in (GeometryTypes.LineString,
-                                       GeometryTypes.MultiLineString)
-
-    @property
-    def is_polygon(self):
-        return self.layer_geometry in (GeometryTypes.Polygon,
-                                       GeometryTypes.MultiPolygon)
-
-    @property
-    def is_multi(self):
-        return self.layer_geometry in (GeometryTypes.MultiPoint,
-                                       GeometryTypes.MultiLineString,
-                                       GeometryTypes.MultiPolygon)
-
-    @cached_property
-    def layer_geometry(self):
-        ''' Return the geometry type of the layer using the first feature in
-            the layer if the layer have no geom_type or the geom_type of the layer
-        '''
-        if self.geom_type is None:
-            feature = self.features.first()
-            if feature:
-                return feature.geom.geom_typeid
-        return self.geom_type
-
-    @cached_property
-    def settings_with_default(self):
-        return always_merger.merge(deepcopy(self.SETTINGS_DEFAULT), self.settings)
-
-    def layer_settings(self, *json_path):
-        ''' Return the nested value of settings at path json_path.
-            Raise an KeyError if not defined.
-        '''
-        # Dives into settings using args
-        return reduce(
-            lambda a, v: a[v],  # Let raise KeyError on missing key
-            json_path,
-            self.settings) if self.settings is not None else None
-
-    def layer_settings_with_default(self, *json_path):
-        ''' Return the nested value of settings with SETTINGS_DEFAULT as
-            fallback at path json_path.
-            Raise an KeyError if not defined.
-        '''
-        # Dives into settings using args
-        return reduce(
-            lambda a, v: a[v],  # Let raise KeyError on missing key
-            json_path,
-            self.settings_with_default)
-
-    def set_layer_settings(self, *json_path_value):
-        '''Set last parameter as value at the path place into settings
-        '''
-        json_path, value = json_path_value[:-1], json_path_value[-1]
-        # Dive into settings until the last key of path,
-        # and set the corresponding value
-        settings = self.settings
-        for key in json_path[:-1]:
-            s = settings.get(key, {})
-            settings[key] = s
-            settings = s
-        settings[json_path[-1]] = value
-
-        try:
-            # Delete the cached property
-            del self.settings_with_default
-        except AttributeError:
-            pass  # Let's continue, cache was not set
-
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
 
@@ -599,3 +605,37 @@ class FeatureRelation(models.Model):
 
     class Meta:
         ordering = ['id']
+
+
+class LayerExtraGeom(LayerBasedModelMixin):
+    layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name='extra_geometries')
+    slug = models.SlugField(editable=False)
+    title = models.CharField(max_length=250)
+
+    @cached_property
+    def name(self):
+        return f"{slugify(self.layer.name)}-{self.slug}"
+
+    def save(self, **kwargs):
+        if self.pk is None:
+            self.slug = slugify(self.title)
+        super().save(**kwargs)
+
+    class Meta:
+        unique_together = (
+            ('layer', 'slug'),
+            ('layer', 'title'),
+        )
+
+
+class FeatureExtraGeom(BaseUpdatableModel):
+    feature = models.ForeignKey(Feature, on_delete=models.CASCADE, related_name='extra_geometries')
+    layer_extra_geom = models.ForeignKey(LayerExtraGeom, on_delete=models.CASCADE, related_name='features')
+    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID)
+    properties = JSONField(default=dict, blank=True)
+    identifier = models.UUIDField(blank=True, null=True, editable=False, default=uuid.uuid4)
+
+    class Meta:
+        unique_together = (
+            ('feature', 'layer_extra_geom'),
+        )

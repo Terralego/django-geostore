@@ -24,15 +24,9 @@ def get_cache_version(layer):
 
 def cached_tile(func):
     def wrapper(self, x, y, z,
-                pixel_buffer, features_filter, properties_filter,
-                features_limit, *args, **kwargs):
-        cache_key = self.get_tile_cache_key(
-            x, y, z,
-            pixel_buffer, features_filter, properties_filter,
-            features_limit)
-
+                *args, **kwargs):
+        cache_key = self.get_tile_cache_key(x, y, z)
         version = get_cache_version(self.layer)
-
         expiration_factor = (log(5, z) ** 0.9)
 
         # Cache expiry calculation is based on a logarithmic function where we add a random factor of +-10%
@@ -40,10 +34,8 @@ def cached_tile(func):
 
         def build_tile():
             (a, b) = func(
-                self, x, y, z,
-                pixel_buffer, features_filter, properties_filter,
-                features_limit, *args, **kwargs)
-            return (a, b.tobytes())
+                self, x, y, z, *args, **kwargs)
+            return a, b.tobytes()
 
         return cache.get_or_set(cache_key, build_tile, expiration, version=version)
 
@@ -53,6 +45,10 @@ def cached_tile(func):
 class VectorTile(object):
     def __init__(self, layer, cache_key=None):
         self.layer, self.cache_key = layer, cache_key
+        self.pixel_buffer = self.layer.layer_settings_with_default('tiles', 'pixel_buffer')
+        self.features_filter = self.layer.layer_settings_with_default('tiles', 'features_filter')
+        self.properties_filter = self.layer.layer_settings_with_default('tiles', 'properties_filter')
+        self.features_limit = self.layer.layer_settings_with_default('tiles', 'features_limit')
 
     # Number of tile units per pixel
     EXTENT_RATIO = 8
@@ -113,14 +109,11 @@ class VectorTile(object):
         )
 
     @cached_tile
-    def get_tile(self, x, y, z,
-                 pixel_buffer, features_filter, properties_filter,
-                 features_limit, features):
-
+    def get_tile(self, x, y, z):
         xmin, ymin, xmax, ymax = self.get_tile_bbox(x, y, z)
         pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
 
-        layer_query = features.annotate(
+        layer_query = self.layer.features.annotate(
             bbox=ST_MakeEnvelope(
                 xmin,
                 ymin,
@@ -129,10 +122,10 @@ class VectorTile(object):
                 EPSG_3857),
             # Intersects on internal data projection using pixel buffer
             bbox_select=ST_Transform(ST_MakeEnvelope(
-                xmin - pixel_width_x * pixel_buffer,
-                ymin - pixel_width_y * pixel_buffer,
-                xmax + pixel_width_x * pixel_buffer,
-                ymax + pixel_width_y * pixel_buffer,
+                xmin - pixel_width_x * self.pixel_buffer,
+                ymin - pixel_width_y * self.pixel_buffer,
+                xmax + pixel_width_x * self.pixel_buffer,
+                ymax + pixel_width_y * self.pixel_buffer,
                 EPSG_3857), app_settings.INTERNAL_GEOMETRY_SRID),
             outgeom3857=ST_Transform('geom', EPSG_3857),
         ).filter(
@@ -140,19 +133,19 @@ class VectorTile(object):
         )
 
         # Filter features
-        layer_query = self._filter_on_property(layer_query, features_filter)
+        layer_query = self._filter_on_property(layer_query, self.features_filter)
         layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
 
         # Lighten geometry
         layer_query = self._simplify(layer_query, pixel_width_x, pixel_width_y)
 
         # Seatbelt
-        layer_query = self._limit(layer_query, features_limit)
+        layer_query = self._limit(layer_query, self.features_limit)
 
         layer_raw_query, args = layer_query.query.sql_with_params()
 
-        if properties_filter:
-            filter = ', '.join([f"'{f}'" for f in properties_filter])
+        if self.properties_filter:
+            filter = ', '.join([f"'{f}'" for f in self.properties_filter])
             properties = f'''
                 (
                     SELECT jsonb_object_agg(key, value) FROM
@@ -160,7 +153,7 @@ class VectorTile(object):
                     WHERE key IN ({filter})
                 )
                 '''
-        elif properties_filter == []:
+        elif self.properties_filter == []:
             properties = "'{}'::jsonb"
         else:
             properties = "properties"
@@ -178,7 +171,7 @@ class VectorTile(object):
                             outgeom3857,
                             bbox,
                             {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
-                            {pixel_buffer * self.EXTENT_RATIO},
+                            {self.pixel_buffer * self.EXTENT_RATIO},
                             true) AS geometry
                     FROM
                         fullgeom)
@@ -199,13 +192,12 @@ class VectorTile(object):
 
             return row[0], row[1]
 
-    def get_tile_cache_key(self, x, y, z,
-                           pixel_buffer, features_filter, properties_filter,
-                           features_limit):
+    def get_tile_cache_key(self, x, y, z):
         if self.cache_key:
             cache_key = self.cache_key
         else:
             cache_key = self.layer.pk
+
         features_filter = ''
         if features_filter is not None:
             features_filter_hash = \
@@ -213,15 +205,15 @@ class VectorTile(object):
                     str(features_filter).encode('utf-8')
                 ).hexdigest()
         properties_filter_hash = ''
-        if properties_filter is not None:
+        if self.properties_filter is not None:
             properties_filter_hash = \
                 hashlib.sha224(
-                    ','.join(properties_filter).encode('utf-8')
+                    ','.join(self.properties_filter).encode('utf-8')
                 ).hexdigest()
         return (
             f'tile_cache_{cache_key}_{x}_{y}_{z}'
-            f'_{pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
-            f'_{features_limit}'
+            f'_{self.pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
+            f'_{self.features_limit}'
         )
 
     def clean_tiles(self, tiles, pixel_buffer, features_filter,
