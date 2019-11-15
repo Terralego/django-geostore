@@ -44,7 +44,8 @@ def cached_tile(func):
 
 class VectorTile(object):
     def __init__(self, layer, cache_key=None):
-        self.layer, self.cache_key = layer, cache_key
+        self.layer = layer
+        self.cache_key = cache_key
         self.pixel_buffer = self.layer.layer_settings_with_default('tiles', 'pixel_buffer')
         self.features_filter = self.layer.layer_settings_with_default('tiles', 'features_filter')
         self.properties_filter = self.layer.layer_settings_with_default('tiles', 'properties_filter')
@@ -198,12 +199,11 @@ class VectorTile(object):
         else:
             cache_key = self.layer.pk
 
-        features_filter = ''
-        if features_filter is not None:
-            features_filter_hash = \
-                hashlib.sha224(
-                    str(features_filter).encode('utf-8')
-                ).hexdigest()
+        if self.features_filter is None:
+            self.features_filter = ''
+        features_filter_hash = hashlib.sha224(
+                str(self.features_filter).encode('utf-8')
+            ).hexdigest()
         properties_filter_hash = ''
         if self.properties_filter is not None:
             properties_filter_hash = \
