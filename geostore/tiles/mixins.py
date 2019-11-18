@@ -177,6 +177,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         for layer in self.layers:
             data.append({
                 'id': layer.name,
+                'description': layer.name.title(),
                 'fields': self.layer_fields(layer),
                 'minzoom': layer.layer_settings_with_default('tiles', 'minzoom'),
                 'maxzoom': layer.layer_settings_with_default('tiles', 'maxzoom'),
@@ -184,6 +185,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             for extra_geom in layer.extra_geometries.all():
                 data.append({
                     'id': f'{extra_geom.name}',
+                    'description': f'{extra_geom.title}'.title(),
                     'fields': {},
                     'minzoom': layer.layer_settings_with_default('tiles', 'minzoom'),
                     'maxzoom': layer.layer_settings_with_default('tiles', 'maxzoom'),
