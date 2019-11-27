@@ -9,6 +9,7 @@ Terralego backend app
 
    installation
    configuration
+   vectortiles
    use
 
 .. |Build Status| image:: https://travis-ci.org/Terralego/django-geostore.svg?branch=master
