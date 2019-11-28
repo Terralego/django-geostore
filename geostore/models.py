@@ -15,6 +15,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Extent
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
+from django.contrib.gis.measure import D
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GistIndex
 from django.core.serializers import serialize
@@ -547,6 +548,31 @@ class Feature(BaseUpdatableModel):
         validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
         validate_json_schema_data(self.properties, self.layer.schema)
 
+    def get_relation_qs(self, relation):
+        # relation should be in layer_relation_as_origins
+        if relation not in self.layer.relations_as_origin.all():
+            return
+
+        qs = Feature.objects.none()
+        kwargs = {
+            'layer': relation.destination,
+        }
+        if relation.relation_type == 'intersects':
+            kwargs.update({
+                'geom__intersects': self.geom,
+            })
+            qs = Feature.objects.filter(**kwargs)
+        elif relation.relation_type == 'distance':
+            kwargs.update({
+                'geom__distance_lte': (self.geom,
+                                       D(m=relation.settings.get('distance')),
+                                       'spheroid'),
+            })
+            qs = Feature.objects.filter(**kwargs)
+        return qs
+
+
+
     class Meta:
         ordering = ['id']
         indexes = [
@@ -559,16 +585,36 @@ class Feature(BaseUpdatableModel):
 
 
 class LayerRelation(models.Model):
+    RELATION_TYPES = (
+        (None, 'Manuelle'),
+        ('intersects', 'Intersects'),
+        ('distance', 'Distance'),
+    )
+    name = models.CharField(max_length=250)
+    slug = models.SlugField(editable=False)
     origin = models.ForeignKey(Layer,
                                on_delete=models.PROTECT,
                                related_name='relations_as_origin')
     destination = models.ForeignKey(Layer,
                                     on_delete=models.PROTECT,
                                     related_name='relations_as_destination')
-    schema = JSONField(default=dict, blank=True)
+    multiple = models.BooleanField(default=True)
+    editable = models.BooleanField(default=False)
+    relation_type = models.CharField(choices=RELATION_TYPES, max_length=25, default=RELATION_TYPES[0])
+    settings = JSONField(default=dict, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(f'{self.origin_id}-{self.name}')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         ordering = ['id']
+        unique_together = (
+            ('name', 'origin'),
+        )
 
 
 class FeatureRelation(models.Model):

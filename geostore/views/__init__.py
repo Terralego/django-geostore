@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, decorators
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
@@ -225,6 +225,20 @@ class FeatureViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, url_path=r'relation/(?P<id_relation>[\d-]+)/features')
+    def relation(self, request, *args, **kwargs):
+        feature = self.get_object()
+        layer_relation = get_object_or_404(feature.layer.relations_as_origin.all(),
+                                           pk=kwargs.get('id_relation'))
+        data = feature.get_relation_qs(layer_relation)
+        many = True
+        if not layer_relation.multiple:
+            many = False
+            data = data.first()
+        serializer_class = self.get_serializer_class()
+        serializer = serializer_class(data, many=many)
+        return Response(serializer.data)
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):

@@ -8,6 +8,9 @@ services:
       - POSTGRES_PASSWORD=travis_ci_test
       - POSTGRES_USER=travis_ci_test
       - POSTGRES_DB=travis_ci_test
+    ports:
+      - "5432:5432"
+
   web:
     build:
       context: .

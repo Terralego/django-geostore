@@ -12,6 +12,13 @@ from geostore.validators import (validate_json_schema_data,
 
 class FeatureSerializer(serializers.ModelSerializer):
     properties = serializers.JSONField(required=False)
+    relations = serializers.SerializerMethodField()
+
+    def get_relations(self, obj):
+        return {
+            relation.name: reverse('feature-relation', args=(obj.layer_id, obj.identifier, relation.pk))
+            for relation in obj.layer.relations_as_origin.all()
+        }
 
     def __init__(self, instance=None, data=empty, **kwargs):
         super().__init__(instance=instance, data=data, **kwargs)
@@ -42,7 +49,7 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'identifier', 'layer', 'geom', 'properties', )
+        fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations')
         read_only_fields = ('id', 'layer')
 
 
