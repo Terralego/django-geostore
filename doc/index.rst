@@ -9,8 +9,9 @@ Terralego backend app
 
    installation
    configuration
-   vectortiles
    use
+   vectortiles
+   routing
 
 .. |Build Status| image:: https://travis-ci.org/Terralego/django-geostore.svg?branch=master
    :target: https://travis-ci.org/Terralego//django-geostore
