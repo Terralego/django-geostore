@@ -12,6 +12,7 @@ Terralego backend app
    use
    vectortiles
    routing
+   tilesgroupaccess
 
 .. |Build Status| image:: https://travis-ci.org/Terralego/django-geostore.svg?branch=master
    :target: https://travis-ci.org/Terralego//django-geostore

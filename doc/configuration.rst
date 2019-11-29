@@ -22,6 +22,10 @@ Add geostore to your ``INSTALLED_APPS`` :
 Settings
 ********
 
+warning::
+  Geostore will change the geojson serializer on app loading.
+
+
 INTERNAL_GEOMETRY_SRID
 ----------------------
 **Default: 4326**

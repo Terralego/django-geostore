@@ -15,7 +15,8 @@ Settings
 pgRouting needs to update a table that contains all linestring connections, to do you need to execute
 the management command we made:
 
-::
+.. code-block:: bash
+
   ./manage.py update_topology -pk <layer_pk>
 
 You must provide the pk of the layer you want to use.
@@ -41,13 +42,13 @@ Query content can provided in a POST or a GET request.
 
 An example of response:
 
-:: json
+.. code-block:: json
 
     {
         'request': {
-            'callbackid': "my_callback",
+            'callbackid': 'my_callback',
             'geom': {
-                "type": "LineString",
+                "type": 'LineString',
                 "coordinates": [
                 [
                     10.8984375,
@@ -58,11 +59,11 @@ An example of response:
                     46.042735653846506
                 ]
                 ]
-            },
+            }
         },
         'geom': {
-            "type": "LineString",
-            "coordinates": [
+            'type': 'LineString',
+            'coordinates': [
             [
                 1.6259765625,
                 45.767522962149876
@@ -76,6 +77,6 @@ An example of response:
                 52.10650519075632
             ]
             ]
-        },
+        }
     }
 
