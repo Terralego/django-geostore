@@ -4,8 +4,10 @@ Configuration
 
 In your project :
 
-# settings
+Add geostore to your ``INSTALLED_APPS`` :
+
 ::
+
     # install required apps
     INSTALLED_APPS = [
         ...
@@ -17,17 +19,52 @@ In your project :
         ...
     ]
 
-    # optional overridable settings
-    INTERNAL_GEOMETRY_SRID = 4326 (can be changed for another SRID, should not be changed after 1rst migration)
+Settings
+********
 
-    HOSTNAME = ''
-    TERRA_TILES_HOSTNAMES = [HOSTNAME, ]
-
-    MAX_TILE_ZOOM = 15
-    MIN_TILE_ZOOM = 10
+warning::
+  Geostore will change the geojson serializer on app loading.
 
 
-# urls
+INTERNAL_GEOMETRY_SRID
+----------------------
+**Default: 4326**
+
+It's the installation SRID, it must be set before the first migration and never change after installation,
+else you must create your own migrations to change your database SRID.
+
+HOSTNAME
+--------
+**Default: empty**
+
+Used to feed ``TERRA_TILES_HOSTNAMES`` setting
+
+TERRA_TILES_HOSTNAMES
+---------------------
+**Default: [HOSTNAME, ]**
+
+It contains the list of base URLs where are served the vector tiles.
+Since web browsers limit the number of connections to one domain name, a workaround is to use
+many domains to serve vector tiles, so browser will create more tcp connections, and the tiles loading
+will be faster.
+
+MAX_TILE_ZOOM
+-------------
+**Default: 15**
+
+It represent the max authorized zoom, if a tile with a zoom above this setting is requested, geostore will refuse to serve it.
+
+MIN_TILE_ZOOM
+-------------
+**Default: 10**
+
+Like for ``MAX_TILE_ZOOM`` setting, if a tile of a lesser zoom than this setting is requested, backend will refuse to serve it.
+
+URLs
+****
+
+Add to you urls.py file this pattern:
+
 ::
 
     urlpatterns = [
@@ -39,19 +76,7 @@ In your project :
 You can customize default url and namespace by including geostore.views directly
 
 
-# ADMIN :
+Admin
+-----
 
 you can disable and / or customize admin
-
-
-- BACKWARD compatibility
-
-# settings to add :
-::
-
-    import os
-
-    #####
-
-    HOSTNAME = os.environ.get('HOSTNAME', '')
-    TERRA_TILES_HOSTNAMES = [HOSTNAME, ]

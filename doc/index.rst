@@ -10,6 +10,9 @@ Terralego backend app
    installation
    configuration
    use
+   vectortiles
+   routing
+   tilesgroupaccess
 
 .. |Build Status| image:: https://travis-ci.org/Terralego/django-geostore.svg?branch=master
    :target: https://travis-ci.org/Terralego//django-geostore
