@@ -553,25 +553,21 @@ class Feature(BaseUpdatableModel):
         if relation not in self.layer.relations_as_origin.all():
             return
 
-        qs = Feature.objects.none()
-        kwargs = {
-            'layer': relation.destination,
-        }
+        qs = Feature.objects.filter(layer=relation.destination)
+        kwargs = {}
         if relation.relation_type == 'intersects':
             kwargs.update({
                 'geom__intersects': self.geom,
             })
-            qs = Feature.objects.filter(**kwargs)
         elif relation.relation_type == 'distance':
             kwargs.update({
                 'geom__distance_lte': (self.geom,
                                        D(m=relation.settings.get('distance')),
                                        'spheroid'),
             })
-            qs = Feature.objects.filter(**kwargs)
-        return qs
-
-
+        else:
+            qs = Feature.objects.none()
+        return qs.filter(**kwargs)
 
     class Meta:
         ordering = ['id']
