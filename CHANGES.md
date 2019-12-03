@@ -2,12 +2,17 @@
 CHANGELOG
 =========
 
-0.3.12    (XXXX-XX-XX)
+0.3.12         (XXXX-XX-XX)
 ---------------------------
 
 Improves
 
 * Improve documentation
+
+Features
+
+* Ability to define and package extra geometries for features (One to One)
+
 
 0.3.11    (2019-11-05)
 ---------------------------
