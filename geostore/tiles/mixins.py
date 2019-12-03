@@ -18,7 +18,6 @@ from .helpers import VectorTile
 
 
 class AuthenticatedGroupsMixin:
-
     IDB64_QUERY_ARG = 'idb64'
     TOKEN_QUERY_ARG = 'token'
 
@@ -60,7 +59,8 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             cache.set(cache_key, tilejson_data, version=version)
         return Response(tilejson_data)
 
-    @action(detail=True, url_path=r'tiles/(?P<z>[\d-]+)/(?P<x>[\d-]+)/(?P<y>[\d-]+)', url_name='tiles', permission_classes=[])
+    @action(detail=True, url_name='tiles', permission_classes=[],
+            url_path=r'tiles/(?P<z>[\d-]+)/(?P<x>[\d-]+)/(?P<y>[\d-]+)', )
     def tiles(self, request, z, x, y, **kwargs):
         return self.tile_response_class(
             self.get_tile(int(z), int(x), int(y)),
@@ -69,14 +69,8 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
 
     def get_tile_for_layer(self, layer, z, x, y):
         tile = VectorTile(layer)
-        features = layer.features.all()
         return tile.get_tile(
-            x, y, z,
-            layer.layer_settings_with_default('tiles', 'pixel_buffer'),
-            layer.layer_settings_with_default('tiles', 'features_filter'),
-            layer.layer_settings_with_default('tiles', 'properties_filter'),
-            layer.layer_settings_with_default('tiles', 'features_limit'),
-            features,
+            x, y, z
         )
 
     def get_tile(self, z, x, y):
@@ -85,8 +79,13 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             minzoom = layer.layer_settings_with_default('tiles', 'minzoom')
             maxzoom = layer.layer_settings_with_default('tiles', 'maxzoom')
             if minzoom <= z <= int(maxzoom) and self.is_authorized(layer):
-                _, tile = self.get_tile_for_layer(layer, z, x, y)
+                unused, tile = self.get_tile_for_layer(layer, z, x, y)
                 tiles_array.append(tile)
+
+            for extra_layer in layer.extra_geometries.all():
+                unused, tile = self.get_tile_for_layer(extra_layer, z, x, y)
+                tiles_array.append(tile)
+
         return b''.join(tiles_array)
 
     def get_tile_path(self):
@@ -174,13 +173,25 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         return {f: '' for f in fields}
 
     def get_vector_layers(self):
-        return [
-            {
-                'id': l.name,
-                'fields': self.layer_fields(l),
-                'minzoom': l.layer_settings_with_default('tiles', 'minzoom'),
-                'maxzoom': l.layer_settings_with_default('tiles', 'maxzoom'),
-            } for l in self.layers]
+        data = []
+        for layer in self.layers:
+            data.append({
+                'id': layer.name,
+                'description': layer.name.title(),
+                'fields': self.layer_fields(layer),
+                'minzoom': layer.layer_settings_with_default('tiles', 'minzoom'),
+                'maxzoom': layer.layer_settings_with_default('tiles', 'maxzoom'),
+            })
+            for extra_geom in layer.extra_geometries.all():
+                data.append({
+                    'id': f'{extra_geom.name}',
+                    'description': f'{extra_geom.title}'.title(),
+                    'fields': {},
+                    'minzoom': layer.layer_settings_with_default('tiles', 'minzoom'),
+                    'maxzoom': layer.layer_settings_with_default('tiles', 'maxzoom'),
+                })
+
+        return data
 
     def get_tilejson(self):
         minzoom = self.get_min_zoom()

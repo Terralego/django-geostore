@@ -12,8 +12,7 @@ from geostore.tiles.helpers import VectorTile, get_cache_version
 
 @override_settings(DEBUG=True, CACHES={
     'default': {
-        'BACKEND': ('django.core.cache.backends'
-                    '.locmem.LocMemCache')
+        'BACKEND': ('django.core.cache.backends.locmem.LocMemCache')
     }})
 class FillTilesCacheTestCase(TestCase):
 
@@ -53,29 +52,21 @@ class FillTilesCacheTestCase(TestCase):
 
     def test_update_topology_routing_fail(self):
         tile = VectorTile(self.layer)
-        features = self.layer.features.all()
-
         cache_version = get_cache_version(self.layer)
 
         x, y, z = 515, 373, 10
-        pixel_buffer, features_filter, properties_filter, features_limit = 4, None, None, 10000
-
         query_count_before = len(connection.queries)
 
         call_command('fill_tiles_cache', stdout=StringIO())
 
         query_count_after = len(connection.queries)
-
         self.assertLess(query_count_before, query_count_after)
 
-        tile.get_tile(
-            x, y, z,
-            pixel_buffer, features_filter, properties_filter, features_limit,
-            features)
+        tile.get_tile(x, y, z)
 
         self.assertIsNotNone(
             cache.get(
-                tile.get_tile_cache_key(x, y, z, pixel_buffer, features_filter, properties_filter, features_limit),
+                tile.get_tile_cache_key(x, y, z),
                 version=cache_version,
             )
         )

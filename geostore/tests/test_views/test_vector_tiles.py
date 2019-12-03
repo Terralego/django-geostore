@@ -238,16 +238,12 @@ class VectorTilesTestCase(TestCase):
         self.assertEqual(len(response.content), 113)
 
     def test_filtering(self):
-        features = self.layer.features.all()
         tile = VectorTile(self.layer, "CACHINGCACHE")
         x, y, z = 16506, 11966, 15
-        pixel_buffer, features_filter, properties_filter, features_limit = \
-            4, {'baba': 'fifi2'}, ['foo'], 10000
 
         tile = tile.get_tile(
-            x, y, z,
-            pixel_buffer, features_filter, properties_filter, features_limit,
-            features)
+            x, y, z
+        )
         self.assertGreater(len(tile), 0)
 
     def test_guess_maxzoom(self):
