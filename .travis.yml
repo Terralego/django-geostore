@@ -7,11 +7,13 @@ language: python
 python:
 - '3.6'
 - '3.7'
-- '3.8'
+#- '3.8' disabled until fiona supports python 3.8
 
 env:
   matrix:
-  - DJANGO_VERSION=2.2.* REST_VERSION=3.10
+  - DJANGO_VERSION=2.2.*
+  #- DJANGO_VERSION=3.0.*
+  #- DJANGO_VERSION=dev disabled until drf-gis support django 3.0
 
 services:
 - postgresql
@@ -59,8 +61,10 @@ jobs:
   - stage: lint
     install:
     - pip install flake8
+    before_script: skip
     script:
     - flake8 geostore
+    after_success: skip
 
   - stage: deploy
     install: skip
@@ -68,6 +72,7 @@ jobs:
     script: skip
     deploy:
       stage: deploy
+      skip_cleanup: true
       provider: pypi
       user: "$PYPI_USER"
       password:
