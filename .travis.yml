@@ -7,7 +7,7 @@ language: python
 python:
 - '3.6'
 - '3.7'
-#- '3.8' disabled until fiona supports python 3.8
+- '3.8'
 
 env:
   matrix:
@@ -31,7 +31,7 @@ stages:
 - deploy
 
 install:
-- sudo apt-get -y install libproj-dev binutils gdal-bin
+- sudo apt-get -y install libproj-dev binutils gdal-bin libgdal-dev
 - pip install -e .[dev]
 - pip install codecov
 - if [[ $DJANGO_VERSION == dev ]]; then
