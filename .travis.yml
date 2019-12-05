@@ -1,34 +1,44 @@
 dist: bionic
+
 sudo: required
+
 language: python
+
 python:
 - '3.6'
 - '3.7'
+- '3.8'
+
 env:
   matrix:
-  - DJANGO_VERSION=2.2 REST_VERSION=3.8
-  - DJANGO_VERSION=2.2 REST_VERSION=3.9
-  - DJANGO_VERSION=2.2 REST_VERSION=3.10
+  - DJANGO_VERSION=2.2.*
+  #- DJANGO_VERSION=3.0.*
+  #- DJANGO_VERSION=dev disabled until drf-gis support django 3.0
+
 services:
 - postgresql
+
 addons:
   postgresql: '10'
   apt:
     packages:
     - postgresql-10-postgis-2.4
     - postgresql-10-pgrouting
+
 stages:
 - lint
 - test
 - deploy
+
 install:
-- sudo apt-get -y install libproj-dev binutils gdal-bin
+- sudo apt-get -y install libproj-dev binutils gdal-bin libgdal-dev
 - pip install -e .[dev]
 - pip install codecov
-- if [[ $DJANGO_VERSION == dev ]]; then pip install -e git+https://github.com/django/django@master#egg=django;
-  else pip install Django==$DJANGO_VERSION -U; fi
-- if [[ $REST_VERSION == dev ]]; then pip install -e git+https://github.com/encode/django-rest-framework.git@master#egg=django-rest-framework;
-  else pip install djangorestframework==$REST_VERSION -U; fi
+- if [[ $DJANGO_VERSION == dev ]]; then
+  pip install -e git+https://github.com/django/django@master#egg=django;
+  else
+  pip install Django==$DJANGO_VERSION -U; fi
+
 before_script:
 - psql -c "CREATE USER travis_ci_test WITH ENCRYPTED PASSWORD 'travis_ci_test';" -U
   postgres
@@ -36,24 +46,33 @@ before_script:
 - psql -c 'CREATE DATABASE travis_ci_test WITH OWNER travis_ci_test;' -U postgres
 - psql -d travis_ci_test -c 'CREATE EXTENSION postgis;'
 - psql -d travis_ci_test -c 'CREATE EXTENSION pgrouting;'
+
 after_failure:
 - pip freeze
+
 script:
 - coverage run ./manage.py test
-- codecov
+
+after_success:
+  - codecov
+
 jobs:
   include:
   - stage: lint
     install:
     - pip install flake8
+    before_script: skip
     script:
     - flake8 geostore
+    after_success: skip
+
   - stage: deploy
     install: skip
     before_script: skip
     script: skip
     deploy:
       stage: deploy
+      skip_cleanup: true
       provider: pypi
       user: "$PYPI_USER"
       password:
