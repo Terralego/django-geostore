@@ -621,6 +621,9 @@ class LayerExtraGeom(LayerBasedModelMixin):
             self.slug = slugify(self.title)
         super().save(**kwargs)
 
+    def __str__(self):
+        return f"{self.title} (layer)"
+
     class Meta:
         unique_together = (
             ('layer', 'slug'),
