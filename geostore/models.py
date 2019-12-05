@@ -622,7 +622,7 @@ class LayerExtraGeom(LayerBasedModelMixin):
         super().save(**kwargs)
 
     def __str__(self):
-        return f"{self.title} (layer)"
+        return f"{self.title} ({self.layer})"
 
     class Meta:
         unique_together = (
