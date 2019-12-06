@@ -6,7 +6,7 @@ from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -189,6 +189,43 @@ class FeatureViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
+
+    @action(detail=True, methods=['get', 'post', 'put', 'patch'], permission_classes=[],
+            url_path=r'extra_geometries(/(?P<extrageometry>\d+))?', url_name='extra_geometry')
+    def extra_geometry(self, request, extrageometry=None, *args, **kwargs):
+        feature = self.get_object()
+        if not extrageometry and request.method == 'POST':
+            try:
+                geometry = GEOSGeometry(request.data.get('geom', None))
+            except (GEOSException, GDALException, TypeError, ValueError):
+                return HttpResponseBadRequest(
+                    content='Provided geometry is not valid')
+        elif request.method == 'GET':
+            extra_geometry = feature.extra_geometries.filter(pk=extrageometry)
+            if not extra_geometry:
+                raise Http404
+            return Response(json.loads(serialize('geojson', extra_geometry, fields=('properties',),
+                                                 geometry_field='geom', properties_field='properties')))
+        else:
+            raise 404
+
+        try:
+            geometry = GEOSGeometry(request.data.get('geom', None))
+        except (GEOSException, GDALException, TypeError, ValueError):
+            return HttpResponseBadRequest(
+                content='Provided geometry is not valid')
+
+        response = {
+            'request': {
+                'geom': geometry.json,
+            },
+            'results': json.loads(serialize('geojson',
+                                            fields=('properties',),
+                                            geometry_field='geom',
+                                            properties_field='properties')),
+        }
+
+        return Response(response)
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
