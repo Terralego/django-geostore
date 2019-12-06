@@ -6,7 +6,7 @@ from django.urls import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED
 
 from geostore import GeometryTypes
-from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory)
+from geostore.tests.factories import FeatureFactory, LayerFactory
 from geostore.models import LayerExtraGeom, FeatureExtraGeom
 
 
