@@ -210,8 +210,6 @@ class FeatureViewSet(viewsets.ModelViewSet):
             new_geom = GEOSGeometry(request.data.get('geom', None))
             extra_geometry.update(geom=new_geom)
             return Response(FeatureExtraGeomSerializer(extra_geometry).data)
-        else:
-            raise 404
 
     @action(detail=True, methods=['post'], permission_classes=[],
             url_path=r'extra_geometry/(?P<layerextrageometry>\d+)', url_name='layer_extra_geometry')
@@ -230,8 +228,6 @@ class FeatureViewSet(viewsets.ModelViewSet):
             except (GEOSException, GDALException, TypeError, ValueError):
                 return HttpResponseBadRequest(
                     content='Provided geometry is not valid')
-        else:
-            raise 404
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):

@@ -3,7 +3,8 @@ import json
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
+                                   HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED)
 
 from geostore import GeometryTypes
 from geostore.tests.factories import FeatureFactory, LayerFactory
@@ -102,10 +103,28 @@ class ExtraGeometriesListViewTest(TestCase):
                                                             'layerextrageometry': layer_extra_geom.pk}),
             {'geom': json.dumps(self.point)}
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, HTTP_201_CREATED)
         json_response = response.json()
         extra_feature = FeatureExtraGeom.objects.first()
         self.assertEqual(json_response, {'id': extra_feature.pk, 'geom': {'type': 'Point', 'coordinates': [1.44, 43.6]}})
+
+    def test_post_extra_layer_bad_geom(self):
+        feature = FeatureFactory(
+            layer=self.layer,
+            geom=GEOSGeometry(json.dumps(self.linestring)),
+            properties={'number': 1, 'text': 'bar'},
+        )
+        layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
+                                                         geom_type=GeometryTypes.Point,
+                                                         title='Test')
+        response = self.client.post(
+            reverse('feature-layer_extra_geometry', kwargs={'layer': str(self.layer.name),
+                                                            'identifier': str(feature.identifier),
+                                                            'layerextrageometry': layer_extra_geom.pk}),
+            {'geom': "WRONG_GEOM"}
+        )
+        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.content, b'Provided geometry is not valid')
 
     def test_post_extra_layer_do_not_exists(self):
         feature = FeatureFactory(
