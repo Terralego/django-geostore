@@ -3,6 +3,7 @@ import json
 from django.contrib.gis.gdal.error import GDALException
 from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
                                      Point)
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Q
@@ -16,7 +17,7 @@ from rest_framework.response import Response
 
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from .mixins import MultipleFieldLookupMixin
-from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
+from ..models import FeatureExtraGeom, FeatureRelation, Layer, LayerGroup, LayerRelation
 from ..permissions import FeaturePermission, LayerPermission
 from ..routing.helpers import Routing
 from ..serializers import (FeatureRelationSerializer, FeatureSerializer,
@@ -191,12 +192,21 @@ class FeatureViewSet(viewsets.ModelViewSet):
         serializer.save(layer_id=layer.pk)
 
     @action(detail=True, methods=['get', 'post', 'put', 'patch'], permission_classes=[],
-            url_path=r'extra_geometries/(?P<extrageometry>\d+)?', url_name='extra_geometry')
+            url_path=r'extra_geometries/(?P<extrageometry>\d+)', url_name='extra_geometry')
     def extra_geometry(self, request, extrageometry=None, *args, **kwargs):
         feature = self.get_object()
-        if not extrageometry and request.method == 'POST':
+        if request.method == 'POST':
+            try:
+                extra_layer = self.get_layer().extra_geometries.get(pk=extrageometry)
+            except ObjectDoesNotExist:
+                raise Http404
             try:
                 geometry = GEOSGeometry(request.data.get('geom', None))
+                extra_feature = FeatureExtraGeom.objects.create(layer_extra_geom=extra_layer,
+                                                                feature=feature, geom=geometry)
+                extra_geometry = feature.extra_geometries.filter(pk=extra_feature.pk)
+                return Response(json.loads(serialize('geojson', extra_geometry, fields=('properties',),
+                                                     geometry_field='geom', properties_field='properties')))
             except (GEOSException, GDALException, TypeError, ValueError):
                 return HttpResponseBadRequest(
                     content='Provided geometry is not valid')
@@ -208,24 +218,6 @@ class FeatureViewSet(viewsets.ModelViewSet):
                                                  geometry_field='geom', properties_field='properties')))
         else:
             raise 404
-
-        try:
-            geometry = GEOSGeometry(request.data.get('geom', None))
-        except (GEOSException, GDALException, TypeError, ValueError):
-            return HttpResponseBadRequest(
-                content='Provided geometry is not valid')
-
-        response = {
-            'request': {
-                'geom': geometry.json,
-            },
-            'results': json.loads(serialize('geojson',
-                                            fields=('properties',),
-                                            geometry_field='geom',
-                                            properties_field='properties')),
-        }
-
-        return Response(response)
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
