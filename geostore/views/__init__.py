@@ -191,7 +191,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
         layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
 
-    @action(detail=True, methods=['get', 'put', 'patch'], permission_classes=[],
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'], permission_classes=[],
             url_path=r'extra_geometries/(?P<extrageometry>\d+)', url_name='extra_geometry')
     def extra_geometry(self, request, extrageometry=None, *args, **kwargs):
         feature = self.get_object()
@@ -202,6 +202,10 @@ class FeatureViewSet(viewsets.ModelViewSet):
             except ObjectDoesNotExist:
                 raise Http404
             return Response(FeatureExtraGeomSerializer(extra_geometry).data)
+        elif request.method == 'DELETE':
+            feature.extra_geometries.get(pk=extrageometry).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
         else:
             raise 404
 

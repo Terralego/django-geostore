@@ -3,7 +3,7 @@ import json
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED
+from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED
 
 from geostore import GeometryTypes
 from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory)
@@ -137,3 +137,23 @@ class ExtraGeometriesListViewTest(TestCase):
             {'geom': json.dumps(self.point)}
         )
         self.assertEqual(response.status_code, HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_delete_extra_feature(self):
+        feature = FeatureFactory(
+            layer=self.layer,
+            geom=GEOSGeometry(json.dumps(self.linestring)),
+            properties={'number': 1, 'text': 'bar'},
+        )
+        layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
+                                                         geom_type=GeometryTypes.Point,
+                                                         title='Test')
+        extra_feature = FeatureExtraGeom.objects.create(layer_extra_geom=layer_extra_geom, feature=feature,
+                                                        geom=GEOSGeometry(json.dumps(self.point)))
+        self.assertEqual(feature.extra_geometries.count(), 1)
+        response = self.client.delete(
+            reverse('feature-extra_geometry', kwargs={'layer': str(self.layer.name),
+                                                      'identifier': str(feature.identifier),
+                                                      'extrageometry': extra_feature.pk})
+        )
+        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)
+        self.assertEqual(feature.extra_geometries.count(), 0)
