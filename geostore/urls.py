@@ -3,7 +3,7 @@ from rest_framework import routers
 
 from . import views
 
-router = routers.SimpleRouter()
+router = routers.DefaultRouter()
 
 router.register(r'layer', views.LayerViewSet)
 router.register(r'group', views.LayerGroupViewsSet, basename='group'),

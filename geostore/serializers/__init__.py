@@ -104,11 +104,6 @@ class LayerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class GeoJSONLayerSerializer(serializers.JSONField):
-    def to_representation(self, data):
-        return data.to_geojson()
-
-
 class LayerRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = LayerRelation

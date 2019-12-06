@@ -12,10 +12,19 @@ from rest_framework import status, viewsets, decorators
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from .mixins import MultipleFieldLookupMixin
+from .models import FeatureRelation, Layer, LayerGroup, LayerRelation
+from .permissions import FeaturePermission, LayerPermission
+from .renderers import GeoJSONRenderer
+from .routing.helpers import Routing
+from .serializers import (FeatureRelationSerializer, FeatureSerializer,
+                          LayerRelationSerializer, LayerSerializer)
+from .serializers.geojson import FinalGeoJSONSerializer
+from .tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
 from ..permissions import FeaturePermission, LayerPermission
 from ..routing.helpers import Routing
@@ -37,7 +46,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 
     @action(methods=['get', 'post'],
             url_name='shapefile', detail=True, permission_classes=[])
-    def shapefile(self, request, pk=None):
+    def shapefile(self, request, *args, **kwargs):
         layer = self.get_object()
 
         if request.method not in SAFE_METHODS:
@@ -156,6 +165,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
     filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter)
+    renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer)
     filter_fields = ('properties', )
     ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')
     lookup_field = 'identifier'
@@ -164,13 +174,23 @@ class FeatureViewSet(viewsets.ModelViewSet):
         super().__init__(*args, **kwargs)
         self.layer = None
 
+    def get_serializer_class(self):
+        original_class = super().get_serializer_class()
+        if self.kwargs.get('format', 'json') == 'geojson':
+            # auto override in geojson case
+            class FinalClass(FinalGeoJSONSerializer, original_class):
+                class Meta(FinalGeoJSONSerializer.Meta, original_class.Meta):
+                    pass
+            return FinalClass
+        return self.serializer_class
+
     def get_layer(self):
         if not self.layer:
-            queryfilter = Q(name=self.kwargs.get('layer'))
+            filters = Q(name=self.kwargs.get('layer'))
             if self.kwargs.get('layer').isdigit():
-                queryfilter |= Q(pk=self.kwargs.get('layer'))
+                filters |= Q(pk=self.kwargs.get('layer'))
 
-            self.layer = get_object_or_404(Layer, queryfilter)
+            self.layer = get_object_or_404(Layer, filters)
         return self.layer
 
     def get_serializer_context(self):
