@@ -3,6 +3,7 @@ import json
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework import status
 from rest_framework.status import HTTP_200_OK
 
 from geostore.tests.factories import (FeatureFactory, LayerFactory)
@@ -185,3 +186,12 @@ class FeaturesListViewTest(TestCase):
             ),
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
+
+    def test_geojson_renderer(self):
+        response = self.client.get(
+            reverse('feature-list', kwargs={'layer': self.layer.pk, 'format': 'geojson'})
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertListEqual(sorted(list(('features', 'type'))), sorted(list(data.keys())))
+        self.assertEqual(data['type'], "FeatureCollection")
