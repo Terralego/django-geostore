@@ -16,7 +16,8 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     def get_relations(self, obj):
         return {
-            relation.name: reverse('feature-relation', args=(obj.layer_id, obj.identifier, relation.pk))
+            relation.name: reverse('feature-relation',
+                                   args=(obj.layer_id, obj.identifier, relation.pk, "geojson"))
             for relation in obj.layer.relations_as_origin.all()
         }
 
