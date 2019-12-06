@@ -191,13 +191,26 @@ class FeatureViewSet(viewsets.ModelViewSet):
         layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
 
-    @action(detail=True, methods=['get', 'post', 'put', 'patch'], permission_classes=[],
+    @action(detail=True, methods=['get', 'put', 'patch'], permission_classes=[],
             url_path=r'extra_geometries/(?P<extrageometry>\d+)', url_name='extra_geometry')
     def extra_geometry(self, request, extrageometry=None, *args, **kwargs):
         feature = self.get_object()
+        if request.method == 'GET':
+            extra_geometry = feature.extra_geometries.filter(pk=extrageometry)
+            if not extra_geometry:
+                raise Http404
+            return Response(json.loads(serialize('geojson', extra_geometry, fields=('properties',),
+                                                 geometry_field='geom', properties_field='properties')))
+        else:
+            raise 404
+
+    @action(detail=True, methods=['post'], permission_classes=[],
+            url_path=r'extra_geometry/(?P<layerextrageometry>\d+)', url_name='layer_extra_geometry')
+    def extra_layer_geometry(self, request, layerextrageometry=None, *args, **kwargs):
+        feature = self.get_object()
         if request.method == 'POST':
             try:
-                extra_layer = self.get_layer().extra_geometries.get(pk=extrageometry)
+                extra_layer = self.get_layer().extra_geometries.get(pk=layerextrageometry)
             except ObjectDoesNotExist:
                 raise Http404
             try:
@@ -210,12 +223,6 @@ class FeatureViewSet(viewsets.ModelViewSet):
             except (GEOSException, GDALException, TypeError, ValueError):
                 return HttpResponseBadRequest(
                     content='Provided geometry is not valid')
-        elif request.method == 'GET':
-            extra_geometry = feature.extra_geometries.filter(pk=extrageometry)
-            if not extra_geometry:
-                raise Http404
-            return Response(json.loads(serialize('geojson', extra_geometry, fields=('properties',),
-                                                 geometry_field='geom', properties_field='properties')))
         else:
             raise 404
 
