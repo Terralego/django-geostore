@@ -20,7 +20,7 @@ from .mixins import MultipleFieldLookupMixin
 from ..models import FeatureExtraGeom, FeatureRelation, Layer, LayerGroup, LayerRelation
 from ..permissions import FeaturePermission, LayerPermission
 from ..routing.helpers import Routing
-from ..serializers import (FeatureRelationSerializer, FeatureSerializer,
+from ..serializers import (FeatureExtraGeomSerializer, FeatureRelationSerializer, FeatureSerializer,
                            LayerRelationSerializer, LayerSerializer)
 from ..tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
@@ -196,11 +196,12 @@ class FeatureViewSet(viewsets.ModelViewSet):
     def extra_geometry(self, request, extrageometry=None, *args, **kwargs):
         feature = self.get_object()
         if request.method == 'GET':
-            extra_geometry = feature.extra_geometries.filter(pk=extrageometry)
-            if not extra_geometry:
+            try:
+
+                extra_geometry = feature.extra_geometries.get(pk=extrageometry)
+            except ObjectDoesNotExist:
                 raise Http404
-            return Response(json.loads(serialize('geojson', extra_geometry, fields=('properties',),
-                                                 geometry_field='geom', properties_field='properties')))
+            return Response(FeatureExtraGeomSerializer(extra_geometry).data)
         else:
             raise 404
 
@@ -215,11 +216,9 @@ class FeatureViewSet(viewsets.ModelViewSet):
                 raise Http404
             try:
                 geometry = GEOSGeometry(request.data.get('geom', None))
-                extra_feature = FeatureExtraGeom.objects.create(layer_extra_geom=extra_layer,
-                                                                feature=feature, geom=geometry)
-                extra_geometry = feature.extra_geometries.filter(pk=extra_feature.pk)
-                return Response(json.loads(serialize('geojson', extra_geometry, fields=('properties',),
-                                                     geometry_field='geom', properties_field='properties')))
+                extra_geometry = FeatureExtraGeom.objects.create(layer_extra_geom=extra_layer,
+                                                                 feature=feature, geom=geometry)
+                return Response(FeatureExtraGeomSerializer(extra_geometry).data)
             except (GEOSException, GDALException, TypeError, ValueError):
                 return HttpResponseBadRequest(
                     content='Provided geometry is not valid')

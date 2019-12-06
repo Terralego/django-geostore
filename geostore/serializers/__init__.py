@@ -4,7 +4,7 @@ from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
 
-from geostore.models import (Feature, FeatureRelation, Layer,
+from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
 from geostore.validators import (validate_json_schema_data,
                                  validate_json_schema, validate_geom_type)
@@ -106,3 +106,9 @@ class FeatureRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeatureRelation
         fields = ('id', 'origin', 'destination')
+
+
+class FeatureExtraGeomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FeatureExtraGeom
+        fields = ('id', 'geom')

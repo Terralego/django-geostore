@@ -31,9 +31,6 @@ class ExtraGeometriesListViewTest(TestCase):
             43.6
         ]
     }
-    geojson_to_render = {'type': 'FeatureCollection', 'crs': {'type': 'name', 'properties': {'name': 'EPSG:4326'}},
-                         'features': [{'type': 'Feature', 'properties': {},
-                                       'geometry': {'type': 'Point', 'coordinates': [1.44, 43.6]}}]}
 
     def setUp(self):
         self.layer = LayerFactory.create()
@@ -57,7 +54,7 @@ class ExtraGeometriesListViewTest(TestCase):
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
-        self.assertEqual(json_response, self.geojson_to_render)
+        self.assertEqual(json_response, {'id': extra_feature.pk, 'geom': {'type': 'Point', 'coordinates': [1.44, 43.6]}})
 
     def test_get_extra_features_do_not_exists(self):
         feature = FeatureFactory(
@@ -101,13 +98,14 @@ class ExtraGeometriesListViewTest(TestCase):
                                                          title='Test')
         response = self.client.post(
             reverse('feature-layer_extra_geometry', kwargs={'layer': str(self.layer.name),
-                                                      'identifier': str(feature.identifier),
-                                                      'layerextrageometry': layer_extra_geom.pk}),
+                                                            'identifier': str(feature.identifier),
+                                                            'layerextrageometry': layer_extra_geom.pk}),
             {'geom': json.dumps(self.point)}
         )
         self.assertEqual(response.status_code, HTTP_200_OK)
         json_response = response.json()
-        self.assertEqual(json_response, self.geojson_to_render)
+        extra_feature = FeatureExtraGeom.objects.first()
+        self.assertEqual(json_response, {'id': extra_feature.pk, 'geom': {'type': 'Point', 'coordinates': [1.44, 43.6]}})
 
     def test_post_extra_layer_do_not_exists(self):
         feature = FeatureFactory(
@@ -117,8 +115,8 @@ class ExtraGeometriesListViewTest(TestCase):
         )
         response = self.client.post(
             reverse('feature-layer_extra_geometry', kwargs={'layer': str(self.layer.name),
-                                                      'identifier': str(feature.identifier),
-                                                      'layerextrageometry': 999}),
+                                                            'identifier': str(feature.identifier),
+                                                            'layerextrageometry': 999}),
             {'geom': json.dumps(self.point)}
         )
         self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
