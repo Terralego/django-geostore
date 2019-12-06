@@ -205,7 +205,11 @@ class FeatureViewSet(viewsets.ModelViewSet):
         elif request.method == 'DELETE':
             feature.extra_geometries.get(pk=extrageometry).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
+        elif request.method == 'PUT' or request.method == 'PATCH':
+            extra_geometry = feature.extra_geometries.get(pk=extrageometry)
+            new_geom = GEOSGeometry(request.data.get('geom', None))
+            extra_geometry.update(geom=new_geom)
+            return Response(FeatureExtraGeomSerializer(extra_geometry).data)
         else:
             raise 404
 
@@ -222,7 +226,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
                 geometry = GEOSGeometry(request.data.get('geom', None))
                 extra_geometry = FeatureExtraGeom.objects.create(layer_extra_geom=extra_layer,
                                                                  feature=feature, geom=geometry)
-                return Response(FeatureExtraGeomSerializer(extra_geometry).data)
+                return Response(FeatureExtraGeomSerializer(extra_geometry).data, status=status.HTTP_201_CREATED)
             except (GEOSException, GDALException, TypeError, ValueError):
                 return HttpResponseBadRequest(
                     content='Provided geometry is not valid')
