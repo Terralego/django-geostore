@@ -191,7 +191,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
         serializer.save(layer_id=layer.pk)
 
     @action(detail=True, methods=['get', 'post', 'put', 'patch'], permission_classes=[],
-            url_path=r'extra_geometries(/(?P<extrageometry>\d+))?', url_name='extra_geometry')
+            url_path=r'extra_geometries/(?P<extrageometry>\d+)?', url_name='extra_geometry')
     def extra_geometry(self, request, extrageometry=None, *args, **kwargs):
         feature = self.get_object()
         if not extrageometry and request.method == 'POST':
