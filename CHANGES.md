@@ -5,6 +5,8 @@ CHANGELOG
 0.3.13.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* Order extra geometries by layer
+
 
 0.3.12         (2019-12-03)
 ---------------------------

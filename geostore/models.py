@@ -609,6 +609,7 @@ class FeatureRelation(models.Model):
 
 class LayerExtraGeom(LayerBasedModelMixin):
     layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name='extra_geometries')
+    order = models.PositiveSmallIntegerField(default=0)
     slug = models.SlugField(editable=False)
     title = models.CharField(max_length=250)
 
@@ -628,6 +629,9 @@ class LayerExtraGeom(LayerBasedModelMixin):
         unique_together = (
             ('layer', 'slug'),
             ('layer', 'title'),
+        )
+        ordering = (
+            'layer', 'order'
         )
 
 
