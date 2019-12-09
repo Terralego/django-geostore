@@ -3,8 +3,7 @@ import json
 from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
-                                   HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED)
+from rest_framework import status
 
 from geostore import GeometryTypes
 from geostore.tests.factories import FeatureFactory, LayerFactory
@@ -53,7 +52,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                       'identifier': str(feature.identifier),
                                                       'id_extra_feature': extra_feature.pk})
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
         self.assertEqual(json_response, {'id': extra_feature.pk, 'geom': {'type': 'Point', 'coordinates': [1.44, 43.6]}})
 
@@ -69,7 +68,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                       'identifier': str(feature.identifier),
                                                       'id_extra_feature': 999})
         )
-        self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_post_extra_features(self):
         feature = FeatureFactory(
@@ -87,7 +86,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                       'identifier': str(feature.identifier),
                                                       'id_extra_feature': extra_feature.pk})
         )
-        self.assertEqual(response.status_code, HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_post_extra_layer(self):
         feature = FeatureFactory(
@@ -104,7 +103,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                             'id_extra_layer': layer_extra_geom.pk}),
             {'geom': json.dumps(self.point)}
         )
-        self.assertEqual(response.status_code, HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         json_response = response.json()
         extra_feature = FeatureExtraGeom.objects.first()
         self.assertEqual(json_response, {'id': extra_feature.pk, 'geom': {'type': 'Point', 'coordinates': [1.44, 43.6]}})
@@ -124,7 +123,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                             'id_extra_layer': layer_extra_geom.pk}),
             {'geom': "WRONG_GEOM"}
         )
-        self.assertEqual(response.status_code, HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.content, b'Provided geometry is not valid')
 
     def test_post_extra_layer_do_not_exists(self):
@@ -139,7 +138,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                             'id_extra_layer': 999}),
             {'geom': json.dumps(self.point)}
         )
-        self.assertEqual(response.status_code, HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_extra_layer(self):
         feature = FeatureFactory(
@@ -156,7 +155,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                             'id_extra_layer': layer_extra_geom.pk}),
             {'geom': json.dumps(self.point)}
         )
-        self.assertEqual(response.status_code, HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_delete_extra_feature(self):
         feature = FeatureFactory(
@@ -175,7 +174,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                       'identifier': str(feature.identifier),
                                                       'id_extra_feature': extra_feature.pk})
         )
-        self.assertEqual(response.status_code, HTTP_204_NO_CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(feature.extra_geometries.count(), 0)
 
     def test_edit_extra_features(self):
@@ -196,7 +195,7 @@ class ExtraGeometriesListViewTest(TestCase):
                                                       'id_extra_feature': extra_feature.pk}),
             data={'geom': json.dumps(self.linestring)}, content_type='application/json'
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
         self.assertEqual(json_response, {'id': extra_feature.pk,
                                          'geom': {'type': 'LineString',
