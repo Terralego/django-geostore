@@ -192,39 +192,41 @@ class FeatureViewSet(viewsets.ModelViewSet):
         serializer.save(layer_id=layer.pk)
 
     @action(detail=True, methods=['get', 'put', 'patch', 'delete'], permission_classes=[],
-            url_path=r'extra_geometries/(?P<extrageometry>\d+)', url_name='extra_geometry')
-    def extra_geometry(self, request, extrageometry=None, *args, **kwargs):
+            url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='extra_geometry')
+    def extra_geometry(self, request, id_extra_feature=None, *args, **kwargs):
         feature = self.get_object()
         if request.method == 'GET':
             try:
-
-                extra_geometry = feature.extra_geometries.get(pk=extrageometry)
+                extra_geometry = feature.extra_geometries.get(pk=id_extra_feature)
             except ObjectDoesNotExist:
                 raise Http404
             return Response(FeatureExtraGeomSerializer(extra_geometry).data)
         elif request.method == 'DELETE':
-            feature.extra_geometries.get(pk=extrageometry).delete()
+            feature.extra_geometries.get(pk=id_extra_feature).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         elif request.method == 'PUT' or request.method == 'PATCH':
-            extra_geometry = feature.extra_geometries.get(pk=extrageometry)
-            new_geom = GEOSGeometry(request.data.get('geom', None))
-            extra_geometry.update(geom=new_geom)
-            return Response(FeatureExtraGeomSerializer(extra_geometry).data)
+            extra_geometry = feature.extra_geometries.get(pk=id_extra_feature)
+            serializer = FeatureExtraGeomSerializer(data=request.data, instance=extra_geometry)
+            serializer.is_valid()
+            serializer.save()
+            return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[],
-            url_path=r'extra_geometry/(?P<layerextrageometry>\d+)', url_name='layer_extra_geometry')
-    def extra_layer_geometry(self, request, layerextrageometry=None, *args, **kwargs):
+            url_path=r'extra_layer/(?P<id_extra_layer>\d+)', url_name='extra_layer_geometry')
+    def extra_layer_geometry(self, request, id_extra_layer=None, *args, **kwargs):
         feature = self.get_object()
         if request.method == 'POST':
             try:
-                extra_layer = self.get_layer().extra_geometries.get(pk=layerextrageometry)
+                extra_layer = self.get_layer().extra_geometries.get(pk=id_extra_layer)
             except ObjectDoesNotExist:
                 raise Http404
             try:
-                geometry = GEOSGeometry(request.data.get('geom', None))
                 extra_geometry = FeatureExtraGeom.objects.create(layer_extra_geom=extra_layer,
-                                                                 feature=feature, geom=geometry)
-                return Response(FeatureExtraGeomSerializer(extra_geometry).data, status=status.HTTP_201_CREATED)
+                                                                 feature=feature, geom=request.data.get('geom', None))
+                serializer = FeatureExtraGeomSerializer(instance=extra_geometry, data=request.data)
+                serializer.is_valid()
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
             except (GEOSException, GDALException, TypeError, ValueError):
                 return HttpResponseBadRequest(
                     content='Provided geometry is not valid')
