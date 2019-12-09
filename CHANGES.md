@@ -2,7 +2,7 @@
 CHANGELOG
 =========
 
-0.3.13.dev0    (XXXX-XX-XX)
+0.3.13         (2019-12-09)
 ---------------------------
 
 * Order extra geometries by layer
