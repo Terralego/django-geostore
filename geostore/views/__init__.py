@@ -6,7 +6,7 @@ from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseNotAllowed, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -195,9 +195,13 @@ class FeatureViewSet(viewsets.ModelViewSet):
     def extra_geometry(self, request, id_extra_feature=None, *args, **kwargs):
         feature = self.get_object()
         extra_geometry = get_object_or_404(feature.extra_geometries.all(), pk=id_extra_feature)
+        extra_layer = extra_geometry.layer_extra_geom
         if request.method == 'GET':
             return Response(FeatureExtraGeomSerializer(extra_geometry).data)
-        elif request.method == 'DELETE':
+        if not extra_layer.editable:
+            return Response(FeatureExtraGeomSerializer(extra_geometry).data,
+                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        if request.method == 'DELETE':
             extra_geometry.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         elif request.method == 'PUT' or request.method == 'PATCH':
@@ -214,6 +218,9 @@ class FeatureViewSet(viewsets.ModelViewSet):
         feature = self.get_object()
         layer = self.get_layer()
         extra_layer = get_object_or_404(layer.extra_geometries.all(), pk=id_extra_layer)
+        if not extra_layer.editable:
+            return HttpResponseNotAllowed(permitted_methods=[],
+                                          content="You cannot create geometry on this extra layer")
         serializer = FeatureExtraGeomSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(feature=feature, layer_extra_geom=extra_layer)

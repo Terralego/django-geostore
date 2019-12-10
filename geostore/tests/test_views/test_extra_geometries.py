@@ -142,6 +142,25 @@ class ExtraGeometriesListViewTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_post_extra_layer_not_editable(self):
+        feature = FeatureFactory(
+            layer=self.layer,
+            geom=GEOSGeometry(json.dumps(self.linestring)),
+            properties={'number': 1, 'text': 'bar'},
+        )
+        layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
+                                                         geom_type=GeometryTypes.Point,
+                                                         title='Test',
+                                                         editable=False)
+        response = self.client.post(
+            reverse('feature-extra_layer_geometry', kwargs={'layer': str(self.layer.name),
+                                                            'identifier': str(feature.identifier),
+                                                            'id_extra_layer': layer_extra_geom.pk}),
+            {'geom': json.dumps(self.point)}
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.content, b'You cannot create geometry on this extra layer')
+
     def test_get_extra_layer(self):
         feature = FeatureFactory(
             layer=self.layer,
@@ -178,6 +197,30 @@ class ExtraGeometriesListViewTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(feature.extra_geometries.count(), 0)
+
+    def test_delete_extra_feature_not_editable(self):
+        feature = FeatureFactory(
+            layer=self.layer,
+            geom=GEOSGeometry(json.dumps(self.linestring)),
+            properties={'number': 1, 'text': 'bar'},
+        )
+        layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
+                                                         geom_type=GeometryTypes.Point,
+                                                         title='Test',
+                                                         editable=False)
+        extra_feature = FeatureExtraGeom.objects.create(layer_extra_geom=layer_extra_geom, feature=feature,
+                                                        geom=GEOSGeometry(json.dumps(self.point)))
+        self.assertEqual(feature.extra_geometries.count(), 1)
+        response = self.client.delete(
+            reverse('feature-extra_geometry', kwargs={'layer': str(self.layer.name),
+                                                      'identifier': str(feature.identifier),
+                                                      'id_extra_feature': extra_feature.pk})
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(feature.extra_geometries.count(), 1)
+        json_response = response.json()
+        self.assertEqual(json_response, {'id': extra_feature.pk,
+                                         'geom': {'type': 'Point', 'coordinates': [1.44, 43.6]}})
 
     def test_edit_extra_features(self):
         feature = FeatureFactory(
