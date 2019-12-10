@@ -124,7 +124,9 @@ class ExtraGeometriesListViewTest(TestCase):
             {'geom': "WRONG_GEOM"}
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.content, b'Provided geometry is not valid')
+        json_response = response.json()
+        self.assertEqual(json_response, {'geom': ['Unable to convert to python object: '
+                                                  'String input unrecognized as WKT EWKT, and HEXEWKB.']})
 
     def test_post_extra_layer_do_not_exists(self):
         feature = FeatureFactory(
@@ -201,3 +203,26 @@ class ExtraGeometriesListViewTest(TestCase):
                                          'geom': {'type': 'LineString',
                                                   'coordinates': [[1.440925598144531, 43.64750394449096],
                                                                   [1.440582275390625, 43.574421623084234]]}})
+
+    def test_edit_extra_features_bad_geom(self):
+        feature = FeatureFactory(
+            layer=self.layer,
+            geom=GEOSGeometry(json.dumps(self.linestring)),
+            properties={'number': 1, 'text': 'bar'},
+        )
+        layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
+                                                         geom_type=GeometryTypes.Point,
+                                                         title='Test')
+        extra_feature = FeatureExtraGeom.objects.create(layer_extra_geom=layer_extra_geom, feature=feature,
+                                                        geom=GEOSGeometry(json.dumps(self.point)))
+        feature.extra_geometries.add(extra_feature)
+        response = self.client.put(
+            reverse('feature-extra_geometry', kwargs={'layer': str(self.layer.name),
+                                                      'identifier': str(feature.identifier),
+                                                      'id_extra_feature': extra_feature.pk}),
+            data={'geom': "WRONG_GEOM"}, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        json_response = response.json()
+        self.assertEqual(json_response, {'geom': ['Unable to convert to python object: '
+                                                  'String input unrecognized as WKT EWKT, and HEXEWKB.']})

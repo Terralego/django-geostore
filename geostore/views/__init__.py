@@ -3,11 +3,10 @@ import json
 from django.contrib.gis.gdal.error import GDALException
 from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
                                      Point)
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -17,7 +16,7 @@ from rest_framework.response import Response
 
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from .mixins import MultipleFieldLookupMixin
-from ..models import FeatureExtraGeom, FeatureRelation, Layer, LayerGroup, LayerRelation
+from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
 from ..permissions import FeaturePermission, LayerPermission
 from ..routing.helpers import Routing
 from ..serializers import (FeatureExtraGeomSerializer, FeatureRelationSerializer, FeatureSerializer,
@@ -195,41 +194,32 @@ class FeatureViewSet(viewsets.ModelViewSet):
             url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='extra_geometry')
     def extra_geometry(self, request, id_extra_feature=None, *args, **kwargs):
         feature = self.get_object()
+        extra_geometry = get_object_or_404(feature.extra_geometries.all(), pk=id_extra_feature)
         if request.method == 'GET':
-            try:
-                extra_geometry = feature.extra_geometries.get(pk=id_extra_feature)
-            except ObjectDoesNotExist:
-                raise Http404
             return Response(FeatureExtraGeomSerializer(extra_geometry).data)
         elif request.method == 'DELETE':
-            feature.extra_geometries.get(pk=id_extra_feature).delete()
+            extra_geometry.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         elif request.method == 'PUT' or request.method == 'PATCH':
-            extra_geometry = feature.extra_geometries.get(pk=id_extra_feature)
             serializer = FeatureExtraGeomSerializer(data=request.data, instance=extra_geometry)
-            serializer.is_valid()
-            serializer.save()
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[],
             url_path=r'extra_layer/(?P<id_extra_layer>\d+)', url_name='extra_layer_geometry')
     def extra_layer_geometry(self, request, id_extra_layer=None, *args, **kwargs):
         feature = self.get_object()
-        if request.method == 'POST':
-            try:
-                extra_layer = self.get_layer().extra_geometries.get(pk=id_extra_layer)
-            except ObjectDoesNotExist:
-                raise Http404
-            try:
-                extra_geometry = FeatureExtraGeom.objects.create(layer_extra_geom=extra_layer,
-                                                                 feature=feature, geom=request.data.get('geom', None))
-                serializer = FeatureExtraGeomSerializer(instance=extra_geometry, data=request.data)
-                serializer.is_valid()
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            except (GEOSException, GDALException, TypeError, ValueError):
-                return HttpResponseBadRequest(
-                    content='Provided geometry is not valid')
+        layer = self.get_layer()
+        extra_layer = get_object_or_404(layer.extra_geometries.all(), pk=id_extra_layer)
+        serializer = FeatureExtraGeomSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(feature=feature, layer_extra_geom=extra_layer)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):
