@@ -13,7 +13,7 @@ env:
   matrix:
   - DJANGO_VERSION=2.2.*
   - DJANGO_VERSION=3.0.*
-  - DJANGO_VERSION=dev
+  #- DJANGO_VERSION=dev
 
 services:
 - postgresql
