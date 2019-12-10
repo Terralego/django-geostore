@@ -14,9 +14,10 @@ class ImportGeojsonTest(TestCase):
         output = StringIO()
         call_command(
             'import_geojson',
-            open(get_files_tests('empty.json'), 'r'),
-            verbosity=1,
-            stdout=output)
+            get_files_tests('empty.json'),
+            '--verbosity=1',
+            stdout=output
+        )
 
         # Retrieve the layer
         layer = Layer.objects.first()
@@ -28,9 +29,9 @@ class ImportGeojsonTest(TestCase):
         output = StringIO()
         call_command(
             'import_geojson',
-            open(get_files_tests('empty.json'), 'r'),
-            dry_run=True,
-            verbosity=1, stdout=output)
+            get_files_tests('empty.json'),
+            '--dry-run',
+            '--verbosity=1', stdout=output)
         self.assertIn("The created layer pk is", output.getvalue())
         # Retrieve the layer
         self.assertEqual(Layer.objects.count(), 0)
@@ -38,8 +39,8 @@ class ImportGeojsonTest(TestCase):
     def test_schema_generated(self):
         call_command(
             'import_geojson',
-            open(get_files_tests('bati.geojson'), 'r'),
-            generate_schema=True,
+            get_files_tests('bati.geojson'),
+            '--generate-schema',
             verbosity=0)
 
         # Retrieve the layer
@@ -57,18 +58,17 @@ class ImportGeojsonTest(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'import_geojson',
-                open(get_files_tests('empty.json'), 'r'),
-                layer_settings=open(bad_json, 'r'),
+                get_files_tests('empty.json'),
+                f'--layer-settings={bad_json}',
                 verbosity=0)
         self.assertEqual("Please provide a valid layer settings file", str(error.exception))
 
     def test_import_geojson_layer_with_pk_layer(self):
         layer = LayerFactory()
         self.assertEqual(len(layer.features.all()), 0)
-        geojson_sample = get_files_tests('toulouse.geojson')
         call_command(
             'import_geojson',
-            geojson_sample,
+            get_files_tests('toulouse.geojson'),
             layer_pk=layer.pk,
             verbosity=0
         )
@@ -80,8 +80,8 @@ class ImportGeojsonTest(TestCase):
             call_command(
                 'import_geojson',
                 geojson_sample,
-                layer_pk=999,
-                generate_schema=True,
-                verbosity=0
+                '--layer-pk=999',
+                '--generate-schema',
+                '--verbosity=0'
             )
         self.assertIn("Layer with pk 999 doesn't exist", str(error.exception))

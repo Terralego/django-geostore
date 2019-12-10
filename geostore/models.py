@@ -12,6 +12,8 @@ import fiona.transform
 from deepmerge import always_merger
 from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
+from django.contrib.gis.db.models import Extent
+from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GistIndex
@@ -24,12 +26,12 @@ from fiona.crs import from_epsg
 from mercantile import tiles
 
 from . import GeometryTypes, settings as app_settings
+from .decorators import zoom_update, topology_update
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .mixins import BaseUpdatableModel
-from .routing.helpers import Routing
 from .tiles.funcs import ST_HausdorffDistance
-from .tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
+from .tiles.helpers import VectorTile
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
 
@@ -40,38 +42,6 @@ ACCEPTED_PROJECTIONS = [
     'urn:ogc:def:crs:OGC:1.3:CRS84',
     'EPSG:4326',
 ]
-
-
-def zoom_update(func):
-    def wrapper(*args, **kargs):
-        layer = args[0]
-        response = func(*args, **kargs)
-
-        try:
-            minzoom = layer.layer_settings('tiles', 'minzoom')
-        except KeyError:
-            minzoom = guess_minzoom(layer)
-            layer.set_layer_settings('tiles', 'minzoom', minzoom)
-            layer.save(update_fields=["settings"])
-
-        try:
-            layer.layer_settings('tiles', 'maxzoom')
-        except KeyError:
-            maxzoom = max(guess_maxzoom(layer), minzoom)
-            layer.set_layer_settings('tiles', 'maxzoom', maxzoom)
-            layer.save(update_fields=["settings"])
-
-        return response
-    return wrapper
-
-
-def topology_update(func):
-    def wrapper(layer, *args, **kwargs):
-        response = func(layer, *args, **kwargs)
-        Routing.create_topology(layer)
-        return response
-
-    return wrapper
 
 
 class LayerBasedModelMixin(BaseUpdatableModel):
@@ -489,6 +459,13 @@ class Layer(LayerBasedModelMixin):
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
+
+    def get_extent(self, srid=3857):
+        return self.features.annotate(
+            geom_transformed=Transform('geom', srid)
+        ).aggregate(
+            extent=Extent('geom_transformed')
+        )
 
     def __str__(self):
         return f"{self.name}"

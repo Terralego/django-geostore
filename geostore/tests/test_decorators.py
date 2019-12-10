@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from geostore.models import zoom_update
+from geostore.decorators import zoom_update
 from geostore.tests.factories import LayerFactory
 
 

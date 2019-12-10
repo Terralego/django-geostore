@@ -16,7 +16,7 @@ class Command(LayerCommandMixin, BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('file_path',
                             nargs='+',
-                            type=argparse.FileType('r', encoding='UTF-8'),
+                            type=argparse.FileType('r'),
                             action="store",
                             help='GeoJSON files to import')
         exclusive_group = parser.add_mutually_exclusive_group()

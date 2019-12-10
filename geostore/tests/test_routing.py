@@ -2,9 +2,10 @@ from django.contrib.gis.geos import LineString, Point
 from django.db import connection
 from django.test import TestCase
 from django.urls import reverse
+from geostore.routing.helpers import Routing
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
-from geostore.models import Layer, Routing
+from geostore.models import Layer
 from .. import settings as app_settings
 from ..tests.factories import FeatureFactory, UserFactory
 from ..tests.utils import get_files_tests
