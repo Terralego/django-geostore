@@ -14,7 +14,7 @@ class ImportShapefileTest(TestCase):
         call_command(
             'import_shapefile',
             get_files_tests('shapefile-WGS84.zip'),
-            '-i', 'ID_PG',
+            identifier='ID_PG',
             verbosity=0)
 
         # Retrieve the layer
@@ -33,10 +33,11 @@ class ImportShapefileTest(TestCase):
         output = StringIO()
         call_command(
             'import_shapefile',
-            f'-iID_PG',
-            f'--dry-run',
-            f'{sample_shapefile.name}',
-            verbosity=1, stdout=output)
+            sample_shapefile.name,
+            identifier='ID_PG',
+            dry_run=True,
+            verbosity=1,
+            stdout=output)
         self.assertIn("The created layer pk is", output.getvalue())
         # Retrieve the layer
         layer = Layer.objects.all()
@@ -69,7 +70,7 @@ class ImportShapefileTest(TestCase):
         call_command(
             'import_shapefile',
             get_files_tests('shapefile-WGS84.zip'),
-            '-i', 'ID_PG',
+            identifier='ID_PG',
             verbosity=0)
 
         # Ensure old settings
@@ -83,10 +84,9 @@ class ImportShapefileTest(TestCase):
         # Change settings
         call_command(
             'layer_edit',
-            '-pk', layer.pk,
-            '-l', 'new_name',
-            '-gr', 'new_group',
-            '-ls', foo_bar_json
+            layer_pk=layer.pk,
+            group='new_group',
+            layer_settings=foo_bar_json
         )
 
         # Ensure new settings
@@ -100,7 +100,7 @@ class ImportShapefileTest(TestCase):
         call_command(
             'import_shapefile',
             get_files_tests('shapefile-WGS84.zip'),
-            '-gs',
+            generate_schema=True,
             verbosity=0)
 
         # Retrieve the layer
@@ -122,9 +122,10 @@ class ImportShapefileTest(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'import_shapefile',
-                '-iID_PG',
-                '-gs', sample_shapefile.name,
-                '-ls', bad_settings_json,
+                sample_shapefile.name,
+                identifier='ID_PG',
+                generate_schema=True,
+                layer_settings=bad_settings_json,
                 verbosity=0
             )
         self.assertEqual("Please provide a valid layer settings file", str(error.exception))
@@ -137,9 +138,10 @@ class ImportShapefileTest(TestCase):
         sample_shapefile = open(shapefile_path, 'rb')
         call_command(
             'import_shapefile',
-            f'--layer-pk={layer.pk}',
-            '-iID_PG',
-            '-gs', sample_shapefile.name,
+            sample_shapefile.name,
+            layer_pk=layer.pk,
+            identifier='ID_PG',
+            generate_schema=True,
             verbosity=0
         )
         self.assertEqual(len(layer.features.all()), 8)
@@ -151,9 +153,10 @@ class ImportShapefileTest(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'import_shapefile',
-                f'--layer-pk=999',
-                '-iID_PG',
-                '-gs', sample_shapefile.name,
+                sample_shapefile.name,
+                layer_pk=999,
+                identifier='ID_PG',
+                generate_schema=True,
                 verbosity=0
             )
         self.assertIn("Layer with pk 999 doesn't exist", str(error.exception))
