@@ -59,7 +59,7 @@ class ImportGeojsonTest(TestCase):
             call_command(
                 'import_geojson',
                 empty_geojson,
-                layer_settings=bad_json,
+                layer_settings=open(bad_json),
                 verbosity=0)
         self.assertEqual("Please provide a valid layer settings file", str(error.exception))
 

@@ -84,9 +84,10 @@ class ImportShapefileTest(TestCase):
         # Change settings
         call_command(
             'layer_edit',
+            layer='new_name',
             layer_pk=layer.pk,
-            group='new_group',
-            layer_settings=foo_bar_json
+            groups=['new_group', ],
+            layer_settings=open(foo_bar_json)
         )
 
         # Ensure new settings
@@ -125,7 +126,7 @@ class ImportShapefileTest(TestCase):
                 sample_shapefile.name,
                 identifier='ID_PG',
                 generate_schema=True,
-                layer_settings=bad_settings_json,
+                layer_settings=open(bad_settings_json),
                 verbosity=0
             )
         self.assertEqual("Please provide a valid layer settings file", str(error.exception))
