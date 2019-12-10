@@ -192,19 +192,18 @@ class FeatureViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get', 'put', 'patch', 'delete'], permission_classes=[],
             url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='extra_geometry')
-    def extra_geometry(self, request, id_extra_feature=None, *args, **kwargs):
+    def extra_geometry(self, request, id_extra_feature, *args, **kwargs):
         feature = self.get_object()
         extra_geometry = get_object_or_404(feature.extra_geometries.all(), pk=id_extra_feature)
         extra_layer = extra_geometry.layer_extra_geom
         if request.method == 'GET':
             return Response(FeatureExtraGeomSerializer(extra_geometry).data)
         if not extra_layer.editable:
-            return Response(FeatureExtraGeomSerializer(extra_geometry).data,
-                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         if request.method == 'DELETE':
             extra_geometry.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        elif request.method == 'PUT' or request.method == 'PATCH':
+        elif request.method in ('PUT', 'PATCH'):
             serializer = FeatureExtraGeomSerializer(data=request.data, instance=extra_geometry)
             if serializer.is_valid():
                 serializer.save()
@@ -214,13 +213,12 @@ class FeatureViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[],
             url_path=r'extra_layer/(?P<id_extra_layer>\d+)', url_name='extra_layer_geometry')
-    def extra_layer_geometry(self, request, id_extra_layer=None, *args, **kwargs):
+    def extra_layer_geometry(self, request, id_extra_layer, *args, **kwargs):
         feature = self.get_object()
         layer = self.get_layer()
         extra_layer = get_object_or_404(layer.extra_geometries.all(), pk=id_extra_layer)
         if not extra_layer.editable:
-            return HttpResponseNotAllowed(permitted_methods=[],
-                                          content="You cannot create geometry on this extra layer")
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         serializer = FeatureExtraGeomSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(feature=feature, layer_extra_geom=extra_layer)

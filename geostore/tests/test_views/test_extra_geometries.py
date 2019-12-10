@@ -159,7 +159,6 @@ class ExtraGeometriesListViewTest(TestCase):
             {'geom': json.dumps(self.point)}
         )
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        self.assertEqual(response.content, b'You cannot create geometry on this extra layer')
 
     def test_get_extra_layer(self):
         feature = FeatureFactory(
@@ -218,9 +217,6 @@ class ExtraGeometriesListViewTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(feature.extra_geometries.count(), 1)
-        json_response = response.json()
-        self.assertEqual(json_response, {'id': extra_feature.pk,
-                                         'geom': {'type': 'Point', 'coordinates': [1.44, 43.6]}})
 
     def test_edit_extra_features(self):
         feature = FeatureFactory(
