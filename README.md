@@ -4,8 +4,8 @@
 [![Documentation Status](https://readthedocs.org/projects/django-geostore/badge/?version=latest)](https://django-geostore.readthedocs.io/en/latest/?badge=latest)
 
 ![Python Version](https://img.shields.io/badge/python-%3E%3D%203.6-blue.svg)
-![Django Version](https://img.shields.io/badge/django-%3E%3D%202.2%2C<3.0-blue.svg)
-![Rest Version](https://img.shields.io/badge/django--rest--framework-%3E%3D%203.8.0-blue)
+![Django Version](https://img.shields.io/badge/django-%3E%3D%202.2%2C<3.1-blue.svg)
+![Rest Version](https://img.shields.io/badge/django--rest--framework-%3E%3D%203.10.0-blue)
 
 # django-geostore
 
