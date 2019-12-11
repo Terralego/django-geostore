@@ -12,7 +12,7 @@ from geostore.tiles.helpers import VectorTile, get_cache_version
 
 @override_settings(DEBUG=True, CACHES={
     'default': {
-        'BACKEND': ('django.core.cache.backends.locmem.LocMemCache')
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
     }})
 class FillTilesCacheTestCase(TestCase):
 

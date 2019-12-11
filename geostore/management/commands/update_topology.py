@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from geostore.models import Layer, Routing
+from geostore.models import Layer
+from geostore.routing.helpers import Routing
 
 
 class Command(BaseCommand):

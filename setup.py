@@ -41,10 +41,10 @@ setup(
         'Programming Language :: Python :: 3.8',
     ],
     install_requires=[
-        'django>=2.2,<3.0',  # wait for restframework-gis, 0.14 doesnt support django 3.0
+        'django>=2.2',
         'django-token-tools',
-        'djangorestframework>=3.8',
-        "djangorestframework-gis>=0.14",
+        'djangorestframework>=3.10',
+        "djangorestframework-gis>=0.15",
         "deepmerge",
         "requests>=2.19",
         "mercantile>=1.0",

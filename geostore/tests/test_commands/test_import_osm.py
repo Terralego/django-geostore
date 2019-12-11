@@ -11,8 +11,7 @@ from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
 
 
-class ImportGeojsonTest(TestCase):
-
+class ImportOSMTest(TestCase):
     def get_good_data(self):
         overpass_path = get_files_tests('overpass.osm')
         with open(overpass_path, 'rb') as overpass_file:
@@ -26,8 +25,12 @@ class ImportGeojsonTest(TestCase):
         mocked_get.return_value.content = b"test"
 
         query = "bad query"
-        self.assertRaises(CommandError, call_command,
-                          'import_osm', f'{query}', f'-t{type_feature}')
+        with self.assertRaises(CommandError):
+            call_command(
+                'import_osm',
+                query,
+                type=type_feature,
+                verbosity=0)
 
     @mock.patch('requests.get')
     def test_overpass_down(self, mocked_get):
@@ -36,8 +39,12 @@ class ImportGeojsonTest(TestCase):
         mocked_get.return_value.content = b""
 
         query = "good query"
-        self.assertRaises(CommandError, call_command,
-                          'import_osm', f'{query}', f'-t{type_feature}')
+        with self.assertRaises(CommandError):
+            call_command(
+                'import_osm',
+                query,
+                type=type_feature,
+                verbosity=0)
 
     @mock.patch('requests.get')
     def test_good_query(self, mocked_get):
@@ -48,9 +55,10 @@ class ImportGeojsonTest(TestCase):
         output = StringIO()
         call_command(
             'import_osm',
-            f'{query}',
-            f'-t{type_feature}',
-            '-v 1', stderr=output)
+            query,
+            type=type_feature,
+            verbosity=1,
+            stderr=output)
         self.assertIn("Warning 1", output.getvalue())
         self.assertEqual(Feature.objects.count(), 2)
 
@@ -64,10 +72,11 @@ class ImportGeojsonTest(TestCase):
         output = StringIO()
         call_command(
             'import_osm',
-            f'{query}',
-            f'-pk={layer.pk}',
-            f'-t{type_feature}',
-            '-v 1', stderr=output)
+            query,
+            layer_pk=layer.pk,
+            type=type_feature,
+            verbosity=1,
+            stderr=output)
         self.assertIn("Warning 1", output.getvalue())
         self.assertEqual(layer.features.count(), 2)
 
@@ -84,9 +93,9 @@ class ImportGeojsonTest(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'import_osm',
-                f'{query}',
-                f'-t{type_feature}',
-                '-v 0')
+                query,
+                type=type_feature,
+                verbosity=0)
         self.assertEqual("Ogr2ogr failed to create the geojson", str(error.exception))
 
     @mock.patch('requests.get')
@@ -102,7 +111,7 @@ class ImportGeojsonTest(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'import_osm',
-                f'{query}',
-                f'-t{type_feature}',
-                '-v 0')
+                query,
+                type=type_feature,
+                verbosity=0)
         self.assertEqual("Command ogr2ogr failed", str(error.exception))

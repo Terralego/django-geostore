@@ -1,5 +1,4 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
 from django.http import Http404
 
 
@@ -24,11 +23,3 @@ class MultipleFieldLookupMixin(object):
                 self.check_object_permissions(self.request, obj)
                 return obj
         raise Http404
-
-
-class BaseUpdatableModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True

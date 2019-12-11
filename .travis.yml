@@ -12,8 +12,8 @@ python:
 env:
   matrix:
   - DJANGO_VERSION=2.2.*
-  #- DJANGO_VERSION=3.0.*
-  #- DJANGO_VERSION=dev disabled until drf-gis support django 3.0
+  - DJANGO_VERSION=3.0.*
+  #- DJANGO_VERSION=dev
 
 services:
 - postgresql

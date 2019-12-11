@@ -14,14 +14,14 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
-from .filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
+from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from .mixins import MultipleFieldLookupMixin
-from .models import FeatureRelation, Layer, LayerGroup, LayerRelation
-from .permissions import FeaturePermission, LayerPermission
-from .routing.helpers import Routing
-from .serializers import (FeatureRelationSerializer, FeatureSerializer,
-                          LayerRelationSerializer, LayerSerializer)
-from .tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
+from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
+from ..permissions import FeaturePermission, LayerPermission
+from ..routing.helpers import Routing
+from ..serializers import (FeatureRelationSerializer, FeatureSerializer,
+                           LayerRelationSerializer, LayerSerializer)
+from ..tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
 
 class LayerGroupViewsSet(MultipleMVTViewMixin, viewsets.ReadOnlyModelViewSet):
@@ -124,10 +124,10 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
                 'geom': geometry.json,
             },
             'results': json.loads(serialize('geojson',
-                                  layer.features.intersects(geometry),
-                                  fields=('properties',),
-                                  geometry_field='geom',
-                                  properties_field='properties')),
+                                            layer.features.intersects(geometry),
+                                            fields=('properties',),
+                                            geometry_field='geom',
+                                            properties_field='properties')),
         }
 
         return Response(response)
@@ -140,10 +140,10 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
                 features = layer.update_geometries(request.data['features'])
                 return Response(
                     json.loads(serialize('geojson',
-                               features,
-                               fields=('properties',),
-                               geometry_field='geom',
-                               properties_field='properties'))
+                                         features,
+                                         fields=('properties',),
+                                         geometry_field='geom',
+                                         properties_field='properties'))
                 )
             except (ValueError, KeyError):
                 return HttpResponseBadRequest('An error occured parsing '

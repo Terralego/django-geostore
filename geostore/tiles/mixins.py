@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import Feature, Layer
+from ..models import Feature
 from .. import settings as app_settings
 from ..tokens import tiles_token_generator
 from .helpers import VectorTile
@@ -222,12 +222,9 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         if features.exists():
             ref_object = features.first()
         else:
-            ref_object = Layer.objects.filter(pk__in=self.layers).order_by('-updated_at').first()
+            ref_object = self.layers.order_by('-updated_at').first()
 
-        if ref_object:
-            return ref_object.updated_at
-
-        return now()
+        return ref_object.updated_at if ref_object else now()
 
 
 class MultipleMVTViewMixin(MVTViewMixin):
