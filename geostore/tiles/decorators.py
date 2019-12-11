@@ -1,4 +1,3 @@
-from geostore.routing.helpers import Routing
 from geostore.tiles.helpers import guess_minzoom, guess_maxzoom
 
 
@@ -22,13 +21,4 @@ def zoom_update(func):
             layer.save(update_fields=["settings"])
 
         return response
-    return wrapper
-
-
-def topology_update(func):
-    def wrapper(layer, *args, **kwargs):
-        response = func(layer, *args, **kwargs)
-        Routing.create_topology(layer)
-        return response
-
     return wrapper

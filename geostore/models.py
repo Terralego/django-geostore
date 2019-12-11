@@ -26,15 +26,15 @@ from fiona.crs import from_epsg
 from mercantile import tiles
 
 from . import GeometryTypes, settings as app_settings
-from .decorators import zoom_update, topology_update
+from .db.mixins import BaseUpdatableModel
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
-from .mixins import BaseUpdatableModel
+from .routing.decorators import topology_update
+from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
-
 
 logger = logging.getLogger(__name__)
 
