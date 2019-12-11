@@ -21,6 +21,7 @@ class ImportCSVTestCase(TestCase):
                          '--layer=companies',
                          '--key=SIREN',
                          '--key=NIC',
+                         '--bulk',
                          f'--source={test_file}')
         self.assertEqual(len(cm.records), 1)
         log_record = cm.records[0]
