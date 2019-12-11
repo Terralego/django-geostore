@@ -19,7 +19,7 @@ from .mixins import MultipleFieldLookupMixin
 from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
 from ..permissions import FeaturePermission, LayerPermission
 from ..routing.helpers import Routing
-from ..serializers import (FeatureRelationSerializer, FeatureSerializer,
+from ..serializers import (FeatureExtraGeomSerializer, FeatureRelationSerializer, FeatureSerializer,
                            LayerRelationSerializer, LayerSerializer)
 from ..tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
@@ -189,6 +189,42 @@ class FeatureViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
+
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'],
+            url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='detail-extra-geometry')
+    def extra_geometry(self, request, id_extra_feature, *args, **kwargs):
+        feature = self.get_object()
+        extra_geometry = get_object_or_404(feature.extra_geometries.all(), pk=id_extra_feature)
+        extra_layer = extra_geometry.layer_extra_geom
+        if request.method == 'GET':
+            return Response(FeatureExtraGeomSerializer(extra_geometry).data)
+        if not extra_layer.editable:
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        if request.method == 'DELETE':
+            extra_geometry.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        elif request.method in ('PUT', 'PATCH'):
+            serializer = FeatureExtraGeomSerializer(data=request.data, instance=extra_geometry)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], url_path=r'extra_layer/(?P<id_extra_layer>\d+)',
+            url_name='create-extra-geometry')
+    def extra_layer_geometry(self, request, id_extra_layer, *args, **kwargs):
+        feature = self.get_object()
+        layer = self.get_layer()
+        extra_layer = get_object_or_404(layer.extra_geometries.all(), pk=id_extra_layer)
+        if not extra_layer.editable:
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        serializer = FeatureExtraGeomSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(feature=feature, layer_extra_geom=extra_layer)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class LayerRelationViewSet(viewsets.ModelViewSet):

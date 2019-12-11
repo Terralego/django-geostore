@@ -6,6 +6,8 @@ CHANGELOG
 ---------------------------
 
 * Officially support django 3.0
+* Add possibility to modify, create, update, delete extra geometries
+* Add field editable to extra layers
 
 
 0.3.13         (2019-12-09)

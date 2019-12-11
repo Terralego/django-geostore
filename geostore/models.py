@@ -589,6 +589,7 @@ class LayerExtraGeom(LayerBasedModelMixin):
     order = models.PositiveSmallIntegerField(default=0)
     slug = models.SlugField(editable=False)
     title = models.CharField(max_length=250)
+    editable = models.BooleanField(default=True)
 
     @cached_property
     def name(self):
