@@ -7,8 +7,6 @@ import django.contrib.postgres.fields.jsonb
 import django.db.models.deletion
 from django.db import migrations, models
 
-import geostore.fields
-
 
 class Migration(migrations.Migration):
 
@@ -25,8 +23,8 @@ class Migration(migrations.Migration):
                 ('geom', django.contrib.gis.db.models.fields.GeometryField()),
                 ('identifier', models.CharField(default=uuid.uuid4, max_length=255)),
                 ('properties', django.contrib.postgres.fields.jsonb.JSONField()),
-                ('from_date', geostore.fields.DateFieldYearLess(default='01-01', help_text='Layer validity period start')),
-                ('to_date', geostore.fields.DateFieldYearLess(default='12-31', help_text='Layer validity period end')),
+                ('from_date', models.DateField(default='1970-01-01', help_text='Layer validity period start')),
+                ('to_date', models.DateField(default='1970-12-31', help_text='Layer validity period end')),
             ],
         ),
         migrations.CreateModel(
