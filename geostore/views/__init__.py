@@ -190,8 +190,8 @@ class FeatureViewSet(viewsets.ModelViewSet):
         layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
 
-    @action(detail=True, methods=['get', 'put', 'patch', 'delete'], permission_classes=[],
-            url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='extra_geometry')
+    @action(detail=True, methods=['get', 'put', 'patch', 'delete'],
+            url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='detail-extra-geometry')
     def extra_geometry(self, request, id_extra_feature, *args, **kwargs):
         feature = self.get_object()
         extra_geometry = get_object_or_404(feature.extra_geometries.all(), pk=id_extra_feature)
@@ -211,8 +211,8 @@ class FeatureViewSet(viewsets.ModelViewSet):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[],
-            url_path=r'extra_layer/(?P<id_extra_layer>\d+)', url_name='extra_layer_geometry')
+    @action(detail=True, methods=['post'], url_path=r'extra_layer/(?P<id_extra_layer>\d+)',
+            url_name='create-extra-geometry')
     def extra_layer_geometry(self, request, id_extra_layer, *args, **kwargs):
         feature = self.get_object()
         layer = self.get_layer()
