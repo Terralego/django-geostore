@@ -2,7 +2,7 @@
 CHANGELOG
 =========
 
-0.3.14.dev0    (XXXX-XX-XX)
+0.3.14         (2019-12-11)
 ---------------------------
 
 * Officially support django 3.0
