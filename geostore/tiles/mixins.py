@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import Feature, Layer
+from ..models import Feature
 from .. import settings as app_settings
 from ..tokens import tiles_token_generator
 from .helpers import VectorTile
