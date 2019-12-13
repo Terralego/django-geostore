@@ -212,10 +212,11 @@ class FeatureDetailTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data), 1, data)
+
         # city cover should not be present after deletion
         city_cover.delete()
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertEqual(len(data), 0)
+        self.assertEqual(len(data), 0, data)
