@@ -245,11 +245,11 @@ class FeatureViewSet(viewsets.ModelViewSet):
         feature = self.get_object()
         layer_relation = get_object_or_404(feature.layer.relations_as_origin.all(),
                                            pk=kwargs.get('id_relation'))
-        data = feature.get_relation_qs(layer_relation)
+        qs = feature.get_relation_qs(layer_relation)
         many = True
         if not layer_relation.multiple:
             many = False
-            data = data.first()
+            qs = qs.first()
         serializer_class = self.get_serializer_class()
-        serializer = serializer_class(data, many=many)
+        serializer = serializer_class(qs, many=many)
         return Response(serializer.data)
