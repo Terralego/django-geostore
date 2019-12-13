@@ -5,6 +5,7 @@ import os
 import uuid
 from copy import deepcopy
 from functools import reduce
+from itertools import islice
 from tempfile import TemporaryDirectory
 
 import fiona
@@ -567,9 +568,8 @@ class Feature(BaseUpdatableModel):
                                        D(m=relation.settings.get('distance')),
                                        'spheroid'),
             })
-        else:
-            return qs_empty
-        return qs.filter(**kwargs)
+
+        return qs.filter(**kwargs) if kwargs else qs
 
     def sync_relations(self, layer_relation=None):
         """ replace feature relations for automatic layer relations """
@@ -581,12 +581,14 @@ class Feature(BaseUpdatableModel):
             # fill destination
             qs = self.get_relation_qs(rel)
 
-            for feature_rel in qs.all():
-                FeatureRelation.objects.create(
-                    origin=self,
-                    destination=feature_rel,
-                    relation=rel
-                )
+            # batch import
+            batch_size = 100
+            objs = (FeatureRelation(origin=self, destination=feature_rel, relation=rel) for feature_rel in qs.all())
+            while True:
+                batch = list(islice(objs, batch_size))
+                if not batch:
+                    break
+                FeatureRelation.objects.bulk_create(batch, batch_size)
 
     class Meta:
         ordering = ['id']
@@ -619,16 +621,12 @@ class LayerRelation(models.Model):
     settings = JSONField(default=dict, blank=True)
 
     def save(self, *args, **kwargs):
+        self.clean()
         self.slug = slugify(f'{self.origin_id}-{self.name}')
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
-
-    def sync_relation(self):
-        if self.relation_type:
-            # no manual, refresh relations
-            pass
 
     class Meta:
         ordering = ['id']
