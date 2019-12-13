@@ -5,6 +5,8 @@ CHANGELOG
 0.3.15.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* support django rest framework 3.11
+
 
 0.3.14         (2019-12-11)
 ---------------------------
