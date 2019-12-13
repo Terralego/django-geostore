@@ -553,7 +553,6 @@ class Feature(BaseUpdatableModel):
         qs_empty = Feature.objects.none()
 
         if relation not in self.layer.relations_as_origin.all():
-            raise Exception('yes')
             return qs_empty
 
         qs = Feature.objects.filter(layer=relation.destination)

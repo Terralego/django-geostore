@@ -1,22 +1,15 @@
-import json
-
-from django.contrib.gis.geos.geometry import GEOSGeometry
 from django.test import TestCase
 from django.urls import reverse
+from geostore import GeometryTypes
 from rest_framework import status
 from rest_framework.status import HTTP_200_OK
 
-from geostore.tests.factories import (FeatureFactory, LayerFactory)
+from geostore.models import LayerRelation
+from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory)
 
 
 class FeaturesListViewTest(TestCase):
-    fake_geometry = {
-        "type": "Point",
-        "coordinates": [
-            2.,
-            45.
-        ]
-    }
+    fake_geometry = "POINT(2 45)"
     intersect_geometry = {
         "type": "LineString",
         "coordinates": [
@@ -75,17 +68,17 @@ class FeaturesListViewTest(TestCase):
         layer = LayerFactory()
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 1, 'text': 'bar'},
         )
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 1, 'text': 'foo'},
         )
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 2, 'text': 'foo'},
         )
         response = self.client.get(
@@ -100,12 +93,12 @@ class FeaturesListViewTest(TestCase):
         layer = LayerFactory()
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 1},
         )
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 2},
         )
         response = self.client.get(
@@ -121,17 +114,17 @@ class FeaturesListViewTest(TestCase):
         layer = LayerFactory()
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 2, 'digit': 42},
         )
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 1, 'digit': 42},
         )
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'number': 1, 'digit': 34},
         )
         response = self.client.get(
@@ -146,17 +139,17 @@ class FeaturesListViewTest(TestCase):
         layer = LayerFactory()
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'text': 'foobar', 'sentence': 'foobar is here'},
         )
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'text': 'foo', 'sentence': 'foobar is missing'},
         )
         FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'text': 'foobar', 'sentence': 'foobar is here'},
         )
         response = self.client.get(
@@ -174,7 +167,7 @@ class FeaturesListViewTest(TestCase):
         layer = LayerFactory()
         feature = FeatureFactory(
             layer=layer,
-            geom=GEOSGeometry(json.dumps(self.fake_geometry)),
+            geom=self.fake_geometry,
             properties={'text': 'foobar', 'sentence': 'foobar is here'},
         )
 
@@ -195,3 +188,34 @@ class FeaturesListViewTest(TestCase):
         data = response.json()
         self.assertListEqual(sorted(list(('features', 'type'))), sorted(list(data.keys())))
         self.assertEqual(data['type'], "FeatureCollection")
+
+
+class FeatureDetailTestCase(TestCase):
+    def setUp(self) -> None:
+        self.layer_trek = LayerSchemaFactory(geom_type=GeometryTypes.LineString)
+        self.layer_city = LayerSchemaFactory(geom_type=GeometryTypes.Polygon)
+        self.trek = FeatureFactory(layer=self.layer_trek, geom='LINESTRING(0 0, 1 1, 2 2, 3 3)')
+        self.city_uncover = FeatureFactory(layer=self.layer_city, geom='POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))')
+
+    def test_relation(self):
+        city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
+        intersect_relation = LayerRelation.objects.create(
+            relation_type='intersects',
+            origin=self.layer_trek,
+            destination=self.layer_city,
+        )
+        url = reverse('feature-relation', args=(self.layer_trek.pk,
+                                                self.trek.identifier,
+                                                intersect_relation.pk))
+        # city cover should be present after sync
+        self.trek.sync_relations(intersect_relation.pk)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        # city cover should not be present after deletion
+        city_cover.delete()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(len(data), 0)

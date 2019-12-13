@@ -17,7 +17,7 @@ from rest_framework.response import Response
 
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
-from ..models import Layer, LayerGroup
+from ..models import Layer, LayerGroup, Feature
 from ..permissions import FeaturePermission, LayerPermission
 from ..renderers import GeoJSONRenderer
 from ..routing.helpers import Routing
@@ -245,7 +245,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
         feature = self.get_object()
         layer_relation = get_object_or_404(feature.layer.relations_as_origin.all(),
                                            pk=kwargs.get('id_relation'))
-        qs = feature.get_relation_qs(layer_relation)
+        qs = Feature.objects.filter(pk__in=feature.relations_as_origin.filter(relation=layer_relation))
         many = True
         if not layer_relation.multiple:
             many = False
