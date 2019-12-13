@@ -245,7 +245,9 @@ class FeatureViewSet(viewsets.ModelViewSet):
         feature = self.get_object()
         layer_relation = get_object_or_404(feature.layer.relations_as_origin.all(),
                                            pk=kwargs.get('id_relation'))
-        qs = Feature.objects.filter(pk__in=feature.relations_as_origin.filter(relation=layer_relation))
+        destination_ids = feature.relations_as_origin.filter(relation=layer_relation)\
+                                                     .values_list('destination_id', flat=True)
+        qs = Feature.objects.filter(pk__in=destination_ids)
         many = True
         if not layer_relation.multiple:
             many = False
