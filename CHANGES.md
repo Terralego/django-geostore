@@ -2,7 +2,7 @@
 CHANGELOG
 =========
 
-0.3.15.dev0    (XXXX-XX-XX)
+0.3.15         (2019-12-13)
 ---------------------------
 
 * support django rest framework 3.11
