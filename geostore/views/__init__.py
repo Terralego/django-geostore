@@ -17,12 +17,12 @@ from rest_framework.response import Response
 
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
-from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
+from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission
 from ..renderers import GeoJSONRenderer
 from ..routing.helpers import Routing
-from ..serializers import (FeatureExtraGeomSerializer, FeatureRelationSerializer, FeatureSerializer,
-                           LayerRelationSerializer, LayerSerializer)
+from ..serializers import (FeatureExtraGeomSerializer, FeatureSerializer,
+                           LayerSerializer)
 from ..serializers.geojson import FinalGeoJSONSerializer
 from ..tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
@@ -253,13 +253,3 @@ class FeatureViewSet(viewsets.ModelViewSet):
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(data, many=many)
         return Response(serializer.data)
-
-
-class LayerRelationViewSet(viewsets.ModelViewSet):
-    queryset = LayerRelation.objects.all()
-    serializer_class = LayerRelationSerializer
-
-
-class FeatureRelationViewSet(viewsets.ModelViewSet):
-    queryset = FeatureRelation.objects.all()
-    serializer_class = FeatureRelationSerializer

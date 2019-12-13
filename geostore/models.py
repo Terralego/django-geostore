@@ -550,8 +550,11 @@ class Feature(BaseUpdatableModel):
 
     def get_relation_qs(self, relation):
         # relation should be in layer_relation_as_origins
+        qs_empty = Feature.objects.none()
+
         if relation not in self.layer.relations_as_origin.all():
-            return
+            raise Exception('yes')
+            return qs_empty
 
         qs = Feature.objects.filter(layer=relation.destination)
         kwargs = {}
@@ -566,8 +569,25 @@ class Feature(BaseUpdatableModel):
                                        'spheroid'),
             })
         else:
-            qs = Feature.objects.none()
+            return qs_empty
         return qs.filter(**kwargs)
+
+    def sync_relations(self, layer_relation=None):
+        """ replace feature relations for automatic layer relations """
+        layer_relations = self.layer.relations_as_origin.exclude(relation_type__isnull=True)
+        layer_relations = layer_relations.filter(pk__in=[layer_relation]) if layer_relation else layer_relations
+        for rel in layer_relations:
+            # delete destinations
+            self.relations_as_origin.filter(relation=rel).delete()
+            # fill destination
+            qs = self.get_relation_qs(rel)
+
+            for feature_rel in qs.all():
+                FeatureRelation.objects.create(
+                    origin=self,
+                    destination=feature_rel,
+                    relation=rel
+                )
 
     class Meta:
         ordering = ['id']
@@ -606,6 +626,11 @@ class LayerRelation(models.Model):
     def __str__(self):
         return self.name
 
+    def sync_relation(self):
+        if self.relation_type:
+            # no manual, refresh relations
+            pass
+
     class Meta:
         ordering = ['id']
         unique_together = (
@@ -615,11 +640,14 @@ class LayerRelation(models.Model):
 
 class FeatureRelation(models.Model):
     origin = models.ForeignKey(Feature,
-                               on_delete=models.PROTECT,
+                               on_delete=models.CASCADE,
                                related_name='relations_as_origin')
     destination = models.ForeignKey(Feature,
-                                    on_delete=models.PROTECT,
+                                    on_delete=models.CASCADE,
                                     related_name='relations_as_destination')
+    relation = models.ForeignKey(LayerRelation,
+                                 on_delete=models.CASCADE,
+                                 related_name='related_features')
     properties = JSONField(default=dict, blank=True)
 
     class Meta:
