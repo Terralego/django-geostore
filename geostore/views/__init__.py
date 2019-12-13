@@ -8,28 +8,22 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
-from rest_framework import status, viewsets, decorators
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
-from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from .mixins import MultipleFieldLookupMixin
-from .models import FeatureRelation, Layer, LayerGroup, LayerRelation
-from .permissions import FeaturePermission, LayerPermission
-from .renderers import GeoJSONRenderer
-from .routing.helpers import Routing
-from .serializers import (FeatureRelationSerializer, FeatureSerializer,
-                          LayerRelationSerializer, LayerSerializer)
-from .serializers.geojson import FinalGeoJSONSerializer
-from .tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
+from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
 from ..permissions import FeaturePermission, LayerPermission
+from ..renderers import GeoJSONRenderer
 from ..routing.helpers import Routing
 from ..serializers import (FeatureExtraGeomSerializer, FeatureRelationSerializer, FeatureSerializer,
                            LayerRelationSerializer, LayerSerializer)
+from ..serializers.geojson import FinalGeoJSONSerializer
 from ..tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
 
