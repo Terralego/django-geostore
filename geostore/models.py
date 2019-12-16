@@ -379,38 +379,33 @@ class Layer(LayerBasedModelMixin):
         for prop in schema_properties:
             if prop.required:
                 schema['required'].append(prop.slug)
-
+            options = prop.options
             prop_schema = {
                 prop.slug: {
                     "type": prop.prop_type,
                     "title": prop.title,
-                    **prop.options
                 }
             }
 
             if prop.prop_type == 'array':
                 # specify final type for arrays
-                array_items = {
-                    "items": {
-                        "type": prop.array_type,
-                    }
-                }
-                if prop.array_type == 'object':
+                if not prop.array_type == 'object':
+                    options["items"]["type"] = prop.array_type
+                else:
+                    options = {"items": {"type": prop.array_type}}
                     # add sub-items for array objects
-                    array_items['items'].update({
-                        'required': [],
+                    options["items"].update({
                         'properties': {}
                     })
                     for sub_prop in prop.array_properties.all():
                         if sub_prop.required:
-                            array_items['items']['required'].append(sub_prop.slug)
-
-                        array_items['items']['properties'][sub_prop.slug] = {
+                            options["items"].setdefault('required', []).append(sub_prop.slug)
+                        options["items"]['properties'][sub_prop.slug] = {
                             "type": sub_prop.prop_type,
                             "title": sub_prop.title,
                             **sub_prop.options
                         }
-                prop_schema[prop.slug].update(array_items)
+            prop_schema[prop.slug].update(options)
 
             schema['properties'].update(prop_schema)
         return schema
