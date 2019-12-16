@@ -181,6 +181,14 @@ class FeaturesListViewTest(TestCase):
         self.assertEqual(response.status_code, HTTP_200_OK)
 
     def test_geojson_renderer(self):
+        FeatureFactory.create_batch(
+            50,
+            layer=self.layer,
+            geom=self.fake_geometry,
+            properties={
+                'test': 'name',
+                'name': 'test'
+            })
         response = self.client.get(
             reverse('feature-list', kwargs={'layer': self.layer.pk, 'format': 'geojson'})
         )
@@ -188,6 +196,7 @@ class FeaturesListViewTest(TestCase):
         data = response.json()
         self.assertListEqual(sorted(list(('features', 'type'))), sorted(list(data.keys())))
         self.assertEqual(data['type'], "FeatureCollection")
+        self.assertEqual(len(data['features']), self.layer.features.count())
 
 
 class FeatureDetailTestCase(TestCase):
