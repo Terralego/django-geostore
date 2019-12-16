@@ -248,10 +248,6 @@ class FeatureViewSet(viewsets.ModelViewSet):
         destination_ids = feature.relations_as_origin.filter(relation=layer_relation)\
                                                      .values_list('destination_id', flat=True)
         qs = Feature.objects.filter(pk__in=destination_ids)
-        many = True
-        if not layer_relation.multiple:
-            many = False
-            qs = qs.first()
         serializer_class = self.get_serializer_class()
-        serializer = serializer_class(qs, many=many)
+        serializer = serializer_class(qs, many=True)
         return Response(serializer.data)
