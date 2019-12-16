@@ -2,7 +2,6 @@
 
 from django.db import migrations
 from geostore.db.schemas import schema_to_schemamodel
-from django.apps import apps
 
 
 def move_data(apps, schema_editor):
