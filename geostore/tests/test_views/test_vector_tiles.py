@@ -5,6 +5,7 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import urlunquote
+from rest_framework import status
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from rest_framework.test import APITestCase
 
@@ -158,6 +159,14 @@ class VectorTilesTestCase(TestCase):
         tilejson = response.json()
         self.assertTrue(tilejson['attribution'])
         self.assertTrue(tilejson['description'] is None)
+
+    def test_404_tile_pattern(self):
+        response = self.client.get(
+            reverse(
+                'layer-tiles-pattern',
+                kwargs={'pk': self.layer.pk})
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_vector_group_tiles_view(self):
         # first query that generate the cache
