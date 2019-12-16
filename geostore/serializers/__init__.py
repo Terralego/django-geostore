@@ -45,7 +45,7 @@ class FeatureSerializer(serializers.ModelSerializer):
         Validate schema if exists
         """
         if self.get_layer():
-            validate_json_schema_data(data, self.get_layer().schema)
+            validate_json_schema_data(data, self.get_layer().generated_schema)
         return data
 
     class Meta:

@@ -3,12 +3,12 @@ from django.utils.text import slugify
 
 from geostore import GeometryTypes
 from geostore.models import LayerExtraGeom, Feature
-from geostore.tests.factories import LayerSchemaFactory
+from geostore.tests.factories import LayerWithSchemaFactory
 
 
 class LayerExtraGeomModelTestCase(TestCase):
     def setUp(self):
-        self.layer_schema = LayerSchemaFactory()
+        self.layer_schema = LayerWithSchemaFactory()
         self.extra_layer = LayerExtraGeom.objects.create(layer=self.layer_schema,
                                                          geom_type=GeometryTypes.Point,
                                                          title='Test')
@@ -24,7 +24,7 @@ class LayerExtraGeomModelTestCase(TestCase):
 
 class FeatureTestCase(TestCase):
     def setUp(self):
-        self.layer_schema = LayerSchemaFactory()
+        self.layer_schema = LayerWithSchemaFactory()
 
     def test_clean(self):
         feature = Feature.objects.create(layer=self.layer_schema,

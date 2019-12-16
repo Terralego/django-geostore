@@ -2,7 +2,7 @@ from geostore.models import Feature
 from rest_framework import status
 from rest_framework.reverse import reverse
 
-from geostore.tests.factories import UserFactory, LayerFactory
+from geostore.tests.factories import UserFactory, LayerFactory, SchemaFactory
 from rest_framework.test import APITestCase
 
 
@@ -10,20 +10,12 @@ class LayerFeatureListOrderingTestCase(APITestCase):
     def setUp(self):
         self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
         self.client.force_authenticate(user=self.user)
-        self.valid_schema = {
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "age": {
-                    "type": "integer"
-                }
-            }
-        }
+
         self.property_schema_layer = LayerFactory(
             name="tree",
-            schema=self.valid_schema
         )
+        SchemaFactory.create(slug="name", title="Name", layer=self.property_schema_layer)
+        SchemaFactory.create(slug="age", title="Age", layer=self.property_schema_layer)
         Feature.objects.bulk_create([
             Feature(layer=self.property_schema_layer,
                     properties={'name': '1',

@@ -48,7 +48,7 @@ class ImportGeojsonTest(TestCase):
 
         # Assert schema properties are presents
         self.assertNotEqual(
-            layer.schema.get('properties').keys() -
+            layer.generated_schema.get('properties').keys() -
             ['ALTITUDE', 'ETIQUETTE', 'HAUTEUR', 'ID', 'ID_PG', 'NATURE', 'NOM',
              'ORIGIN_BAT', 'PUB_XDECAL', 'PUB_YDECAL', 'ROTATION', 'ROTATION_S',
              'XDECAL', 'XDECAL_SYM', 'YDECAL', 'YDECAL_SYM', 'Z_MAX', 'Z_MIN', ], True)

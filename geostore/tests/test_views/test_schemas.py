@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from geostore.tests.factories import LayerFactory, UserFactory
+from geostore.tests.factories import LayerFactory, UserFactory, SchemaFactory
 
 
 class SchemaValidationTest(APITestCase):
@@ -10,45 +10,9 @@ class SchemaValidationTest(APITestCase):
         self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
         self.client.force_authenticate(user=self.user)
         self.no_schema_layer = LayerFactory(name="no schema", geom_type=None)
-        self.valid_schema = {
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "age": {
-                    "type": "integer"
-                }
-            }
-        }
-        self.property_schema_layer = LayerFactory(
-            name="tree",
-            schema=self.valid_schema)
-
-    def test_create_layer_without_valid_schema(self):
-        """
-        Try to create layer with valid schema
-        """
-        response = self.client.post(reverse('layer-list'),
-                                    data={})
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_create_layer_with_valid_schema(self):
-        """
-        Try to create layer with valid schema
-        """
-        response = self.client.post(reverse('layer-list'),
-                                    data={"schema": self.valid_schema})
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_create_layer_unvalid_schema(self):
-        """
-        Try to create layer with unvalid schema
-        """
-        response = self.client.post(reverse('layer-list'),
-                                    data={"schema": {"type": "unknown"}})
-        response_json = response.json()
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("schema", response_json)
+        self.property_schema_layer = LayerFactory(name="tree")
+        SchemaFactory.create(slug="name", title="Name", layer=self.property_schema_layer)
+        SchemaFactory.create(slug="age", title="Age", prop_type="integer", layer=self.property_schema_layer)
 
     def test_no_schema_properties_ok(self):
         """

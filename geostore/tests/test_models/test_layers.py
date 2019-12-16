@@ -8,19 +8,19 @@ from rest_framework.test import APIClient
 
 from geostore.models import Layer
 from geostore.tests.factories import (FeatureFactory, LayerFactory,
-                                      LayerSchemaFactory, UserFactory)
+                                      LayerWithSchemaFactory, UserFactory)
 from geostore.tests.utils import get_files_tests
 from geostore.transformations import set_geometry_from_options
 
 
 class LayerModelTestCase(TestCase):
     def setUp(self):
-        self.layer_schema = LayerSchemaFactory()
+        self.layer_schema = LayerWithSchemaFactory()
 
     def test_get_property_title_defined(self):
         """ method should return property title """
         self.assertEqual(self.layer_schema.get_property_title('age'),
-                         self.layer_schema.schema['properties']['age']['title'])
+                         self.layer_schema.generated_schema['properties']['age']['title'])
 
     def test_get_property_title_undefined(self):
         """ method should return property name """
@@ -37,7 +37,7 @@ class LayerModelTestCase(TestCase):
     def test_get_property_type_defined(self):
         """ method should return property type if property exists """
         self.assertEqual(self.layer_schema.get_property_type('age'),
-                         self.layer_schema.schema['properties']['age']['type'])
+                         self.layer_schema.generated_schema['properties']['age']['type'])
 
     def test_get_property_type_undefined(self):
         """ method should return None if property doesn't exist """

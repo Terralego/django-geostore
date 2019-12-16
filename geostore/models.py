@@ -47,7 +47,6 @@ ACCEPTED_PROJECTIONS = [
 
 class Layer(LayerBasedModelMixin):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
-    schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
     authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers')
 
     def _initial_import_from_csv(self, chunks, options, operations):
@@ -302,8 +301,8 @@ class Layer(LayerBasedModelMixin):
         """
         Return properties based on layer features or layer schema definition
         """
-        if self.schema:
-            results = list(self.schema.get('properties', {}).keys())
+        if self.generated_schema:
+            results = list(self.generated_schema.get('properties', {}).keys())
 
         else:
             feature_table = Feature._meta.db_table
@@ -330,8 +329,7 @@ class Layer(LayerBasedModelMixin):
 
     def get_property_title(self, prop):
         """ Get json property title with its name. Return its name if not defined. """
-        json_form_properties = self.schema.get('properties', {})
-
+        json_form_properties = self.generated_schema.get('properties', {})
         if prop in json_form_properties:
             data = json_form_properties[prop]
             title = data.get('title', prop)
@@ -342,7 +340,7 @@ class Layer(LayerBasedModelMixin):
     def get_property_type(self, prop):
         """ Get json property type with its name """
         prop_type = None
-        json_form_properties = self.schema.get('properties', {})
+        json_form_properties = self.generated_schema.get('properties', {})
 
         if prop in json_form_properties:
             data = json_form_properties[prop]
@@ -380,10 +378,11 @@ class Layer(LayerBasedModelMixin):
             if prop.required:
                 schema['required'].append(prop.slug)
             options = prop.options
+            title = prop.slug if not prop.title else prop.title
             prop_schema = {
                 prop.slug: {
                     "type": prop.prop_type,
-                    "title": prop.title,
+                    "title": title,
                 }
             }
 
@@ -517,7 +516,7 @@ class Feature(BaseUpdatableModel):
         Validate properties according schema if provided
         """
         validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
-        validate_json_schema_data(self.properties, self.layer.schema)
+        validate_json_schema_data(self.properties, self.layer.generated_schema)
 
     class Meta:
         ordering = ['id']
@@ -647,7 +646,7 @@ class SchemaObjectProperty(models.Model):
         ('boolean', _('Boolean')),
         ('object', _('Object')),
     )
-    slug = models.SlugField()
+    slug = models.SlugField(editable=False)
     title = models.CharField(max_length=250)
     prop_type = models.CharField(max_length=50, choices=PROPERTY_TYPES)
     array_type = models.CharField(max_length=50, choices=ARRAY_TYPES, blank=True)
@@ -664,6 +663,8 @@ class SchemaObjectProperty(models.Model):
 
     def save(self, *args, **kwargs):
         # force clean
+        if self.pk is None:
+            self.slug = slugify(self.title)
         self.clean()
         super().save(*args, **kwargs)
 

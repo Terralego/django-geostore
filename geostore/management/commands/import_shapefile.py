@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from geostore.management.commands.mixins import LayerCommandMixin
-from geostore.models import Layer, LayerGroup
+from geostore.models import Layer, LayerGroup, LayerSchemaProperty
 
 
 class Command(LayerCommandMixin, BaseCommand):
@@ -92,13 +92,8 @@ class Command(LayerCommandMixin, BaseCommand):
         self.import_datas(layer, file_path, identifier)
         if generate_schema and not layer_pk:
             # only in layer creation, find properties to generate schema
-            layer.schema = {
-                'properties': {
-                    key: {
-                        'type': 'string'
-                    } for key, value in layer.layer_properties.items()
-                }
-            }
+            for key, value in layer.layer_properties.items():
+                LayerSchemaProperty.objects.create(slug=key, prop_type='string', layer=layer)
             layer.save()
 
         if dryrun:

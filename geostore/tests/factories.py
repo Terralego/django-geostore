@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
 from geostore import GeometryTypes
-from geostore.models import Feature, Layer
+from geostore.models import Feature, Layer, LayerSchemaProperty
 
 
 def _get_perm(perm_name):
@@ -30,25 +30,15 @@ class LayerFactory(factory.DjangoModelFactory):
             FeatureFactory(layer=self)
 
 
-class LayerSchemaFactory(factory.DjangoModelFactory):
+class LayerWithSchemaFactory(factory.DjangoModelFactory):
     geom_type = GeometryTypes.Point
-    schema = {
-        "type": "object",
-        "required": ["name", ],
-        "properties": {
-            "name": {
-                'type': "string",
-            },
-            "age": {
-                'type': "integer",
-                "title": "Age",
-            },
-            "country": {
-                'type': "string",
-                "title": "Country"
-            },
-        }
-    }
+
+    @factory.post_generation
+    def create_schmeas_properties(obj, create, extracted, **kwargs):
+        LayerSchemaProperty.objects.create(slug="name", required=True, prop_type="string", layer=obj)
+        LayerSchemaProperty.objects.create(slug="age", required=False, prop_type="integer", title="Age", layer=obj)
+        LayerSchemaProperty.objects.create(slug="country", required=False, prop_type="string", title="Country",
+                                           layer=obj)
 
     class Meta:
         model = Layer
@@ -91,3 +81,12 @@ class UserFactory(factory.DjangoModelFactory):
         if create and extracted:
             # We have a saved object and a list of permission names
             self.user_permissions.add(*[_get_perm(pn) for pn in extracted])
+
+
+class SchemaFactory(factory.DjangoModelFactory):
+    slug = factory.Sequence(lambda n: "property%s" % n)
+    prop_type = "string"
+    layer = factory.SubFactory(Layer)
+
+    class Meta:
+        model = LayerSchemaProperty
