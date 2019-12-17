@@ -206,7 +206,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
         serializer.save(layer_id=layer.pk)
 
     def update(self, request, *args, **kwargs):
-        """  """
+        """ override to keep unfilled properties in partial update case """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         data = request.data
