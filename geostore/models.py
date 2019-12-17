@@ -539,6 +539,7 @@ class Feature(BaseUpdatableModel):
         return self.geom.extent
 
     def save(self, *args, **kwargs):
+        self.clean()
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
 
