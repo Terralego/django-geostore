@@ -48,13 +48,6 @@ class FeatureSerializer(serializers.ModelSerializer):
             validate_json_schema_data(data, self.get_layer().schema)
         return data
 
-    def update(self, instance, validated_data):
-        # to keep computed properties, we patch properties
-        old_properties = instance.properties
-        old_properties.update(validated_data['properties'])
-        validated_data['properties'] = old_properties
-        return super().update(instance, validated_data)
-
     class Meta:
         model = Feature
         fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations')

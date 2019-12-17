@@ -228,6 +228,14 @@ class FeatureDetailTestCase(APITestCase):
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', 'age']))
 
+    def test_feature_put_replace_properties(self):
+        response = self.client.put(self.detail_url, data={'geom': 'POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))',
+                                                          "properties": {"name": "Divona"}})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertListEqual(sorted(list(data['properties'].keys())),
+                             sorted(['name', ]), data)
+
     def test_relation(self):
         city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
         intersect_relation = LayerRelation.objects.create(

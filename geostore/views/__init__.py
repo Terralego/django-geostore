@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 from django.contrib.gis.gdal.error import GDALException
 from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
@@ -203,6 +204,27 @@ class FeatureViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
+
+    def update(self, request, *args, **kwargs):
+        """  """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        data = request.data
+        if partial:
+            # if partial, we update properties
+            properties = deepcopy(instance.properties)
+            properties.update(data.get('properties', {}))
+            data['properties'] = properties
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get', 'put', 'patch', 'delete'],
             url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='detail-extra-geometry')
