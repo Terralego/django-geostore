@@ -1,11 +1,13 @@
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.test import APITestCase
+
 from geostore import GeometryTypes
 from rest_framework import status
 from rest_framework.status import HTTP_200_OK
 
 from geostore.models import LayerRelation
-from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory)
+from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory, UserFactory)
 
 
 class FeaturesListViewTest(TestCase):
@@ -199,12 +201,32 @@ class FeaturesListViewTest(TestCase):
         self.assertEqual(len(data['features']), self.layer.features.count())
 
 
-class FeatureDetailTestCase(TestCase):
+class FeatureDetailTestCase(APITestCase):
     def setUp(self) -> None:
         self.layer_trek = LayerSchemaFactory(geom_type=GeometryTypes.LineString)
         self.layer_city = LayerSchemaFactory(geom_type=GeometryTypes.Polygon)
         self.trek = FeatureFactory(layer=self.layer_trek, geom='LINESTRING(0 0, 1 1, 2 2, 3 3)')
-        self.city_uncover = FeatureFactory(layer=self.layer_city, geom='POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))')
+        self.city_uncover = FeatureFactory(layer=self.layer_city,
+                                           geom='POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))',
+                                           properties={
+                                               "name": "Cahors",
+                                               "age": 50000
+                                           })
+        self.detail_url = reverse('feature-detail', args=(self.layer_city.pk,
+                                                          self.city_uncover.identifier,))
+        self.super_user = UserFactory(is_superuser=True)
+        self.client.force_authenticate(self.super_user)
+
+    def test_feature_detail(self):
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_feature_patch_keep_properties(self):
+        response = self.client.patch(self.detail_url, data={"properties": {"name": "Divona"}})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertListEqual(sorted(list(data['properties'].keys())),
+                             sorted(['name', 'age']))
 
     def test_relation(self):
         city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
