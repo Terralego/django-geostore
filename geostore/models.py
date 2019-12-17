@@ -600,6 +600,10 @@ class Feature(BaseUpdatableModel):
             models.Index(fields=['identifier', ]),
             GistIndex(fields=['layer', 'geom']),
         ]
+        constraints = [
+            # geometry should be valid
+            models.CheckConstraint(check=models.Q(geom__isvalid=True), name='geom_is_valid'),
+        ]
 
 
 class LayerRelation(models.Model):
