@@ -169,14 +169,17 @@ class FeatureViewSet(viewsets.ModelViewSet):
         super().__init__(*args, **kwargs)
         self.layer = None
 
+    def transform_serializer_geojson(self, serializer_class):
+        class FinalClass(FinalGeoJSONSerializer, serializer_class):
+            class Meta(FinalGeoJSONSerializer.Meta, serializer_class.Meta):
+                pass
+        return FinalClass
+
     def get_serializer_class(self):
         original_class = super().get_serializer_class()
         if self.kwargs.get('format', 'json') == 'geojson':
             # auto override in geojson case
-            class FinalClass(FinalGeoJSONSerializer, original_class):
-                class Meta(FinalGeoJSONSerializer.Meta, original_class.Meta):
-                    pass
-            return FinalClass
+            return self.transform_serializer_geojson(original_class)
         return self.serializer_class
 
     def get_layer(self):
