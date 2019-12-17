@@ -200,7 +200,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         layer = self.get_layer()
         qs = layer.features.all()
-        qs = qs.prefetch_related('relations_as_origin')
+        qs = qs.prefetch_related('layer__relations_as_origin')
         return qs
 
     def perform_create(self, serializer):
