@@ -64,6 +64,6 @@ class LayerRelationTestCase(TestCase):
             settings={'distance': 1000}
         )
         self.city_cover.sync_relations(bad_relation.pk)
-        self.assertListEqual(list(self.trek.relations_as_origin.filter(relation=bad_relation)
-                                  .values_list('destination__pk', flat=True)),
+        self.assertListEqual(list(self.trek.get_relation_qs(relation=bad_relation)
+                                  .values_list('pk', flat=True)),
                              [])
