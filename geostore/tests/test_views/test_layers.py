@@ -411,6 +411,8 @@ class LayerDetailTest(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.layer = LayerFactory()
+        self.layer_group = LayerGroup.objects.create(name='layer group')
+        self.layer_group.layers.add(self.layer)
         self.user = UserFactory()
         self.client.force_authenticate(self.user)
 
