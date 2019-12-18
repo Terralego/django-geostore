@@ -176,7 +176,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
                 class Meta(FinalGeoJSONSerializer.Meta, serializer_class.Meta):
                     pass
             return FinalClass
-        return self.serializer_class
+        return serializer_class
 
     def get_serializer_class(self):
         original_class = super().get_serializer_class()
