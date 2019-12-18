@@ -276,5 +276,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
                                                      .values_list('destination_id', flat=True)
         qs = Feature.objects.filter(pk__in=destination_ids)
         serializer_class = self.get_serializer_class()
+        qs = self.paginate_queryset(qs) if self.paginator else qs
         serializer = serializer_class(qs, many=True)
-        return Response(serializer.data)
+        data = serializer.data if not self.paginator else self.get_paginated_response(serializer.data)
+        return Response(data)
