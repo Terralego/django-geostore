@@ -60,10 +60,10 @@ pixel_buffer
 ^^^^^^^^^^^^
 **Default: 4**
 
-Buffer size around a tile, it's used by mapbox to match features that cross multiples tiles.
+Buffer size around a tile, to match more features and clip features at a larger size than the tile.
 
-Mostly, the default value is enough, but sometimes, depending of the features topology, you will need
-to increase this value.
+Mostly, the default value is enough, but sometimes, depending of the display style (width border of lines or polygons),
+you will need to increase this value.
 
 features_filter
 ^^^^^^^^^^^^^^^
