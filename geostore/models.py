@@ -621,7 +621,7 @@ class LayerRelation(models.Model):
                                     related_name='relations_as_destination')
     multiple = models.BooleanField(default=True)
     editable = models.BooleanField(default=False)
-    relation_type = models.CharField(choices=RELATION_TYPES, max_length=25, default=RELATION_TYPES[0])
+    relation_type = models.CharField(choices=RELATION_TYPES, blank=True, max_length=25, default=RELATION_TYPES[0])
     settings = JSONField(default=dict, blank=True)
 
     def save(self, *args, **kwargs):
