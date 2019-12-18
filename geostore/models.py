@@ -13,7 +13,7 @@ import fiona.transform
 from deepmerge import always_merger
 from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
-from django.contrib.gis.db.models import Extent
+from django.contrib.gis.db.models.aggregates import Extent
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.gis.measure import D
@@ -547,6 +547,7 @@ class Feature(BaseUpdatableModel):
         """
         Validate properties according schema if provided
         """
+        self.geom = GEOSGeometry(self.geom)
         validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
         validate_json_schema_data(self.properties, self.layer.schema)
 
