@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.contrib.gis.geos import GEOSGeometry
 from django.urls import reverse
 from django.utils.http import urlunquote
 from rest_framework import serializers
@@ -36,6 +37,8 @@ class FeatureSerializer(serializers.ModelSerializer):
         """
         Validate geom exists
         """
+        if type(data) == str:
+            data = GEOSGeometry(data)
         if self.get_layer():
             validate_geom_type(self.get_layer().geom_type, data.geom_typeid)
         return data
