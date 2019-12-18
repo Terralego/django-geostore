@@ -539,7 +539,6 @@ class Feature(BaseUpdatableModel):
         return self.geom.extent
 
     def save(self, *args, **kwargs):
-        self.clean()
         super().save(*args, **kwargs)
         self.clean_vect_tile_cache()
 
@@ -547,7 +546,6 @@ class Feature(BaseUpdatableModel):
         """
         Validate properties according schema if provided
         """
-        self.geom = GEOSGeometry(self.geom)
         validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
         validate_json_schema_data(self.properties, self.layer.schema)
 
