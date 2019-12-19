@@ -648,6 +648,7 @@ class LayerRelation(models.Model):
         super().save(*args, **kwargs)
 
         if creation:
+            self.refresh_from_db()
             layer_relations_set_destinations.delay(self.pk)\
                 if app_settings.GEOSTORE_RELATION_CELERY_ASYNC else layer_relations_set_destinations(self.pk)
 
