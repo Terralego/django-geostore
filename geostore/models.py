@@ -32,6 +32,7 @@ from .db.mixins import BaseUpdatableModel
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .routing.decorators import topology_update
+from .tasks import feature_update_relations_destinations, layer_relations_set_destinations
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile
@@ -539,7 +540,17 @@ class Feature(BaseUpdatableModel):
         return self.geom.extent
 
     def save(self, *args, **kwargs):
+        sync_required = False
+        if not self.pk:
+            sync_required = True
+
+        if sync_required or Feature.objects.get(pk=self.pk).geom != self.geom:
+            sync_required = True
         super().save(*args, **kwargs)
+
+        if sync_required:
+            feature_update_relations_destinations.delay(self.pk) if app_settings.GEOSTORE_RELATION_CELERY_ASYNC else feature_update_relations_destinations(self.pk)
+
         self.clean_vect_tile_cache()
 
     def clean(self):
@@ -631,9 +642,14 @@ class LayerRelation(models.Model):
     settings = JSONField(default=dict, blank=True)
 
     def save(self, *args, **kwargs):
+        creation = not self.pk
         self.clean()
         self.slug = slugify(f'{self.origin_id}-{self.name}')
         super().save(*args, **kwargs)
+
+        if creation:
+            layer_relations_set_destinations.delay(self.pk)\
+                if app_settings.GEOSTORE_RELATION_CELERY_ASYNC else layer_relations_set_destinations(self.pk)
 
     def __str__(self):
         return self.name
