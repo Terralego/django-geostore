@@ -18,7 +18,7 @@ from rest_framework.response import Response
 
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
-from ..models import Layer, LayerGroup, Feature
+from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission
 from ..renderers import GeoJSONRenderer
 from ..routing.helpers import Routing
