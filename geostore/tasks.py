@@ -12,6 +12,9 @@ def feature_update_relations_destinations(feature_id):
 @shared_task
 def layer_relations_set_destinations(relation_id):
     LayerRelation = apps.get_model('geostore.LayerRelation')
-    relation = LayerRelation.objects.get(pk=relation_id)
+    try:
+        relation = LayerRelation.objects.get(pk=relation_id)
+    except:
+        raise Exception(relation_id, LayerRelation)
     for feature in relation.origin.features.all():
         feature.sync_relations(relation_id)
