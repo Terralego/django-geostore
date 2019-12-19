@@ -549,11 +549,12 @@ class Feature(BaseUpdatableModel):
         validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
         validate_json_schema_data(self.properties, self.layer.schema)
 
-    def get_relation_qs(self, relation):
-        # relation should be in layer_relation_as_origins
+    def get_computed_relation_qs(self, relation):
+        """ Execute relation operation to get feature queryset """
         qs_empty = Feature.objects.none()
 
         if relation not in self.layer.relations_as_origin.all():
+            # relation should be in layer_relation_as_origins
             return qs_empty
 
         qs = Feature.objects.filter(layer=relation.destination)
@@ -571,6 +572,11 @@ class Feature(BaseUpdatableModel):
 
         return qs.filter(**kwargs) if kwargs else qs
 
+    def get_stored_relation_qs(self, layer_relation):
+        destination_ids = self.relations_as_origin.filter(relation=layer_relation) \
+            .values_list('destination_id', flat=True)
+        return Feature.objects.filter(pk__in=destination_ids)
+
     def sync_relations(self, layer_relation=None):
         """ replace feature relations for automatic layer relations """
         layer_relations = self.layer.relations_as_origin.exclude(relation_type__isnull=True)
@@ -579,7 +585,7 @@ class Feature(BaseUpdatableModel):
             # delete destinations
             self.relations_as_origin.filter(relation=rel).delete()
             # fill destination
-            qs = self.get_relation_qs(rel)
+            qs = self.get_computed_relation_qs(rel)
 
             # batch import
             batch_size = 100

@@ -272,12 +272,10 @@ class FeatureViewSet(viewsets.ModelViewSet):
         feature = self.get_object()
         layer_relation = get_object_or_404(feature.layer.relations_as_origin.all(),
                                            pk=kwargs.get('id_relation'))
-        destination_ids = feature.relations_as_origin.filter(relation=layer_relation)\
-                                                     .values_list('destination_id', flat=True)
-        qs = Feature.objects.filter(pk__in=destination_ids)
-
+        qs = feature.get_stored_relation_qs(layer_relation)
+        # keep original viewset filtering
         qs = self.filter_queryset(qs)
-
+        # keep original viewset pagination
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
