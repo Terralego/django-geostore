@@ -574,9 +574,11 @@ class Feature(BaseUpdatableModel):
 
     def sync_relations(self, layer_relation=None):
         """ replace feature relations for automatic layer relations """
+        logger.info(f"Feature relation synchronisation")
         layer_relations = self.layer.relations_as_origin.exclude(relation_type__isnull=True)
         layer_relations = layer_relations.filter(pk__in=[layer_relation]) if layer_relation else layer_relations
         for rel in layer_relations:
+            logger.info(f"relation {rel}")
             qs = self.get_computed_relation_qs(rel)
             # find relation to delete (in stored relation but not in qs result)
             to_delete = self.relations_as_origin.filter(relation=rel).exclude(destination_id__in=qs)

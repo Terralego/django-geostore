@@ -9,6 +9,8 @@ def feature_update_relations_destinations(feature_id):
     feature = Feature.objects.get(pk=feature_id)
     feature.sync_relations()
 
+    return True
+
 
 @shared_task
 def layer_relations_set_destinations(relation_id):
@@ -18,3 +20,5 @@ def layer_relations_set_destinations(relation_id):
 
     for feature in relation.origin.features.all():
         feature.sync_relations(relation_id)
+
+    return True
