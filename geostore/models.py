@@ -34,7 +34,6 @@ from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .routing.decorators import topology_update
 from .signals import save_feature, save_layer_relation
-from .tasks import feature_update_relations_destinations, layer_relations_set_destinations
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
 from .tiles.helpers import VectorTile
