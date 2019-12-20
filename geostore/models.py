@@ -33,7 +33,7 @@ from .db.mixins import BaseUpdatableModel
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .routing.decorators import topology_update
-from .signals import save_feature
+from .signals import save_feature, save_layer_relation
 from .tasks import feature_update_relations_destinations, layer_relations_set_destinations
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
@@ -632,14 +632,9 @@ class LayerRelation(models.Model):
     exclude = JSONField(default=dict, blank=True)
 
     def save(self, *args, **kwargs):
-        creation = not self.pk
         self.clean()
         self.slug = slugify(f'{self.origin_id}-{self.name}')
         super().save(*args, **kwargs)
-
-        if creation:
-            layer_relations_set_destinations.delay(self.pk)\
-                if app_settings.GEOSTORE_RELATION_CELERY_ASYNC else layer_relations_set_destinations(self.pk)
 
     def __str__(self):
         return self.name
@@ -649,6 +644,9 @@ class LayerRelation(models.Model):
         unique_together = (
             ('name', 'origin'),
         )
+
+
+post_save.connect(save_layer_relation, sender=LayerRelation)
 
 
 class FeatureRelation(models.Model):
