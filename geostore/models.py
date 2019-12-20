@@ -22,6 +22,7 @@ from django.contrib.postgres.indexes import GistIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
+from django.db.models.signals import post_save
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from fiona.crs import from_epsg
@@ -32,6 +33,7 @@ from .db.mixins import BaseUpdatableModel
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .managers import FeatureQuerySet
 from .routing.decorators import topology_update
+from .signals import save_feature
 from .tasks import feature_update_relations_destinations, layer_relations_set_destinations
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
@@ -539,27 +541,6 @@ class Feature(BaseUpdatableModel):
     def get_bounding_box(self):
         return self.geom.extent
 
-    def save(self, *args, **kwargs):
-        sync_required = False
-        if not self.pk:
-            sync_required = True
-
-        if sync_required or Feature.objects.get(pk=self.pk).geom != self.geom:
-            sync_required = True
-        super().save(*args, **kwargs)
-
-        if sync_required:
-            feature_update_relations_destinations.delay(self.pk) if app_settings.GEOSTORE_RELATION_CELERY_ASYNC else feature_update_relations_destinations(self.pk)
-
-        self.clean_vect_tile_cache()
-
-    def clean(self):
-        """
-        Validate properties according schema if provided
-        """
-        validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
-        validate_json_schema_data(self.properties, self.layer.schema)
-
     def get_computed_relation_qs(self, relation):
         """ Execute relation operation to get feature queryset """
         qs_empty = Feature.objects.none()
@@ -607,6 +588,13 @@ class Feature(BaseUpdatableModel):
                     break
                 FeatureRelation.objects.bulk_create(batch, batch_size)
 
+    def clean(self):
+        """
+        Validate properties according schema if provided
+        """
+        validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
+        validate_json_schema_data(self.properties, self.layer.schema)
+
     class Meta:
         ordering = ['id']
         indexes = [
@@ -620,6 +608,9 @@ class Feature(BaseUpdatableModel):
             # geometry should be valid
             models.CheckConstraint(check=models.Q(geom__isvalid=True), name='geom_is_valid'),
         ]
+
+
+post_save.connect(save_feature, sender=Feature)
 
 
 class LayerRelation(models.Model):
