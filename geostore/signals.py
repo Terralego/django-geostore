@@ -20,8 +20,7 @@ def save_feature(sender, instance, **kwargs):
 
 
 def save_layer_relation(sender, instance, **kwargs):
-    if kwargs.get('created', False):
-        if app_settings.GEOSTORE_RELATION_CELERY_ASYNC:
-            execute_async_func(layer_relations_set_destinations, (instance.pk,))
-        else:
-            layer_relations_set_destinations(instance.pk)
+    if app_settings.GEOSTORE_RELATION_CELERY_ASYNC:
+        execute_async_func(layer_relations_set_destinations, (instance.pk,))
+    else:
+        layer_relations_set_destinations(instance.pk)
