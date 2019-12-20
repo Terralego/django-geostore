@@ -25,6 +25,7 @@ from django.db.models import Manager
 from django.db.models.signals import post_save
 from django.utils.functional import cached_property
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 from fiona.crs import from_epsg
 from mercantile import tiles
 
@@ -561,7 +562,10 @@ class Feature(BaseUpdatableModel):
                                        'spheroid'),
             })
 
-        return qs.filter(**kwargs) if kwargs else qs
+        qs = qs.filter(**kwargs) if kwargs else qs
+        qs = qs.exclude(**relation.exclude) if relation.exclude else qs
+
+        return qs
 
     def get_stored_relation_qs(self, layer_relation):
         destination_ids = self.relations_as_origin.filter(relation=layer_relation) \
@@ -573,12 +577,16 @@ class Feature(BaseUpdatableModel):
         layer_relations = self.layer.relations_as_origin.exclude(relation_type__isnull=True)
         layer_relations = layer_relations.filter(pk__in=[layer_relation]) if layer_relation else layer_relations
         for rel in layer_relations:
-            # delete destinations
-            self.relations_as_origin.filter(relation=rel).delete()
-            # fill destination
             qs = self.get_computed_relation_qs(rel)
+            # find relation to delete (in stored relation but not in qs result)
+            to_delete = self.relations_as_origin.filter(relation=rel).exclude(destination_id__in=qs)
+            to_delete.delete()
 
-            # batch import
+            # find relation to add (not in stored relation but in qs
+            qs = qs.exclude(pk__in=self.relations_as_origin.filter(relation=rel)
+                                                           .values_list('destination_id', flat=True))
+
+            # batch creation
             batch_size = 100
             objs = (FeatureRelation(origin=self, destination=feature_rel, relation=rel) for feature_rel in qs.all())
             while True:
@@ -628,7 +636,8 @@ class LayerRelation(models.Model):
                                     related_name='relations_as_destination')
     relation_type = models.CharField(choices=RELATION_TYPES, blank=True, max_length=25, default=RELATION_TYPES[0])
     settings = JSONField(default=dict, blank=True)
-    exclude = JSONField(default=dict, blank=True)
+    exclude = JSONField(default=dict, blank=True,
+                        help_text=_("qs exclude (ex: {\"pk__in\": [...], \"identifier__in\":[...]}"))
 
     def save(self, *args, **kwargs):
         self.clean()
