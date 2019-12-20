@@ -11,6 +11,6 @@ def save_feature(sender, instance, **kwargs):
 
 def save_layer_relation(sender, instance, **kwargs):
     # update relations
-    if kwargs.get('creation', False):
+    if kwargs.get('created', False):
         layer_relations_set_destinations.delay(instance.pk) \
             if app_settings.GEOSTORE_RELATION_CELERY_ASYNC else layer_relations_set_destinations(instance.pk)
