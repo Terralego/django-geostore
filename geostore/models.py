@@ -549,7 +549,7 @@ class Feature(BaseUpdatableModel):
             # relation should be in layer_relation_as_origins
             return qs_empty
 
-        qs = Feature.objects.filter(layer=relation.destination)
+        qs = relation.destination.features.all()
         kwargs = {}
         if relation.relation_type == 'intersects':
             kwargs.update({
