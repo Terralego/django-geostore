@@ -52,7 +52,7 @@ setup(
         "Fiona",
         "Pillow",
         "jsonschema",
-        "celery[redis]",
+        "celery",
     ],
     tests_require=test_require,
     extras_require={
