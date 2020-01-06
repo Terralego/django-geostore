@@ -1,5 +1,8 @@
+from unittest.mock import patch, PropertyMock
+
 from django.test import TestCase
 from django.urls import reverse
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
@@ -248,7 +251,7 @@ class FeatureDetailTestCase(APITestCase):
                                                 intersect_relation.pk))
         # city cover should be present after sync
         self.trek.sync_relations(intersect_relation.pk)
-        response = self.client.get(url)
+        response = self.client.get(url, data={'page_size': 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertEqual(len(data), 1, data)
@@ -259,3 +262,26 @@ class FeatureDetailTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertEqual(len(data), 0, data)
+
+    @patch('geostore.views.FeatureViewSet.pagination_class', new_callable=PropertyMock)
+    def test_relation_with_pagination(self, mock_view):
+        class MyPagination(PageNumberPagination):
+            page_size = 1
+            page_size_query_param = 'page_size'
+        mock_view.return_value = MyPagination
+        FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
+        intersect_relation = LayerRelation.objects.create(
+            relation_type='intersects',
+            origin=self.layer_trek,
+            destination=self.layer_city,
+        )
+        url = reverse('feature-relation', args=(self.layer_trek.pk,
+                                                self.trek.identifier,
+                                                intersect_relation.pk))
+        # city cover should be present after sync
+        self.trek.sync_relations(intersect_relation.pk)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(len(data['results']), 1, data)
+        self.assertTrue(mock_view.called)
