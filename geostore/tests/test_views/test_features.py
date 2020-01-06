@@ -1,14 +1,12 @@
 from unittest.mock import patch, PropertyMock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
-from rest_framework import status
-from rest_framework.status import HTTP_200_OK
-
 from geostore.models import LayerRelation
 from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory, UserFactory)
 
@@ -90,7 +88,7 @@ class FeaturesListViewTest(TestCase):
             reverse('feature-list', kwargs={'layer': layer.pk}),
             {'properties__number': 1, 'properties__text': 'foo'},
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
         self.assertEqual(len(json_response), 1)
 
@@ -110,7 +108,7 @@ class FeaturesListViewTest(TestCase):
             reverse('feature-list', kwargs={'layer': layer.pk}),
             {'properties__wrongfield': 'wrong value'},
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         json_response = response.json()
         self.assertEqual(len(json_response), 0)
@@ -136,7 +134,7 @@ class FeaturesListViewTest(TestCase):
             reverse('feature-list', kwargs={'layer': layer.pk}),
             {'properties__number': 1, 'properties__digit': 42},
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
         self.assertEqual(len(json_response), 1)
 
@@ -164,7 +162,7 @@ class FeaturesListViewTest(TestCase):
                 'properties__sentence': 'foobar is here'
             }
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
         self.assertEqual(len(json_response), 2)
 
@@ -183,7 +181,7 @@ class FeaturesListViewTest(TestCase):
                         'identifier': str(feature.identifier)}
             ),
         )
-        self.assertEqual(response.status_code, HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_geojson_renderer(self):
         FeatureFactory.create_batch(
@@ -204,6 +202,7 @@ class FeaturesListViewTest(TestCase):
         self.assertEqual(len(data['features']), self.layer.features.count())
 
 
+@override_settings(GEOSTORE_RELATION_CELERY_ASYNC=True)
 class FeatureDetailTestCase(APITestCase):
     def setUp(self) -> None:
         self.layer_trek = LayerSchemaFactory(geom_type=GeometryTypes.LineString)
@@ -239,7 +238,9 @@ class FeatureDetailTestCase(APITestCase):
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', ]), data)
 
-    def test_relation(self):
+    @patch('geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC', new_callable=PropertyMock)
+    def test_relation(self, mock_relation):
+        mock_relation.return_value = True
         city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
         intersect_relation = LayerRelation.objects.create(
             relation_type='intersects',
