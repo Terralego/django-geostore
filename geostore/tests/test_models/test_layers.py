@@ -28,6 +28,12 @@ class LayerModelTestCase(TestCase):
         self.assertEqual(self.layer_schema.get_property_title(prop),
                          prop)
 
+    def test_get_property_title_does_not_exist(self):
+        """ method should return property name """
+        prop = 'toto'
+        self.assertEqual(self.layer_schema.get_property_title(prop),
+                         prop)
+
     def test_get_property_type_defined(self):
         """ method should return property type if property exists """
         self.assertEqual(self.layer_schema.get_property_type('age'),
