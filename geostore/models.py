@@ -209,13 +209,8 @@ class Layer(LayerBasedModelMixin):
                 **filter_kwargs
             )
         else:
-            try:
-                Feature.objects.filter(**filter_kwargs).update(
-                    **{'properties': feature_args["properties"]})
-            except Feature.DoesNotExist:
-                logger.warning('feature does not exist,'
-                               ' empty geometry,'
-                               f' row skipped : {row}')
+            Feature.objects.filter(**filter_kwargs)\
+                .update(properties=feature_args["properties"])
 
     @topology_update
     @zoom_update
