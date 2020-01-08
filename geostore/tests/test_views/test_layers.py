@@ -363,37 +363,6 @@ class LayerShapefileTestCase(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerGeojsonTestCase(TestCase):
-    def setUp(self):
-        self.layer = LayerFactory()
-        self.user = UserFactory()
-        self.client.force_login(self.user)
-
-    def test_to_geojson(self):
-        # Create at least one feature in the layer, so it's not empty
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        FeatureFactory(layer=self.layer)
-
-        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
-        response = self.client.get(geojson_url)
-
-        self.assertEqual(HTTP_200_OK, response.status_code)
-
-        response = response.json()
-        self.assertEqual('FeatureCollection', response.get('type'))
-        self.assertEqual(self.layer.features.all().count(),
-                         len(response.get('features')))
-
-    def test_to_geojson_no_permission(self):
-        # Create at least one feature in the layer, so it's not empty
-        FeatureFactory(layer=self.layer)
-
-        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
-        response = self.client.get(geojson_url)
-
-        self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
-
-
 class LayerDetailTest(TestCase):
     geometry = {
         "type": "LineString",

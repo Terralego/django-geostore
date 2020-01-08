@@ -2,8 +2,7 @@ import json
 from copy import deepcopy
 
 from django.contrib.gis.gdal.error import GDALException
-from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
-                                     Point)
+from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Q
@@ -21,7 +20,7 @@ from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission
 from ..renderers import GeoJSONRenderer
-from ..routing.helpers import Routing
+from ..routing.views.mixins import RoutingViewsSetMixin
 from ..serializers import (FeatureExtraGeomSerializer, FeatureSerializer,
                            LayerSerializer)
 from ..serializers.geojson import FinalGeoJSONSerializer
@@ -33,7 +32,7 @@ class LayerGroupViewsSet(MultipleMVTViewMixin, viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
 
-class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet):
+class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin, viewsets.ModelViewSet):
     permission_classes = (LayerPermission, )
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
@@ -72,44 +71,6 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             else:
                 self.permission_denied(request, 'Operation not allowed')
         return response
-
-    @action(detail=True, methods=['get'], url_name='geojson', permission_classes=[])
-    def to_geojson(self, request, pk=None):
-        if request.user.has_perm('geostore.can_export_layers'):
-            layer = self.get_object()
-            return JsonResponse(layer.to_geojson())
-        else:
-            self.permission_denied(request, 'Operation not allowed')
-
-    @action(detail=True, methods=['post'], permission_classes=[])
-    def route(self, request, pk=None):
-        layer = self.get_object()
-        callbackid = self.request.data.get('callbackid', None)
-
-        try:
-            geometry = GEOSGeometry(request.data.get('geom', None))
-            if not isinstance(geometry, LineString):
-                raise ValueError
-            points = [Point(c, srid=geometry.srid) for c in geometry.coords]
-        except (GEOSException, TypeError, ValueError):
-            return HttpResponseBadRequest(
-                content='Provided geometry is not valid LineString')
-
-        routing = Routing(points, layer)
-        route = routing.get_route()
-
-        if not route:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        response_data = {
-            'request': {
-                'callbackid': callbackid,
-                'geom': geometry.json,
-            },
-            'geom': route,
-        }
-
-        return Response(response_data, content_type='application/json')
 
     @action(detail=True, methods=['post'], permission_classes=[])
     def intersects(self, request, *args, **kwargs):

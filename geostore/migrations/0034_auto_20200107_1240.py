@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='layerrelation',
             name='relation_type',
-            field=models.CharField(blank=True, choices=[(None, 'Manuelle'), ('intersects', 'Intersects'), ('distance', 'Distance')], default=(None, 'Manuelle'), max_length=25),
+            field=models.CharField(blank=True, choices=[(None, 'Manual'), ('intersects', 'Intersects'), ('distance', 'Distance')], default=(None, 'Manual'), max_length=25),
         ),
         migrations.AddField(
             model_name='layerrelation',

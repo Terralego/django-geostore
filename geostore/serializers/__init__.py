@@ -86,7 +86,7 @@ class LayerSerializer(serializers.ModelSerializer):
         return reverse('layer-shapefile', args=[obj.pk, ])
 
     def get_geojson_url(self, obj):
-        return reverse('layer-geojson', args=[obj.pk, ])
+        return reverse('feature-list', kwargs={'layer': obj.pk, 'format': 'geojson'})
 
     def get_layer_intersects(self, obj):
         return reverse('layer-intersects', args=[obj.name, ])
