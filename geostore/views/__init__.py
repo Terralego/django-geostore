@@ -6,7 +6,7 @@ from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
