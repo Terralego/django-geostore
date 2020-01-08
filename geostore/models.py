@@ -24,7 +24,6 @@ from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from fiona.crs import from_epsg
-from mercantile import tiles
 
 from . import GeometryTypes, settings as app_settings
 from .db.managers import FeatureQuerySet
@@ -403,15 +402,6 @@ class Feature(BaseUpdatableModel):
                                  help_text='Internal field used by pgRouting')
 
     objects = Manager.from_queryset(FeatureQuerySet)()
-
-    def get_intersected_tiles(self):
-        zoom_range = range(app_settings.MIN_TILE_ZOOM, app_settings.MAX_TILE_ZOOM + 1)
-        try:
-            return [(tile.x, tile.y, tile.z)
-                    for tile in tiles(*self.get_bounding_box(), zoom_range)]
-        except ValueError:
-            # TODO find why a ValueError is raised with some Point() geometries
-            return []
 
     def get_bounding_box(self):
         return self.geom.extent
