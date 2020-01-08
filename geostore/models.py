@@ -33,7 +33,6 @@ from .routing.decorators import topology_update
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
-from .tiles.helpers import VectorTile
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
 
