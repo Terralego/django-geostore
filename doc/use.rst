@@ -154,7 +154,7 @@ On group of layers
 Relations
 =========
 
-* You can define relations between layers (and features)
+* You can define relations between layers (and linked features)
 
 .. warning::
     Compute relations need celery project and worker configured in your project.
@@ -170,8 +170,22 @@ No automatic links between features. You need to create yourself FeatureRelation
 Automatic relations
 -------------------
 
-If celery project / worker is available, and GEOSTORE_RELATION_CELERY_ASYNC settings set to True,
-each layer relation creation / or feature creation / update will launch async task to update relation between associated features.
+If any celery project worker is available, and GEOSTORE_RELATION_CELERY_ASYNC settings set to True,
+each layer relation creation or feature edition will launch async task to update relation between linked features.
+
+Intersects
+**********
+
+By selecting intersects, each feature in origin layer intersecting geometry features in destination layer, will be linked to them.
+
+Distance
+**********
+
+By selecting distance, each feature in origin layer with distance max geometry features in destination layer, will be linked to them.
+
+.. warning::
+    You need to define distance in settings:
+    {"distance": 10000}  # for 10km
 
 Data import
 ===========
