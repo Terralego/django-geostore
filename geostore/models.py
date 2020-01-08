@@ -404,20 +404,6 @@ class Feature(BaseUpdatableModel):
 
     objects = Manager.from_queryset(FeatureQuerySet)()
 
-    def clean_vect_tile_cache(self):
-        vtile = VectorTile(self.layer)
-        vtile.clean_tiles(
-            self.get_intersected_tiles(),
-            self.layer.layer_settings_with_default(
-                'tiles', 'pixel_buffer'),
-            self.layer.layer_settings_with_default(
-                'tiles', 'features_filter'),
-            self.layer.layer_settings_with_default(
-                'tiles', 'properties_filter'),
-            self.layer.layer_settings_with_default(
-                'tiles', 'features_limit')
-        )
-
     def get_intersected_tiles(self):
         zoom_range = range(app_settings.MIN_TILE_ZOOM, app_settings.MAX_TILE_ZOOM + 1)
         try:
