@@ -14,7 +14,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
-from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
+from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from .mixins import MultipleFieldLookupMixin
 from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
 from ..permissions import FeaturePermission, LayerPermission
@@ -155,7 +155,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
-    filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter)
+    filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField)
     filter_fields = ('properties', )
     ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')
     lookup_field = 'identifier'
