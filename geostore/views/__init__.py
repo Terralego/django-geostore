@@ -121,7 +121,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin,
 class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
-    filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter, GeometryFilter, InBBoxFilter)
+    filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter)
     renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer)
     filter_fields = ('properties', )
     ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')
