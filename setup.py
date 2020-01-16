@@ -45,6 +45,7 @@ setup(
         'django-token-tools',
         'djangorestframework>=3.10',
         "djangorestframework-gis>=0.15",
+        'django-filter',
         "deepmerge",
         "requests>=2.19",
         "mercantile>=1.0",
