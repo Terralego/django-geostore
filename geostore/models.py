@@ -495,7 +495,8 @@ class Feature(BaseUpdatableModel):
     identifier = models.CharField(max_length=255,
                                   blank=False,
                                   null=False,
-                                  default=uuid.uuid4)
+                                  default=uuid.uuid4,
+                                  unique=True)
     properties = JSONField(default=dict, blank=True)
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
