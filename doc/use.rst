@@ -50,11 +50,13 @@ Without validation
   feature = Feature(layer=layer,
                     geom=GEOSGeometry("POINT(0 0)")
   feature.clean()  # ok
-
+  # then, you can save
+  feature.save()
   feature = Feature(layer=layer,
                     geom=GEOSGeometry("LINESTRING((0 0), (1 1))")
 
   feature.clean()  # ok too
+  feature.save()
 
 With validation
 ---------------
@@ -71,7 +73,7 @@ With validation
                     geom=GEOSGeometry("POINT(0 0)")
 
   feature.clean()  # ok
-
+  feature.save()
   feature = Feature(layer=layer,
                     geom=GEOSGeometry("LINESTRING((0 0), (1 1))")
   feature.clean()  # validation error !
@@ -133,6 +135,7 @@ https://rjsf-team.github.io/react-jsonschema-form/
                       "age": 10
                     })
   feature.clean()  # ok !
+  feature.save()
 
 
 Vector tiles
