@@ -14,7 +14,6 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
-from rest_framework_gis.filters import GeometryFilter, InBBoxFilter
 
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
