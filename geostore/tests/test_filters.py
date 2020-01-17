@@ -86,3 +86,64 @@ class LayerFeatureListOrderingTestCase(APITestCase):
                          len(data))
         names = [x['properties']['name'] for x in data]
         self.assertEqual(names, ['2', '10', '1'])
+
+
+class LayerFeatureListSearchTestCase(APITestCase):
+    def setUp(self):
+        self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
+        self.client.force_authenticate(user=self.user)
+        self.valid_schema = {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "age": {
+                    "type": "integer"
+                }
+            }
+        }
+        self.property_schema_layer = LayerFactory(
+            name="tree",
+            schema=self.valid_schema
+        )
+        Feature.objects.bulk_create([
+            Feature(layer=self.property_schema_layer,
+                    properties={'name': 'John',
+                                'age': 1},
+                    geom='POINT(0 0)'),
+            Feature(layer=self.property_schema_layer,
+                    properties={'name': 'Jack',
+                                'age': 2},
+                    geom='POINT(0 0)'),
+            Feature(layer=self.property_schema_layer,
+                    properties={'name': 'Jeremy',
+                                'age': 10},
+                    geom='POINT(0 0)')
+        ])
+
+    def test_searching_ok(self):
+        response = self.client.get(reverse('feature-list',
+                                           args=(self.property_schema_layer.pk, )),
+                                   data={'search': 'Jack'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(1,
+                         len(data))
+
+    def test_searching_ko(self):
+        response = self.client.get(reverse('feature-list',
+                                           args=(self.property_schema_layer.pk, )),
+                                   data={'search': 'Jeremya'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(0,
+                         len(data))
+
+    def test_searching_j(self):
+        response = self.client.get(reverse('feature-list',
+                                           args=(self.property_schema_layer.pk, )),
+                                   data={'search': 'J'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(3,
+                         len(data))

@@ -16,7 +16,7 @@ from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
 from .mixins import MultipleFieldLookupMixin
-from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter
+from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission
 from ..renderers import GeoJSONRenderer
@@ -120,8 +120,8 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin,
 class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
-    filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter)
     renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer)
+    filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField)
     filter_fields = ('properties', )
     ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')
     lookup_field = 'identifier'

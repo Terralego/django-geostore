@@ -1,4 +1,3 @@
-=========
 CHANGELOG
 =========
 
@@ -8,6 +7,7 @@ CHANGELOG
 * Manage relations between layers and features (manual / intersections or distances).
 * GeoJson renderer. Now API can render .json or .geojson endpoint (or format=?geojson)
 * Partial properties patch. A patch on feature viewset keep properties not sended.
+* Add Json value search filter in FeatureViewset
 
 
 0.3.15         (2019-12-13)
