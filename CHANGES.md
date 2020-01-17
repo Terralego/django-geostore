@@ -4,6 +4,7 @@ CHANGELOG
 0.3.16.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* Add Json value search filter in FeatureViewset
 
 0.3.15         (2019-12-13)
 ---------------------------
