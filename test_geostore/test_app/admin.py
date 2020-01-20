@@ -22,12 +22,6 @@ class LayerRelationInline(admin.TabularInline):
     extra = 0
 
 
-@admin.register(models.Layer)
-class LayerAdmin(admin.ModelAdmin):
-    inlines = [LayerExtraGeomInline, LayerRelationInline]
-    model = models.LayerSchemaProperty
-
-
 class FeatureExtraGeomInline(admin.TabularInline):
     model = models.FeatureExtraGeom
 
@@ -38,7 +32,7 @@ class LayerSchemaPropertyAdmin(admin.ModelAdmin):
 
 @admin.register(models.Layer)
 class LayerAdmin(admin.ModelAdmin):
-    inlines = [LayerExtraGeomInline, LayerSchemaPropertyAdminInline]
+    inlines = [LayerExtraGeomInline, LayerRelationInline, LayerSchemaPropertyAdminInline]
 
 
 @admin.register(models.Feature)
