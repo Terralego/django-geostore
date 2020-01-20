@@ -1,8 +1,8 @@
-#!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+#!/bin/bash
+"exec" "`dirname $0`/../venv/bin/python" "$0" "$@"  # NOQA
+
 import os
 import sys
-
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_geostore.settings')

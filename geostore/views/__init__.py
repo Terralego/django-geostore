@@ -1,26 +1,29 @@
 import json
+from copy import deepcopy
 
 from django.contrib.gis.gdal.error import GDALException
-from django.contrib.gis.geos import (GEOSException, GEOSGeometry, LineString,
-                                     Point)
+from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.core.serializers import serialize
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
-from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from .mixins import MultipleFieldLookupMixin
-from ..models import FeatureRelation, Layer, LayerGroup, LayerRelation
+from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
+from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission
-from ..routing.helpers import Routing
-from ..serializers import (FeatureExtraGeomSerializer, FeatureRelationSerializer, FeatureSerializer,
-                           LayerRelationSerializer, LayerSerializer)
+from ..renderers import GeoJSONRenderer
+from ..routing.views.mixins import RoutingViewsSetMixin
+from ..serializers import (FeatureExtraGeomSerializer, FeatureSerializer,
+                           LayerSerializer)
+from ..serializers.geojson import FinalGeoJSONSerializer
 from ..tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
 
@@ -29,7 +32,7 @@ class LayerGroupViewsSet(MultipleMVTViewMixin, viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
 
-class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet):
+class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin, viewsets.ModelViewSet):
     permission_classes = (LayerPermission, )
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
@@ -37,7 +40,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 
     @action(methods=['get', 'post'],
             url_name='shapefile', detail=True, permission_classes=[])
-    def shapefile(self, request, pk=None):
+    def shapefile(self, request, *args, **kwargs):
         layer = self.get_object()
 
         if request.method not in SAFE_METHODS:
@@ -68,44 +71,6 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             else:
                 self.permission_denied(request, 'Operation not allowed')
         return response
-
-    @action(detail=True, methods=['get'], url_name='geojson', permission_classes=[])
-    def to_geojson(self, request, pk=None):
-        if request.user.has_perm('geostore.can_export_layers'):
-            layer = self.get_object()
-            return JsonResponse(layer.to_geojson())
-        else:
-            self.permission_denied(request, 'Operation not allowed')
-
-    @action(detail=True, methods=['post'], permission_classes=[])
-    def route(self, request, pk=None):
-        layer = self.get_object()
-        callbackid = self.request.data.get('callbackid', None)
-
-        try:
-            geometry = GEOSGeometry(request.data.get('geom', None))
-            if not isinstance(geometry, LineString):
-                raise ValueError
-            points = [Point(c, srid=geometry.srid) for c in geometry.coords]
-        except (GEOSException, TypeError, ValueError):
-            return HttpResponseBadRequest(
-                content='Provided geometry is not valid LineString')
-
-        routing = Routing(points, layer)
-        route = routing.get_route()
-
-        if not route:
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        response_data = {
-            'request': {
-                'callbackid': callbackid,
-                'geom': geometry.json,
-            },
-            'geom': route,
-        }
-
-        return Response(response_data, content_type='application/json')
 
     @action(detail=True, methods=['post'], permission_classes=[])
     def intersects(self, request, *args, **kwargs):
@@ -155,6 +120,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
+    renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer)
     filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField)
     filter_fields = ('properties', )
     ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')
@@ -164,13 +130,26 @@ class FeatureViewSet(viewsets.ModelViewSet):
         super().__init__(*args, **kwargs)
         self.layer = None
 
+    def transform_serializer_geojson(self, serializer_class):
+        if self.kwargs.get('format', 'json') == 'geojson':
+            # auto override in geojson case
+            class FinalClass(FinalGeoJSONSerializer, serializer_class):
+                class Meta(FinalGeoJSONSerializer.Meta, serializer_class.Meta):
+                    pass
+            return FinalClass
+        return serializer_class
+
+    def get_serializer_class(self):
+        original_class = super().get_serializer_class()
+        return self.transform_serializer_geojson(original_class)
+
     def get_layer(self):
         if not self.layer:
-            queryfilter = Q(name=self.kwargs.get('layer'))
+            filters = Q(name=self.kwargs.get('layer'))
             if self.kwargs.get('layer').isdigit():
-                queryfilter |= Q(pk=self.kwargs.get('layer'))
+                filters |= Q(pk=self.kwargs.get('layer'))
 
-            self.layer = get_object_or_404(Layer, queryfilter)
+            self.layer = get_object_or_404(Layer, filters)
         return self.layer
 
     def get_serializer_context(self):
@@ -184,11 +163,34 @@ class FeatureViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         layer = self.get_layer()
-        return layer.features.all()
+        qs = layer.features.all()
+        qs = qs.prefetch_related('layer__relations_as_origin')
+        return qs
 
     def perform_create(self, serializer):
         layer = self.get_layer()
         serializer.save(layer_id=layer.pk)
+
+    def update(self, request, *args, **kwargs):
+        """ override to keep unfilled properties in partial update case """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        data = request.data
+        if partial:
+            # if partial, we update properties
+            properties = deepcopy(instance.properties)
+            properties.update(data.get('properties', {}))
+            data['properties'] = properties
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get', 'put', 'patch', 'delete'],
             url_path=r'extra_geometry/(?P<id_extra_feature>\d+)', url_name='detail-extra-geometry')
@@ -226,12 +228,19 @@ class FeatureViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, url_path=r'relation/(?P<id_relation>[\d-]+)/features')
+    def relation(self, request, *args, **kwargs):
+        feature = self.get_object()
+        layer_relation = get_object_or_404(feature.layer.relations_as_origin.all(),
+                                           pk=kwargs.get('id_relation'))
+        qs = feature.get_stored_relation_qs(layer_relation)
+        # keep original viewset filtering
+        qs = self.filter_queryset(qs)
+        # keep original viewset pagination
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
-class LayerRelationViewSet(viewsets.ModelViewSet):
-    queryset = LayerRelation.objects.all()
-    serializer_class = LayerRelationSerializer
-
-
-class FeatureRelationViewSet(viewsets.ModelViewSet):
-    queryset = FeatureRelation.objects.all()
-    serializer_class = FeatureRelationSerializer
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)

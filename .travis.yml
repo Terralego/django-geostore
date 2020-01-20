@@ -67,6 +67,7 @@ jobs:
     after_success: skip
 
   - stage: deploy
+
     install: skip
     before_script: skip
     script: skip

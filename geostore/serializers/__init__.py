@@ -12,6 +12,14 @@ from geostore.validators import (validate_json_schema_data,
 
 class FeatureSerializer(serializers.ModelSerializer):
     properties = serializers.JSONField(required=False)
+    relations = serializers.SerializerMethodField()
+
+    def get_relations(self, obj):
+        return {
+            relation.name: reverse('feature-relation',
+                                   args=(obj.layer_id, obj.identifier, relation.pk))
+            for relation in obj.layer.relations_as_origin.all()
+        }
 
     def __init__(self, instance=None, data=empty, **kwargs):
         super().__init__(instance=instance, data=data, **kwargs)
@@ -42,7 +50,7 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'identifier', 'layer', 'geom', 'properties', )
+        fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations')
         read_only_fields = ('id', 'layer')
 
 
@@ -78,7 +86,7 @@ class LayerSerializer(serializers.ModelSerializer):
         return reverse('layer-shapefile', args=[obj.pk, ])
 
     def get_geojson_url(self, obj):
-        return reverse('layer-geojson', args=[obj.pk, ])
+        return reverse('feature-list', kwargs={'layer': obj.pk, 'format': 'geojson'})
 
     def get_layer_intersects(self, obj):
         return reverse('layer-intersects', args=[obj.name, ])
@@ -89,11 +97,6 @@ class LayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Layer
         fields = '__all__'
-
-
-class GeoJSONLayerSerializer(serializers.JSONField):
-    def to_representation(self, data):
-        return data.to_geojson()
 
 
 class LayerRelationSerializer(serializers.ModelSerializer):

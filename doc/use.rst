@@ -47,13 +47,16 @@ Without validation
   from django.contrib.geos.geometries import GEOSGeometry
 
   layer = Layer.objects.create(name='Mushroom spot 2')
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("POINT(0 0)")
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("POINT(0 0)")
+  feature.clean()  # ok
+  # then, you can save
+  feature.save()
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("LINESTRING((0 0), (1 1))")
 
-  # ok
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("LINESTRING((0 0), (1 1))")
-  # ok too
+  feature.clean()  # ok too
+  feature.save()
 
 With validation
 ---------------
@@ -66,13 +69,14 @@ With validation
 
   layer = Layer.objects.create(name='Mushroom spot 3',
                                geom_type=GeometryTypes.Point)
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("POINT(0 0)")
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("POINT(0 0)")
 
-  # ok
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("LINESTRING((0 0), (1 1))")
-  # validation error !
+  feature.clean()  # ok
+  feature.save()
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("LINESTRING((0 0), (1 1))")
+  feature.clean()  # validation error !
 
 
 JSON schema definition / validation
@@ -105,32 +109,33 @@ https://rjsf-team.github.io/react-jsonschema-form/
                                    }
                                  }
                                })
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("POINT(0 0)")
-  # Validation Error ! name and age are required
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("POINT(0 0)")
+  feature.clean()  # Validation Error ! name and age are required
 
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("POINT(0 0)",
-                                   properties={
-                                     "name": "Arthur",
-                                   })
-  # Validation Error ! age is required
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("POINT(0 0)",
+                    properties={
+                        "name": "Arthur",
+                    })
+  feature.clean()  # Validation Error ! age is required
 
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("POINT(0 0)",
-                                   properties={
-                                     "name": "Arthur",
-                                     "age": "ten",
-                                   })
-  # Validation Error ! age should be integer
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("POINT(0 0)",
+                    properties={
+                      "name": "Arthur",
+                      "age": "ten",
+                    })
+  feature.clean()  # Validation Error ! age should be integer
 
-  feature = Feature.objects.create(layer=layer,
-                                   geom=GEOSGeometry("POINT(0 0)",
-                                   properties={
-                                     "name": "Arthur",
-                                     "age": 10
-                                   })
-  # ok !
+  feature = Feature(layer=layer,
+                    geom=GEOSGeometry("POINT(0 0)",
+                    properties={
+                      "name": "Arthur",
+                      "age": 10
+                    })
+  feature.clean()  # ok !
+  feature.save()
 
 
 Vector tiles
@@ -149,6 +154,41 @@ On group of layers
 ------------------
 
 
+Relations
+=========
+
+* You can define relations between layers (and linked features)
+
+.. warning::
+    Compute relations need celery project and worker configured in your project.
+    Run at least 1 worker.
+    You need to fix settings explicitly to enable asynchronous tasks.
+    GEOSTORE_RELATION_CELERY_ASYNC = True
+
+Manual relation
+---------------
+
+No automatic links between features. You need to create yourself FeatureRelation between Features.
+
+Automatic relations
+-------------------
+
+If any celery project worker is available, and GEOSTORE_RELATION_CELERY_ASYNC settings set to True,
+each layer relation creation or feature edition will launch async task to update relation between linked features.
+
+Intersects
+**********
+
+By selecting intersects, each feature in origin layer intersecting geometry features in destination layer, will be linked to them.
+
+Distance
+**********
+
+By selecting distance, each feature in origin layer with distance max geometry features in destination layer, will be linked to them.
+
+.. warning::
+    You need to define distance in settings:
+    {"distance": 10000}  # for 10km
 
 Data import
 ===========

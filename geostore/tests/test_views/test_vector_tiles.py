@@ -5,10 +5,12 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import urlunquote
+from geostore import GeometryTypes
+from rest_framework import status
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from rest_framework.test import APITestCase
 
-from geostore.models import Layer, LayerGroup
+from geostore.models import Layer, LayerGroup, LayerExtraGeom
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
 from geostore.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
@@ -47,6 +49,9 @@ class VectorTilesTestCase(TestCase):
         settings = {'metadata': {'attribution': 'plop'}}
 
         self.layer = LayerFactory(name="layerLine", settings=settings)
+        self.layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
+                                                              geom_type=GeometryTypes.LineString,
+                                                              title='Extra geometry')
         self.mygroup = LayerGroup.objects.create(name='mygroup', slug='mygroup')
         self.mygroup.layers.add(self.layer)
 
@@ -159,6 +164,14 @@ class VectorTilesTestCase(TestCase):
         self.assertTrue(tilejson['attribution'])
         self.assertTrue(tilejson['description'] is None)
 
+    def test_404_tile_pattern(self):
+        response = self.client.get(
+            reverse(
+                'layer-tiles-pattern',
+                kwargs={'pk': self.layer.pk})
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_vector_group_tiles_view(self):
         # first query that generate the cache
         response = self.client.get(
@@ -177,7 +190,7 @@ class VectorTilesTestCase(TestCase):
                 kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(
             len(connection.queries),
-            query_count - 2
+            query_count - 3
         )
         self.assertEqual(
             original_content,
@@ -208,7 +221,7 @@ class VectorTilesTestCase(TestCase):
                 kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(
             len(connection.queries),
-            query_count - 2
+            query_count - 3
         )
         self.assertEqual(
             original_content,
@@ -247,7 +260,6 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tile), 0)
 
     def test_guess_maxzoom(self):
-
         # guess_maxzoom returning -1 when TypeError is raised14)
         self.assertEqual(
             guess_maxzoom(self.layerPoint),
@@ -271,7 +283,6 @@ class VectorTilesTestCase(TestCase):
         self.assertEqual(guess_maxzoom(layer_chunk_fontainebleau), 13)
 
     def test_guess_minzoom(self):
-
         self.assertEqual(
             guess_minzoom(self.layerPoint),
             0)

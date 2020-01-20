@@ -3,36 +3,36 @@ import json
 import logging
 import os
 import uuid
-from copy import deepcopy
-from functools import reduce
+from itertools import islice
 from tempfile import TemporaryDirectory
 
 import fiona
 import fiona.transform
-from deepmerge import always_merger
 from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
-from django.contrib.gis.db.models import Extent
+from django.contrib.gis.db.models.aggregates import Extent
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
+from django.contrib.gis.measure import D
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.indexes import GistIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
+from django.db.models.signals import post_save
 from django.utils.functional import cached_property
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy as _
 from fiona.crs import from_epsg
-from mercantile import tiles
 
 from . import GeometryTypes, settings as app_settings
-from .db.mixins import BaseUpdatableModel
+from .db.managers import FeatureQuerySet
+from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
 from .helpers import ChunkIterator, make_zipfile_bytesio
-from .managers import FeatureQuerySet
 from .routing.decorators import topology_update
+from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
-from .tiles.helpers import VectorTile
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
 
@@ -42,108 +42,6 @@ ACCEPTED_PROJECTIONS = [
     'urn:ogc:def:crs:OGC:1.3:CRS84',
     'EPSG:4326',
 ]
-
-
-class LayerBasedModelMixin(BaseUpdatableModel):
-    # Settings schema
-    SETTINGS_DEFAULT = {
-        'metadata': {
-            'attribution': None,  # Json, eg. {'name': 'OSM contributors', href='http://openstreetmap.org'}
-            'licence': None,  # String, eg. 'ODbL'
-            'description': None,  # String
-        },
-        # Tilesets attributes
-        'tiles': {
-            'minzoom': 0,
-            'maxzoom': 22,
-            'pixel_buffer': 4,
-            'features_filter': None,  # Json
-            'properties_filter': None,  # Array of string
-            'features_limit': 10000,
-        }
-    }
-    settings = JSONField(default=dict, blank=True)
-    geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
-
-    @property
-    def is_point(self):
-        return self.layer_geometry in (GeometryTypes.Point,
-                                       GeometryTypes.MultiPoint)
-
-    @property
-    def is_linestring(self):
-        return self.layer_geometry in (GeometryTypes.LineString,
-                                       GeometryTypes.MultiLineString)
-
-    @property
-    def is_polygon(self):
-        return self.layer_geometry in (GeometryTypes.Polygon,
-                                       GeometryTypes.MultiPolygon)
-
-    @property
-    def is_multi(self):
-        return self.layer_geometry in (GeometryTypes.MultiPoint,
-                                       GeometryTypes.MultiLineString,
-                                       GeometryTypes.MultiPolygon)
-
-    @cached_property
-    def layer_geometry(self):
-        """
-        Return the geometry type of the layer using the first feature in
-        the layer if the layer have no geom_type or the geom_type of the layer
-        """
-        if self.geom_type is None:
-            feature = self.features.first()
-            if feature:
-                return feature.geom.geom_typeid
-        return self.geom_type
-
-    @cached_property
-    def settings_with_default(self):
-        return always_merger.merge(deepcopy(self.SETTINGS_DEFAULT), self.settings)
-
-    def layer_settings(self, *json_path):
-        ''' Return the nested value of settings at path json_path.
-            Raise an KeyError if not defined.
-        '''
-        # Dives into settings using args
-        return reduce(
-            lambda a, v: a[v],  # Let raise KeyError on missing key
-            json_path,
-            self.settings) if self.settings is not None else None
-
-    def layer_settings_with_default(self, *json_path):
-        ''' Return the nested value of settings with SETTINGS_DEFAULT as
-            fallback at path json_path.
-            Raise an KeyError if not defined.
-        '''
-        # Dives into settings using args
-        return reduce(
-            lambda a, v: a[v],  # Let raise KeyError on missing key
-            json_path,
-            self.settings_with_default)
-
-    def set_layer_settings(self, *json_path_value):
-        '''Set last parameter as value at the path place into settings
-        '''
-        json_path, value = json_path_value[:-1], json_path_value[-1]
-        # Dive into settings until the last key of path,
-        # and set the corresponding value
-        settings = self.settings
-        for key in json_path[:-1]:
-            s = settings.get(key, {})
-            settings[key] = s
-            settings = s
-        settings[json_path[-1]] = value
-
-        try:
-            # Delete the cached property
-            del self.settings_with_default
-        except AttributeError:
-            pass  # Let's continue, cache was not set
-
-    class Meta:
-        abstract = True
 
 
 class Layer(LayerBasedModelMixin):
@@ -204,13 +102,8 @@ class Layer(LayerBasedModelMixin):
                 **filter_kwargs
             )
         else:
-            try:
-                Feature.objects.filter(**filter_kwargs).update(
-                    **{'properties': feature_args["properties"]})
-            except Feature.DoesNotExist:
-                logger.warning('feature does not exist,'
-                               ' empty geometry,'
-                               f' row skipped : {row}')
+            Feature.objects.filter(**filter_kwargs)\
+                .update(properties=feature_args["properties"])
 
     @topology_update
     @zoom_update
@@ -400,8 +293,7 @@ class Layer(LayerBasedModelMixin):
             feature = self.features.filter(pk=nearest_feature.pk)
             feature.update(properties=new_feature.get('properties', {}))
             modified |= feature
-        # clean cache of updated features
-        [feature.clean_vect_tile_cache() for feature in modified]
+
         return modified
 
     @cached_property
@@ -510,35 +402,67 @@ class Feature(BaseUpdatableModel):
 
     objects = Manager.from_queryset(FeatureQuerySet)()
 
-    def clean_vect_tile_cache(self):
-        vtile = VectorTile(self.layer)
-        vtile.clean_tiles(
-            self.get_intersected_tiles(),
-            self.layer.layer_settings_with_default(
-                'tiles', 'pixel_buffer'),
-            self.layer.layer_settings_with_default(
-                'tiles', 'features_filter'),
-            self.layer.layer_settings_with_default(
-                'tiles', 'properties_filter'),
-            self.layer.layer_settings_with_default(
-                'tiles', 'features_limit')
-        )
-
-    def get_intersected_tiles(self):
-        zoom_range = range(app_settings.MIN_TILE_ZOOM, app_settings.MAX_TILE_ZOOM + 1)
-        try:
-            return [(tile.x, tile.y, tile.z)
-                    for tile in tiles(*self.get_bounding_box(), zoom_range)]
-        except ValueError:
-            # TODO find why a ValueError is raised with some Point() geometries
-            return []
-
     def get_bounding_box(self):
         return self.geom.extent
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        self.clean_vect_tile_cache()
+    def get_computed_relation_qs(self, relation):
+        """ Execute relation operation to get feature queryset """
+        qs_empty = Feature.objects.none()
+
+        if relation not in self.layer.relations_as_origin.all():
+            # relation should be in layer_relation_as_origins
+            return qs_empty
+
+        qs = relation.destination.features.all()
+        kwargs = {}
+        if relation.relation_type == 'intersects':
+            kwargs.update({
+                'geom__intersects': self.geom,
+            })
+        elif relation.relation_type == 'distance':
+            kwargs.update({
+                'geom__distance_lte': (self.geom,
+                                       D(m=relation.settings.get('distance')),
+                                       'spheroid'),
+            })
+
+        qs = qs.filter(**kwargs) if kwargs else qs
+        qs = qs.exclude(**relation.exclude) if relation.exclude else qs
+
+        return qs
+
+    def get_stored_relation_qs(self, layer_relation):
+        destination_ids = self.relations_as_origin.filter(relation=layer_relation) \
+            .values_list('destination_id', flat=True)
+        return Feature.objects.filter(pk__in=destination_ids)
+
+    def sync_relations(self, layer_relation=None):
+        """ replace feature relations for automatic layer relations """
+        logger.info(f"Feature relation synchronisation")
+        layer_relations = self.layer.relations_as_origin.exclude(relation_type__isnull=True)
+        layer_relations = layer_relations.filter(pk__in=[layer_relation]) if layer_relation else layer_relations
+        for rel in layer_relations:
+            logger.info(f"relation {rel}")
+            qs = self.get_computed_relation_qs(rel)
+            # find relation to delete (in stored relation but not in qs result)
+            to_delete = self.relations_as_origin.filter(relation=rel).exclude(destination_id__in=qs)
+
+            logger.info(f"{to_delete.count()} element(s) to delete")
+
+            to_delete.delete()
+
+            # find relation to add (not in stored relation but in qs
+            qs = qs.exclude(pk__in=self.relations_as_origin.filter(relation=rel)
+                                                           .values_list('destination_id', flat=True))
+            logger.info(f"{len(qs)} element(s) to add")
+            # batch creation
+            batch_size = 100
+            objs = (FeatureRelation(origin=self, destination=feature_rel, relation=rel) for feature_rel in qs.all())
+            while True:
+                batch = list(islice(objs, batch_size))
+                if not batch:
+                    break
+                FeatureRelation.objects.bulk_create(batch, batch_size)
 
     def clean(self):
         """
@@ -556,28 +480,62 @@ class Feature(BaseUpdatableModel):
             models.Index(fields=['identifier', ]),
             GistIndex(fields=['layer', 'geom']),
         ]
+        constraints = [
+            # geometry should be valid
+            models.CheckConstraint(check=models.Q(geom__isvalid=True), name='geom_is_valid'),
+        ]
+
+
+post_save.connect(save_feature, sender=Feature)
 
 
 class LayerRelation(models.Model):
+    RELATION_TYPES = (
+        (None, 'Manual'),
+        ('intersects', 'Intersects'),
+        ('distance', 'Distance'),
+    )
+    name = models.CharField(max_length=250)
+    slug = models.SlugField(editable=False)
     origin = models.ForeignKey(Layer,
                                on_delete=models.PROTECT,
                                related_name='relations_as_origin')
     destination = models.ForeignKey(Layer,
                                     on_delete=models.PROTECT,
                                     related_name='relations_as_destination')
-    schema = JSONField(default=dict, blank=True)
+    relation_type = models.CharField(choices=RELATION_TYPES, blank=True, max_length=25, default=RELATION_TYPES[0])
+    settings = JSONField(default=dict, blank=True)
+    exclude = JSONField(default=dict, blank=True,
+                        help_text=_("qs exclude (ex: {\"pk__in\": [...], \"identifier__in\":[...]}"))
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        self.slug = slugify(f'{self.origin_id}-{self.name}')
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         ordering = ['id']
+        unique_together = (
+            ('name', 'origin'),
+        )
+
+
+post_save.connect(save_layer_relation, sender=LayerRelation)
 
 
 class FeatureRelation(models.Model):
     origin = models.ForeignKey(Feature,
-                               on_delete=models.PROTECT,
+                               on_delete=models.CASCADE,
                                related_name='relations_as_origin')
     destination = models.ForeignKey(Feature,
-                                    on_delete=models.PROTECT,
+                                    on_delete=models.CASCADE,
                                     related_name='relations_as_destination')
+    relation = models.ForeignKey(LayerRelation,
+                                 on_delete=models.CASCADE,
+                                 related_name='related_features')
     properties = JSONField(default=dict, blank=True)
 
     class Meta:

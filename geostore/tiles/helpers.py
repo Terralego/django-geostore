@@ -216,13 +216,6 @@ class VectorTile(object):
             f'_{self.features_limit}'
         )
 
-    def clean_tiles(self, tiles, pixel_buffer, features_filter,
-                    properties_filter, features_limit):
-        """
-        TODO Cleaning tiles must be rewrited but for the moment invalidating tiles is not necessary
-        """
-        pass
-
 
 def guess_maxzoom(layer):
     features = layer.features.all()
