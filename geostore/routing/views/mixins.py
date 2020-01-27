@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point, GEOSException
 from django.http import HttpResponseBadRequest
 from rest_framework import status
@@ -31,9 +33,9 @@ class RoutingViewsSetMixin:
         response_data = {
             'request': {
                 'callbackid': callbackid,
-                'geom': geometry.json,
+                'geom': json.loads(geometry.json),
             },
             'geom': route,
         }
 
-        return Response(response_data, content_type='application/json')
+        return Response(response_data)
