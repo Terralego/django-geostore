@@ -51,11 +51,12 @@ class Routing(object):
                             'id',
                             'source',
                             'target',
+                            rows_where := %s,
                             clean := %s)
                     """
 
         cursor.execute(raw_query,
-                       [layer.features.model._meta.db_table, tolerance, clean])
+                       [layer.features.model._meta.db_table, tolerance, f'layer_id={layer.pk} ', clean])
         return ('OK',) == cursor.fetchone()
 
     def _serialize_routes(self, routes):
