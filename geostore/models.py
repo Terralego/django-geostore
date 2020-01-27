@@ -375,6 +375,8 @@ class Layer(LayerBasedModelMixin):
                 "properties": {}
             }
         for prop in schema_properties:
+            if not prop.slug:
+                continue
             if prop.required:
                 schema['required'].append(prop.slug)
             options = prop.options
@@ -663,7 +665,7 @@ class SchemaObjectProperty(models.Model):
 
     def save(self, *args, **kwargs):
         # force clean
-        if self.pk is None:
+        if self.pk is None and not self.slug:
             self.slug = slugify(self.title)
         self.clean()
         super().save(*args, **kwargs)

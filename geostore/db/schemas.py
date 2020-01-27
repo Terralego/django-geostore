@@ -4,10 +4,8 @@ from geostore.models import ArrayObjectProperty, LayerSchemaProperty
 def schema_to_schemamodel(layer, schema):
     required = schema.get('required', [])
     for key, value in schema.get("properties").items():
-        title = layer.get_property_title(key)
-        value.pop("title")
+        title = value.pop("title", False) or layer.get_property_title(key)
         prop_type = value.pop("type")
-
         fields = {
             'slug': key,
             'title': title,

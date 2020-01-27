@@ -1,6 +1,7 @@
 from geostore.models import Layer
 from geostore.db.schemas import schema_to_schemamodel
 from django.test import TestCase
+from copy import deepcopy
 
 schema_complex = {
     "type": "object",
@@ -23,6 +24,10 @@ schema_complex = {
         "own": {
             "type": "string",
             "title": "Propriétaire(s)"
+        },
+        "name": {
+            "type": "string",
+            "title": "Nom"
         },
         "logo": {
             "type": "string",
@@ -108,5 +113,8 @@ class SchemaToModelSchemaTestCase(TestCase):
     def test_schema_to_schemamodel(self):
         self.maxDiff = None
         layer = Layer.objects.create(name='out')
+        schema_complex_before = deepcopy(schema_complex)
         schema_to_schemamodel(layer, schema_complex)
-        self.assertCountEqual(layer.generated_schema, list())
+        self.assertCountEqual(layer.generated_schema, schema_complex_before)
+        schema = layer.generated_schema
+        self.assertDictEqual(schema, schema_complex_before)
