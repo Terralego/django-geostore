@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.3.16.dev0    (XXXX-XX-XX)
+0.3.16         (2020-01-27)
 ---------------------------
 
 * Manage relations between layers and features (manual / intersections or distances).
