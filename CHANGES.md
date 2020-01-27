@@ -4,6 +4,8 @@ CHANGELOG
 0.3.20.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* Configurable tolerance for routing topologies (Now default from 0.0001 ti 0.00001)
+
 
 0.3.19         (2020-06-25)
 ---------------------------
@@ -26,7 +28,6 @@ CHANGELOG
 0.3.16         (2020-01-27)
 ---------------------------
 
-* Configurable tolerance for routing topologies (Now default from 0.0001 ti 0.00001)
 * Manage relations between layers and features (manual / intersections or distances).
 * GeoJson renderer. Now API can render .json or .geojson endpoint (or format=?geojson)
 * Partial properties patch. A patch on feature viewset keep properties not sended.
