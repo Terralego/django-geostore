@@ -15,7 +15,7 @@ class LayerFeatureListOrderingTestCase(APITestCase):
             name="tree",
         )
         SchemaFactory.create(slug="name", title="Name", layer=self.property_schema_layer)
-        SchemaFactory.create(slug="age", title="Age", layer=self.property_schema_layer)
+        SchemaFactory.create(slug="age", title="Age", prop_type="int", layer=self.property_schema_layer)
         Feature.objects.bulk_create([
             Feature(layer=self.property_schema_layer,
                     properties={'name': '1',
@@ -84,20 +84,11 @@ class LayerFeatureListSearchTestCase(APITestCase):
     def setUp(self):
         self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
         self.client.force_authenticate(user=self.user)
-        self.valid_schema = {
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "age": {
-                    "type": "integer"
-                }
-            }
-        }
         self.property_schema_layer = LayerFactory(
             name="tree",
-            schema=self.valid_schema
         )
+        SchemaFactory.create(slug="name", title="Name", layer=self.property_schema_layer)
+        SchemaFactory.create(slug="age", title="Age", prop_type="int", layer=self.property_schema_layer)
         Feature.objects.bulk_create([
             Feature(layer=self.property_schema_layer,
                     properties={'name': 'John',

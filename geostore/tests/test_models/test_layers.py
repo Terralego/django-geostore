@@ -24,7 +24,7 @@ class LayerModelTestCase(TestCase):
 
     def test_get_property_title_undefined(self):
         """ method should return property name """
-        prop = 'name'
+        prop = 'Name'
         self.assertEqual(self.layer_schema.get_property_title(prop),
                          prop)
 

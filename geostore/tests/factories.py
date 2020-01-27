@@ -35,9 +35,9 @@ class LayerWithSchemaFactory(factory.DjangoModelFactory):
 
     @factory.post_generation
     def create_schmeas_properties(obj, create, extracted, **kwargs):
-        LayerSchemaProperty.objects.create(slug="name", required=True, prop_type="string", layer=obj)
-        LayerSchemaProperty.objects.create(slug="age", required=False, prop_type="integer", title="Age", layer=obj)
-        LayerSchemaProperty.objects.create(slug="country", required=False, prop_type="string", title="Country",
+        LayerSchemaProperty.objects.create(required=True, prop_type="string", title="Name", layer=obj)
+        LayerSchemaProperty.objects.create(required=False, prop_type="integer", title="Age", layer=obj)
+        LayerSchemaProperty.objects.create(required=False, prop_type="string", title="Country",
                                            layer=obj)
 
     class Meta:

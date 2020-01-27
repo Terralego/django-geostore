@@ -2,13 +2,13 @@ from django.test import TestCase
 from geostore import GeometryTypes
 from geostore.models import LayerRelation
 
-from geostore.tests.factories import LayerSchemaFactory, FeatureFactory
+from geostore.tests.factories import LayerWithSchemaFactory, FeatureFactory
 
 
 class LayerRelationTestCase(TestCase):
     def setUp(self) -> None:
-        self.layer_trek = LayerSchemaFactory(geom_type=GeometryTypes.LineString)
-        self.layer_city = LayerSchemaFactory(geom_type=GeometryTypes.Polygon)
+        self.layer_trek = LayerWithSchemaFactory(geom_type=GeometryTypes.LineString)
+        self.layer_city = LayerWithSchemaFactory(geom_type=GeometryTypes.Polygon)
         self.trek = FeatureFactory(layer=self.layer_trek, geom='LINESTRING(0 0, 1 1, 2 2, 3 3)')
         self.city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
         self.city_uncover = FeatureFactory(layer=self.layer_city, geom='POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))')
