@@ -195,8 +195,8 @@ class Routing(object):
             LEFT OUTER JOIN geostore_feature ON pgr.edge = geostore_feature.id
         ),
         route AS (
-            /* Finaly we reconstruct the geometry by collecting each edge.
-                At point 1 and 2, we get the splited edge.
+            /* Finally we reconstruct the geometry by collecting each edge.
+                At point 1 and 2, we get the split edge.
             */
             SELECT
                 CASE
@@ -204,8 +204,8 @@ class Routing(object):
                     (SELECT points.geom
                         FROM points
                         WHERE points.pid = -pgr.node
-                        -- Non topologic graph,
-                        -- get the closest to the next egde
+                        -- Non topological graph,
+                        -- get the closest to the next edge
                         ORDER BY ST_Distance(points.geom, pgr.next_geom) ASC
                         LIMIT 1)
                 WHEN next_node = -2 THEN  -- Going to End Point
