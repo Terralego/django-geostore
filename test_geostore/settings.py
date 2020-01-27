@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'debug_toolbar',
     'geostore',
+    'debug_toolbar',
     'test_geostore.test_app'
 ]
 
@@ -124,6 +125,15 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+
+MIDDLEWARE += (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
+)
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda x: True,
+}
 
 
 # Static files (CSS, JavaScript, Images)
