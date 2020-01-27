@@ -40,7 +40,7 @@ class Routing(object):
             return self._serialize_routes(routes)
 
     @classmethod
-    def create_topology(cls, layer, tolerance=0.0001, clean=False):
+    def create_topology(cls, layer, tolerance=0.00001, clean=False):
         cursor = connection.cursor()
         raw_query = """
                     SELECT
