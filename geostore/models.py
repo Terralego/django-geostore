@@ -473,6 +473,9 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
             models.Index(fields=['updated_at', ]),
             models.Index(fields=['updated_at', 'layer', ]),
             models.Index(fields=['layer', 'identifier']),
+            models.Index(fields=['id', 'layer', ]),
+            models.Index(fields=['source', 'layer', ]),
+            models.Index(fields=['target', 'layer', ]),
             GistIndex(fields=['layer', 'geom']),
             GinIndex(name='properties_gin_index', fields=['properties']),
         ]
