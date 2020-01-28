@@ -3,6 +3,8 @@ from geostore.models import ArrayObjectProperty, LayerSchemaProperty
 
 def schema_to_schemamodel(layer, schema):
     required = schema.get('required', [])
+    if not schema.get("properties"):
+        return
     for key, value in schema.get("properties").items():
         title = value.pop("title", False) or layer.get_property_title(key)
         prop_type = value.pop("type")
@@ -10,11 +12,10 @@ def schema_to_schemamodel(layer, schema):
             'slug': key,
             'title': title,
             'prop_type': prop_type,
-            'layer': layer
+            'layer_id': layer.pk
         }
         if key in required:
             fields['required'] = True
-
         array_object_property_list = []
         options = value.copy()
         if prop_type == "array":
