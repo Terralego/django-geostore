@@ -61,7 +61,7 @@ class RoutingTestCase(TestCase):
         response = self.client.post(reverse('layer-route',
                                             args=[self.layer.pk]))
 
-        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code, response.json())
 
         bad_geometry = Point((1, 1))
         response = self.client.post(reverse('layer-route',
@@ -83,13 +83,13 @@ class RoutingTestCase(TestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
 
-        self.assertEqual(response.get('geom').get('type'), 'FeatureCollection')
-        self.assertTrue(len(response.get('geom').get('features')) >= 2)
+        self.assertEqual(response.get('route').get('type'), 'FeatureCollection')
+        self.assertTrue(len(response.get('route').get('features')) >= 2)
 
         # Ensure End Points are close to requested points
-        start = Point(*response.get('geom').get('features')[0].get('geometry')
+        start = Point(*response.get('route').get('features')[0].get('geometry')
                       .get('coordinates')[0])
-        end = Point(*response.get('geom').get('features')[-1].get('geometry')
+        end = Point(*response.get('route').get('features')[-1].get('geometry')
                     .get('coordinates')[-1])
         self.assertTrue(points[0].distance(start) <= 0.001)
         self.assertTrue(points[-1].distance(end) <= 0.001)
@@ -108,14 +108,13 @@ class RoutingTestCase(TestCase):
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
-
-        self.assertEqual(response.get('geom').get('type'), 'FeatureCollection')
-        self.assertTrue(len(response.get('geom').get('features')) >= 1)
+        self.assertEqual(response.get('route').get('type'), 'FeatureCollection')
+        self.assertTrue(len(response.get('route').get('features')) >= 1)
 
         # Ensure End Points are close to requested points
-        start = Point(*response.get('geom').get('features')[0].get('geometry')
+        start = Point(*response.get('route').get('features')[0].get('geometry')
                       .get('coordinates'))
-        end = Point(*response.get('geom').get('features')[-1].get('geometry')
+        end = Point(*response.get('route').get('features')[-1].get('geometry')
                     .get('coordinates'))
         self.assertTrue(points[0].distance(start) <= 0.001)
         self.assertTrue(points[-1].distance(end) <= 0.001)

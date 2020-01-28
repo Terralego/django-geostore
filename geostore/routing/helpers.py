@@ -1,6 +1,6 @@
 import json
 
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, MultiLineString, LineString
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
@@ -28,16 +28,22 @@ class Routing(object):
         if not layer.is_linestring or layer.is_multi:
             raise ValueError('Layer is not routable')
 
-        self.points, self.layer = points, layer
+        self.layer = layer
+        self.points = self._get_points_in_lines(points)
+        self.routes = self._points_route()
 
     def get_route(self):
-        '''Return the geometry of the route from the given points'''
-        self.points = self._get_points_in_lines()
+        """ Return the geometry of the route from the given points """
 
-        routes = self._points_route()
+        if self.routes:
+            return self._serialize_routes(self.routes)
 
-        if routes:
-            return self._serialize_routes(routes)
+    def get_linestring(self):
+        if self.routes:
+            way = MultiLineString(*[GEOSGeometry(route['geometry'])
+                                    for route in self.routes if isinstance(GEOSGeometry(route['geometry']),
+                                                                           LineString)])
+            return way.merged
 
     @classmethod
     def create_topology(cls, layer, tolerance=0.00001, clean=False):
@@ -73,11 +79,11 @@ class Routing(object):
             ]
         }
 
-    def _get_points_in_lines(self):
+    def _get_points_in_lines(self, points):
         '''Returns position of the point in the closed geometry'''
         snapped_points = []
 
-        for point in self.points:
+        for point in points:
             closest_feature = self._get_closest_geometry(point)
 
             snapped_points.append(
@@ -249,8 +255,6 @@ class Routing(object):
                     'properties': properties
                 } for geometry, properties in cursor.fetchall()
             ]
-
-        return None
 
     def _fix_point_fraction(self, point):
         """ This function is used to fix problem with pgrouting when point

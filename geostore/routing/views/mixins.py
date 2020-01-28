@@ -1,7 +1,6 @@
 import json
 
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point, GEOSException
-from django.http import HttpResponseBadRequest
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -13,29 +12,32 @@ class RoutingViewsSetMixin:
     @action(detail=True, methods=['post'], permission_classes=[])
     def route(self, request, pk=None):
         layer = self.get_object()
-        callbackid = self.request.data.get('callbackid', None)
+        callback_id = self.request.data.get('callbackid', None)
 
         try:
-            geometry = GEOSGeometry(request.data.get('geom', None))
+            geometry = GEOSGeometry(str(request.data.get('geom')))
             if not isinstance(geometry, LineString):
                 raise ValueError
-            points = [Point(c, srid=geometry.srid) for c in geometry.coords]
-        except (GEOSException, TypeError, ValueError):
-            return HttpResponseBadRequest(
-                content='Provided geometry is not valid LineString')
 
+        except (GEOSException, TypeError, ValueError):
+            return Response({"error": 'Provided geometry is not valid LineString'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        points = [Point(c, srid=geometry.srid) for c in geometry.coords]
         routing = Routing(points, layer)
         route = routing.get_route()
 
         if not route:
             return Response(status=status.HTTP_204_NO_CONTENT)
 
+        way = routing.get_linestring()
         response_data = {
             'request': {
-                'callbackid': callbackid,
-                'geom': json.loads(geometry.json),
+                'callbackid': callback_id,
+                'geom': json.loads(geometry.geojson),
             },
-            'geom': route,
+            'route': route,
+            'geom': json.loads(way.geojson)
         }
 
         return Response(response_data)
