@@ -689,7 +689,14 @@ class LayerSchemaProperty(SchemaObjectProperty):
 
 
 class ArrayObjectProperty(SchemaObjectProperty):
+    ARRAY_OBJECT_TYPES = (
+        ('string', _('String')),
+        ('integer', _('Integer')),
+        ('number', _('Number')),
+        ('boolean', _('Boolean')),
+    )
     array_property = models.ForeignKey(LayerSchemaProperty, related_name='array_properties', on_delete=models.CASCADE)
+    array_type = models.CharField(max_length=50, choices=ARRAY_OBJECT_TYPES, blank=True)
 
     def __str__(self):
         return f"{self.array_property}: {self.slug} ({self.prop_type})"
