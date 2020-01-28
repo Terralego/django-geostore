@@ -24,28 +24,20 @@ class Command(BaseCommand):
                             action="store",
                             required=False,
                             help=_("Tolerance for snapping topologies (default to 0.00001)."))
-        parser.add_argument('--dry-run',
-                            action="store_true",
-                            help='Execute une dry-run mode')
 
     @transaction.atomic()
     def handle(self, *args, **options):
         layer_pk = options.get('layer_pk', None)
         tolerance = options.get('tolerance', 0.00001)
-        dryrun = options.get('dry_run', None)
 
-        sp = transaction.savepoint()
         try:
             layer = Layer.objects.get(pk=layer_pk)
+            if Routing.create_topology(layer, tolerance=tolerance):
+                if options['verbosity'] >= 1:
+                    self.stdout.write('Topology successfully updated')
+
+            else:
+                raise CommandError('An error occuring during topology update')
+
         except Layer.DoesNotExist:
             raise CommandError(f"Layer with pk {layer_pk} doesn't exist")
-        if Routing.create_topology(layer, tolerance=tolerance):
-            if options['verbosity'] >= 1:
-                self.stdout.write('Topology successfully updated')
-        else:
-            raise CommandError('An error occuring during topology update')
-
-        if dryrun:
-            transaction.savepoint_rollback(sp)
-        else:
-            transaction.savepoint_commit(sp)
