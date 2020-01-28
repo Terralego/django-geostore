@@ -9,7 +9,7 @@ from ..helpers import Routing
 
 
 class RoutingViewsSetMixin:
-    @action(detail=True, methods=['post'], permission_classes=[])
+    @action(detail=True, methods=['post'])
     def route(self, request, pk=None):
         layer = self.get_object()
         callback_id = self.request.data.get('callbackid', None)

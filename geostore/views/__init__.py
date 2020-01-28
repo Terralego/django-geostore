@@ -11,7 +11,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
@@ -72,7 +72,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin,
                 self.permission_denied(request, 'Operation not allowed')
         return response
 
-    @action(detail=True, methods=['post'], permission_classes=[])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def intersects(self, request, *args, **kwargs):
         layer = self.get_object()
         callbackid = self.request.data.get('callbackid', None)

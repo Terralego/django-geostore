@@ -36,7 +36,7 @@ class RoutingTestCase(TestCase):
 
     def setUp(self):
         self.layer = Layer.objects.create(name='test_layer')
-        self.user = UserFactory()
+        self.user = UserFactory(is_superuser=True)
         self.client.force_login(self.user)
 
         geojson_path = get_files_tests('toulouse.geojson')

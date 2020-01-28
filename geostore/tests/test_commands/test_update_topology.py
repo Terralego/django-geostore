@@ -4,6 +4,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
+from geostore import GeometryTypes
 from geostore.models import Layer
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
@@ -11,7 +12,7 @@ from geostore.tests.utils import get_files_tests
 
 class UpdateTopologyTestCase(TestCase):
     def test_update_topology_routing_fail(self):
-        layer = LayerFactory()
+        layer = LayerFactory(geom_type=GeometryTypes.Point)
         with self.assertRaises(CommandError) as error:
             call_command(
                 'update_topology',
