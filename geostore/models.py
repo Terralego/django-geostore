@@ -681,6 +681,7 @@ class LayerSchemaProperty(SchemaObjectProperty):
         return f"{self.layer}: {self.slug} ({self.prop_type})"
 
     def clean(self):
+        super(LayerSchemaProperty, self).clean()
         validate_json_schema(self.layer.generated_schema)
 
     class Meta:
@@ -702,6 +703,7 @@ class ArrayObjectProperty(SchemaObjectProperty):
         return f"{self.array_property}: {self.slug} ({self.prop_type})"
 
     def clean(self):
+        super(ArrayObjectProperty, self).clean()
         validate_json_schema(self.array_property.layer.generated_schema)
 
     class Meta:
