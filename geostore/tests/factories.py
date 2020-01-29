@@ -4,7 +4,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
 from geostore import GeometryTypes
-from geostore.models import Feature, Layer, LayerSchemaProperty
+from geostore.models import Feature, Layer, LayerSchemaProperty, ArrayObjectProperty
 
 
 def _get_perm(perm_name):
@@ -34,11 +34,15 @@ class LayerWithSchemaFactory(factory.DjangoModelFactory):
     geom_type = GeometryTypes.Point
 
     @factory.post_generation
-    def create_schmeas_properties(obj, create, extracted, **kwargs):
+    def create_schemas_properties(obj, create, extracted, **kwargs):
         LayerSchemaProperty.objects.create(required=True, prop_type="string", title="Name", layer=obj)
         LayerSchemaProperty.objects.create(required=False, prop_type="integer", title="Age", layer=obj)
         LayerSchemaProperty.objects.create(required=False, prop_type="string", title="Country",
                                            layer=obj)
+        layer_schema_property = LayerSchemaProperty.objects.create(required=False, prop_type="array",
+                                                                   array_type="object", title="Country",
+                                                                   layer=obj)
+        ArrayObjectProperty.objects.create(prop_type="string", title="column", array_property=layer_schema_property)
 
     class Meta:
         model = Layer
