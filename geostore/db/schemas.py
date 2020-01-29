@@ -1,6 +1,33 @@
 from geostore.models import ArrayObjectProperty, LayerSchemaProperty
 
 
+def generate_array_object_property_list(prop_type, value, fields):
+    options = value.copy()
+    array_object_property_list = []
+    if prop_type == "array":
+        array_type = value['items']['type']
+        fields['array_type'] = array_type
+        if array_type == "object":
+            required_array = value['items'].get("required", [])
+            items_array = value.get('items')
+            for sub_key, sub_value in items_array.get("properties").items():
+                sub_title = sub_value.pop("title")
+                sub_prop_type = sub_value.pop("type")
+                sub_options = sub_value
+                sub_fields = {
+                    'slug': sub_key,
+                    'title': sub_title,
+                    'prop_type': sub_prop_type,
+                    'options': sub_options,
+                }
+                if sub_key in required_array:
+                    sub_fields['required'] = True
+                array_object_property_list.append(sub_fields)
+            del options['items']
+    fields['options'] = options
+    return array_object_property_list
+
+
 def schema_to_schemamodel(layer, schema):
     required = schema.get('required', [])
     if not schema.get("properties"):
@@ -16,29 +43,9 @@ def schema_to_schemamodel(layer, schema):
         }
         if key in required:
             fields['required'] = True
-        array_object_property_list = []
-        options = value.copy()
-        if prop_type == "array":
-            array_type = value['items']['type']
-            fields['array_type'] = array_type
-            if array_type == "object":
-                required_array = value['items'].get("required", [])
-                items_array = value.get('items')
-                for sub_key, sub_value in items_array.get("properties").items():
-                    sub_title = sub_value.pop("title")
-                    sub_prop_type = sub_value.pop("type")
-                    sub_options = sub_value
-                    sub_fields = {
-                        'slug': sub_key,
-                        'title': sub_title,
-                        'prop_type': sub_prop_type,
-                        'options': sub_options,
-                    }
-                    if sub_key in required_array:
-                        sub_fields['required'] = True
-                    array_object_property_list.append(sub_fields)
-                del options['items']
-        fields['options'] = options
+
+        array_object_property_list = generate_array_object_property_list(prop_type, value, fields)
+
         layer_schema_property = LayerSchemaProperty.objects.create(**fields)
         for array_object_property in array_object_property_list:
             ArrayObjectProperty.objects.create(**array_object_property, array_property=layer_schema_property)
