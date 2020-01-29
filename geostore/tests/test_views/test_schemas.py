@@ -36,7 +36,6 @@ class SchemaValidationTest(APITestCase):
         """
         Try to create layer with valid schema
         """
-        print(reverse('layer-list'))
         response = self.client.post(reverse('layer-list'),
                                     data={"schema": self.valid_schema})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)

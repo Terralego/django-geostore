@@ -40,7 +40,7 @@ class LayerWithSchemaFactory(factory.DjangoModelFactory):
         LayerSchemaProperty.objects.create(required=False, prop_type="string", title="Country",
                                            layer=obj)
         layer_schema_property = LayerSchemaProperty.objects.create(required=False, prop_type="array",
-                                                                   array_type="object", title="Country",
+                                                                   array_type="object", title="Other",
                                                                    layer=obj)
         ArrayObjectProperty.objects.create(prop_type="string", title="column", array_property=layer_schema_property)
 

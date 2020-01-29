@@ -110,11 +110,19 @@ schema_complex = {
 
 
 class SchemaToModelSchemaTestCase(TestCase):
+    def setUp(self):
+        self.layer = Layer.objects.create(name='out')
+
     def test_schema_to_schemamodel(self):
         self.maxDiff = None
-        layer = Layer.objects.create(name='out')
         schema_complex_before = deepcopy(schema_complex)
-        schema_to_schemamodel(layer, schema_complex)
-        self.assertCountEqual(layer.generated_schema, schema_complex_before)
-        schema = layer.generated_schema
+        schema_to_schemamodel(self.layer, schema_complex)
+        self.assertCountEqual(self.layer.generated_schema, schema_complex_before)
+        schema = self.layer.generated_schema
         self.assertDictEqual(schema, schema_complex_before)
+
+    def test_empty_schema(self):
+        self.maxDiff = None
+        schema_to_schemamodel(self.layer, {})
+        schema = self.layer.generated_schema
+        self.assertDictEqual(schema, {})
