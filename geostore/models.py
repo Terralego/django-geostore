@@ -365,25 +365,29 @@ class Layer(LayerBasedModelMixin):
         array_type = prop.array_type
         if not array_type == 'object':
             options["items"]["type"] = array_type
-        else:
-            array_schema_properties = prop.array_properties.all()
-            # add sub-items for array objects
-            options = {
-                "items": {
-                    "type": array_type,
-                    "required": list(array_schema_properties.filter(required=True).values_list('slug', flat=True)),
-                    "properties": {}
-                }
+            return options
+
+        array_schema_properties = prop.array_properties.all()
+        # add sub-items for array objects
+        required = list(array_schema_properties.filter(required=True).order_by('slug').values_list('slug', flat=True))
+        options = {
+            "items": {
+                "type": array_type,
+                "properties": {}
+            }
+        }
+        if required:
+            options["items"]["required"] = required
+
+        for sub_prop in array_schema_properties:
+            sub_prop_slug = sub_prop.slug
+
+            options["items"]['properties'][sub_prop_slug] = {
+                "type": sub_prop.prop_type,
+                "title": sub_prop.title,
+                **sub_prop.options
             }
 
-            for sub_prop in array_schema_properties:
-                sub_prop_slug = sub_prop.slug
-
-                options["items"]['properties'][sub_prop_slug] = {
-                    "type": sub_prop.prop_type,
-                    "title": sub_prop.title,
-                    **sub_prop.options
-                }
         return options
 
     @property
