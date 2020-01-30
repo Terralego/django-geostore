@@ -393,7 +393,7 @@ class Layer(LayerBasedModelMixin):
             "properties": {}
         }
 
-        schema_properties_with_slug = list(schema_properties.exclude(slug__isnull=True).values_list('slug', flat=True))
+        schema_properties_with_slug = schema_properties.exclude(slug__exact='')
 
         for prop in schema_properties_with_slug:
             options = prop.options
