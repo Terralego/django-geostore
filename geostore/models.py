@@ -365,7 +365,7 @@ class Layer(LayerBasedModelMixin):
     def generated_schema(self):
         """ Generate JSON schema according to linked schema properties  """
         schema = {}  # keep empty schema if no property defined to avoid validation
-        schema_properties = self.schema_properties.all().prefetch_related('array_properties')
+        schema_properties = self.schema_properties.filter(editable=True).prefetch_related('array_properties')
 
         if schema_properties.exists():
             # default schema structure if property exists
@@ -676,6 +676,7 @@ class SchemaObjectProperty(models.Model):
 
 class LayerSchemaProperty(SchemaObjectProperty):
     layer = models.ForeignKey(Layer, related_name='schema_properties', on_delete=models.CASCADE)
+    editable = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.layer}: {self.slug} ({self.prop_type})"
