@@ -362,16 +362,20 @@ class Layer(LayerBasedModelMixin):
         return f"{self.name}"
 
     def generated_schema_array(self, prop, options):
-        if not prop.array_type == 'object':
-            options["items"]["type"] = prop.array_type
+        array_type = prop.array_type
+        if not array_type == 'object':
+            options["items"]["type"] = array_type
         else:
             # add sub-items for array objects
-            options = {"items": {"type": prop.array_type, 'properties': {}}}
+            options = {"items": {"type": array_type, 'properties': {}}}
 
             for sub_prop in prop.array_properties.all():
+                sub_prop_slug = sub_prop.slug
+
                 if sub_prop.required:
-                    options["items"].setdefault('required', []).append(sub_prop.slug)
-                options["items"]['properties'][sub_prop.slug] = {
+                    options["items"].setdefault('required', []).append(sub_prop_slug)
+
+                options["items"]['properties'][sub_prop_slug] = {
                     "type": sub_prop.prop_type,
                     "title": sub_prop.title,
                     **sub_prop.options
