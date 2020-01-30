@@ -361,6 +361,28 @@ class Layer(LayerBasedModelMixin):
     def __str__(self):
         return f"{self.name}"
 
+    def get_required_properties(self, schema_properties):
+        return [prop.slug for prop in schema_properties if prop.required]
+
+    def generated_schema_array(self, prop, options):
+        if not prop.array_type == 'object':
+            options["items"]["type"] = prop.array_type
+        else:
+            options = {"items": {"type": prop.array_type}}
+            # add sub-items for array objects
+            options["items"].update({
+                'properties': {}
+            })
+            for sub_prop in prop.array_properties.all():
+                if sub_prop.required:
+                    options["items"].setdefault('required', []).append(sub_prop.slug)
+                options["items"]['properties'][sub_prop.slug] = {
+                    "type": sub_prop.prop_type,
+                    "title": sub_prop.title,
+                    **sub_prop.options
+                }
+        return options
+
     @property
     def generated_schema(self):
         """ Generate JSON schema according to linked schema properties  """
@@ -371,14 +393,12 @@ class Layer(LayerBasedModelMixin):
             # default schema structure if property exists
             schema = {
                 "type": "object",
-                "required": [],
+                "required": self.get_required_properties(schema_properties),
                 "properties": {}
             }
-        for prop in schema_properties:
-            if not prop.slug:
-                continue
-            if prop.required:
-                schema['required'].append(prop.slug)
+        schema_properties_with_slug = [prop for prop in schema_properties if prop.slug]
+
+        for prop in schema_properties_with_slug:
             options = prop.options
             title = prop.slug if not prop.title else prop.title
             prop_schema = {
@@ -390,22 +410,7 @@ class Layer(LayerBasedModelMixin):
 
             if prop.prop_type == 'array':
                 # specify final type for arrays
-                if not prop.array_type == 'object':
-                    options["items"]["type"] = prop.array_type
-                else:
-                    options = {"items": {"type": prop.array_type}}
-                    # add sub-items for array objects
-                    options["items"].update({
-                        'properties': {}
-                    })
-                    for sub_prop in prop.array_properties.all():
-                        if sub_prop.required:
-                            options["items"].setdefault('required', []).append(sub_prop.slug)
-                        options["items"]['properties'][sub_prop.slug] = {
-                            "type": sub_prop.prop_type,
-                            "title": sub_prop.title,
-                            **sub_prop.options
-                        }
+                options = self.generated_schema_array(prop, options)
             prop_schema[prop.slug].update(options)
 
             schema['properties'].update(prop_schema)
