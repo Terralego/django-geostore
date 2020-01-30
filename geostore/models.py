@@ -365,11 +365,9 @@ class Layer(LayerBasedModelMixin):
         if not prop.array_type == 'object':
             options["items"]["type"] = prop.array_type
         else:
-            options = {"items": {"type": prop.array_type}}
             # add sub-items for array objects
-            options["items"].update({
-                'properties': {}
-            })
+            options = {"items": {"type": prop.array_type, 'properties': {}}}
+
             for sub_prop in prop.array_properties.all():
                 if sub_prop.required:
                     options["items"].setdefault('required', []).append(sub_prop.slug)
@@ -385,15 +383,17 @@ class Layer(LayerBasedModelMixin):
         """ Generate JSON schema according to linked schema properties  """
         schema = {}  # keep empty schema if no property defined to avoid validation
         schema_properties = self.schema_properties.filter(editable=True).prefetch_related('array_properties')
+        if not schema_properties.exists():
+            return schema
 
-        if schema_properties.exists():
-            # default schema structure if property exists
-            schema = {
-                "type": "object",
-                "required": list(schema_properties.filter(required=True).values_list('slug', flat=True)),
-                "properties": {}
-            }
-        schema_properties_with_slug = [prop for prop in schema_properties if prop.slug]
+        # default schema structure if property exists
+        schema = {
+            "type": "object",
+            "required": list(schema_properties.filter(required=True).values_list('slug', flat=True)),
+            "properties": {}
+        }
+
+        schema_properties_with_slug = list(schema_properties.exclude(slug__isnull=True).values_list('slug', flat=True))
 
         for prop in schema_properties_with_slug:
             options = prop.options
