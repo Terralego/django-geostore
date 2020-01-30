@@ -361,9 +361,6 @@ class Layer(LayerBasedModelMixin):
     def __str__(self):
         return f"{self.name}"
 
-    def get_required_properties(self, schema_properties):
-        return [prop.slug for prop in schema_properties if prop.required]
-
     def generated_schema_array(self, prop, options):
         if not prop.array_type == 'object':
             options["items"]["type"] = prop.array_type
@@ -393,7 +390,7 @@ class Layer(LayerBasedModelMixin):
             # default schema structure if property exists
             schema = {
                 "type": "object",
-                "required": self.get_required_properties(schema_properties),
+                "required": list(schema_properties.filter(required=True).values_list('slug', flat=True)),
                 "properties": {}
             }
         schema_properties_with_slug = [prop for prop in schema_properties if prop.slug]
