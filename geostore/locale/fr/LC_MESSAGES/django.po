@@ -1,0 +1,106 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-11-04 15:10+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#, python-format
+msgid ""
+"'%(value)s' value has an invalid date format. It must be in MM-DD format."
+msgstr ""
+
+#, python-format
+msgid ""
+"'%(value)s' value has the correct format (MM-DD) but it is an invalid date."
+msgstr ""
+
+msgid "Import insee data from csv to db."
+msgstr ""
+
+msgid "Delete all stored INSEE data, DO NOT USE IN PROD."
+msgstr ""
+
+msgid "Number of rows per transaction"
+msgstr ""
+
+msgid "Specify CSV delimiter"
+msgstr ""
+
+msgid "Specify CSV quotechar"
+msgstr ""
+
+msgid "Specify CSV path"
+msgstr ""
+
+msgid ""
+"If present and it's not an initial import will speed up features creation. "
+"But no rollback is possible. If something broke up during import, the import "
+"will stop  with half data in database."
+msgstr ""
+
+msgid "Improve performance of initial import"
+msgstr ""
+
+msgid ""
+"Define primary keys of this data. Example with companies: --key=SIREN --"
+"key=NIC Example with INSEE: --key=code_insee"
+msgstr ""
+
+msgid "Specify layer name"
+msgstr ""
+
+msgid "Specify transform functions"
+msgstr ""
+
+msgid "Name of longitude column"
+msgstr ""
+
+msgid "Name of latitude column"
+msgstr ""
+
+msgid "Overpass query without type (out:json)"
+msgstr ""
+
+msgid "Specify type of layer"
+msgstr ""
+
+msgid ""
+"Name of created layer containing GeoJSON datas.If not provided an uuid4 is "
+"set."
+msgstr ""
+
+msgid ""
+"PK of the layer where to insertthe features.\n"
+"A new layer is created if not present."
+msgstr ""
+
+msgid "Group name of the created layer"
+msgstr ""
+
+msgid ""
+"Field in properties that will be used as identifier of the features, so "
+"features can be grouped on layer's operations"
+msgstr ""
+
+msgid "PK of the layer to update"
+msgstr ""
+
+msgid "Group names of the created layer"
+msgstr ""
+
+msgid "Guess min and max zoom from data"
+msgstr ""

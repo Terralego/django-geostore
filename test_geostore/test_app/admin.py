@@ -1,28 +1,44 @@
 from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
 
-from geostore.models import Layer, Feature, LayerExtraGeom, FeatureExtraGeom, LayerRelation
+from geostore import models
+
+
+class ArrayObjectPropertyAdminInline(admin.TabularInline):
+    model = models.ArrayObjectProperty
+
+
+class LayerSchemaPropertyAdminInline(admin.TabularInline):
+    model = models.LayerSchemaProperty
 
 
 class LayerExtraGeomInline(admin.TabularInline):
-    model = LayerExtraGeom
+    model = models.LayerExtraGeom
 
 
 class LayerRelationInline(admin.TabularInline):
     fk_name = 'origin'
-    model = LayerRelation
+    model = models.LayerRelation
     extra = 0
 
 
-@admin.register(Layer)
-class LayerAdmin(admin.ModelAdmin):
-    inlines = [LayerExtraGeomInline, LayerRelationInline]
-
-
 class FeatureExtraGeomInline(admin.TabularInline):
-    model = FeatureExtraGeom
+    model = models.FeatureExtraGeom
 
 
-@admin.register(Feature)
+class LayerSchemaPropertyAdmin(admin.ModelAdmin):
+    inlines = [ArrayObjectPropertyAdminInline, ]
+
+
+@admin.register(models.Layer)
+class LayerAdmin(admin.ModelAdmin):
+    inlines = [LayerExtraGeomInline, LayerRelationInline, LayerSchemaPropertyAdminInline]
+
+
+@admin.register(models.Feature)
 class FeatureAdmin(OSMGeoAdmin):
     inlines = [FeatureExtraGeomInline]
+
+
+admin.site.register(models.ArrayObjectProperty)
+admin.site.register(models.LayerSchemaProperty, LayerSchemaPropertyAdmin)

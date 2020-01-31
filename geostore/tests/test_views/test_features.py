@@ -8,7 +8,7 @@ from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
 from geostore.models import LayerRelation
-from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory, UserFactory)
+from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerWithSchemaFactory, UserFactory)
 
 
 class FeaturesListViewTest(TestCase):
@@ -205,8 +205,8 @@ class FeaturesListViewTest(TestCase):
 @override_settings(GEOSTORE_RELATION_CELERY_ASYNC=True)
 class FeatureDetailTestCase(APITestCase):
     def setUp(self) -> None:
-        self.layer_trek = LayerSchemaFactory(geom_type=GeometryTypes.LineString)
-        self.layer_city = LayerSchemaFactory(geom_type=GeometryTypes.Polygon)
+        self.layer_trek = LayerWithSchemaFactory(geom_type=GeometryTypes.LineString)
+        self.layer_city = LayerWithSchemaFactory(geom_type=GeometryTypes.Polygon)
         self.trek = FeatureFactory(layer=self.layer_trek, geom='LINESTRING(0 0, 1 1, 2 2, 3 3)')
         self.city_uncover = FeatureFactory(layer=self.layer_city,
                                            geom='POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))',

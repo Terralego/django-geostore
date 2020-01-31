@@ -4,6 +4,7 @@ from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
 
+from geostore.db.schemas import schema_to_schemamodel
 from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
 from geostore.validators import (validate_json_schema_data,
@@ -93,6 +94,13 @@ class LayerSerializer(serializers.ModelSerializer):
 
     def get_tilejson(self, obj):
         return urlunquote(reverse('layer-tilejson', args=[obj.pk]))
+
+    def save(self, **kwargs):
+        schema = self.validated_data.pop("schema", None)
+        layer = super().save(**kwargs)
+        if schema:
+            schema_to_schemamodel(layer, schema)
+        return layer
 
     class Meta:
         model = Layer

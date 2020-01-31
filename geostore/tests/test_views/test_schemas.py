@@ -2,7 +2,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from geostore.tests.factories import LayerFactory, UserFactory
+from geostore.tests.factories import LayerFactory, UserFactory, SchemaFactory
 
 
 class SchemaValidationTest(APITestCase):
@@ -10,6 +10,9 @@ class SchemaValidationTest(APITestCase):
         self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
         self.client.force_authenticate(user=self.user)
         self.no_schema_layer = LayerFactory(name="no schema", geom_type=None)
+        self.property_schema_layer = LayerFactory(name="tree")
+        SchemaFactory.create(title="Name", layer=self.property_schema_layer)
+        SchemaFactory.create(title="Age", prop_type="integer", layer=self.property_schema_layer)
         self.valid_schema = {
             "properties": {
                 "name": {
@@ -20,9 +23,6 @@ class SchemaValidationTest(APITestCase):
                 }
             }
         }
-        self.property_schema_layer = LayerFactory(
-            name="tree",
-            schema=self.valid_schema)
 
     def test_create_layer_without_valid_schema(self):
         """

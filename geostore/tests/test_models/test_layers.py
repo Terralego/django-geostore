@@ -3,19 +3,20 @@ import json
 import tempfile
 
 from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from geostore.models import Layer
+from geostore.models import Layer, LayerSchemaProperty
 from geostore.tests.factories import (FeatureFactory, LayerFactory,
-                                      LayerSchemaFactory, UserFactory)
+                                      LayerWithSchemaFactory, UserFactory)
 from geostore.tests.utils import get_files_tests
 from geostore.transformations import set_geometry_from_options
 
 
 class LayerModelTestCase(TestCase):
     def setUp(self):
-        self.layer_schema = LayerSchemaFactory()
+        self.layer_schema = LayerWithSchemaFactory()
 
     def test_get_property_title_defined(self):
         """ method should return property title """
@@ -24,7 +25,7 @@ class LayerModelTestCase(TestCase):
 
     def test_get_property_title_undefined(self):
         """ method should return property name """
-        prop = 'name'
+        prop = 'Name'
         self.assertEqual(self.layer_schema.get_property_title(prop),
                          prop)
 
@@ -42,6 +43,19 @@ class LayerModelTestCase(TestCase):
     def test_get_property_type_undefined(self):
         """ method should return None if property doesn't exist """
         self.assertIsNone(self.layer_schema.get_property_type('unknown'))
+
+    def test_schema_without_slug(self):
+        LayerSchemaProperty.objects.create(required=False, prop_type="string", layer=self.layer_schema)
+        self.assertEqual(len(self.layer_schema.schema['properties']),
+                         LayerSchemaProperty.objects.filter(layer=self.layer_schema).count() - 1)
+
+    def test_schema_array_type_fail(self):
+        with self.assertRaisesRegexp(ValidationError, 'Array type is only for array properties'):
+            LayerSchemaProperty.objects.create(required=False, array_type="string", layer=self.layer_schema)
+
+    def test_schema_array_type_fail_2(self):
+        with self.assertRaisesRegexp(ValidationError, 'Array type is mandatory for array'):
+            LayerSchemaProperty.objects.create(required=False, prop_type="array", layer=self.layer_schema)
 
 
 class LayerFromCSVDictReaderTestCase(TestCase):
