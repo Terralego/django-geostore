@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geostore', '0032_auto_20191016_0844'),
+        ('geostore', '0036_auto_20200116_0926'),
     ]
 
     operations = [
@@ -16,11 +16,14 @@ class Migration(migrations.Migration):
             name='LayerSchemaProperty',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('slug', models.SlugField()),
+                ('slug', models.SlugField(editable=False)),
                 ('title', models.CharField(max_length=250)),
-                ('prop_type', models.CharField(max_length=50)),
-                ('options', django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Define extra options to json schema property')),
+                ('prop_type', models.CharField(choices=[('string', 'String'), ('integer', 'Integer'), ('number', 'Number'), ('boolean', 'Boolean'), ('array', 'Array')], max_length=50)),
+                ('options', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Define extra options to json schema property')),
                 ('layer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='schema_properties', to='geostore.Layer')),
+                ('array_type', models.CharField(blank=True, choices=[('string', 'String'), ('integer', 'Integer'), ('number', 'Number'), ('boolean', 'Boolean'), ('object', 'Object')], max_length=50)),
+                ('required', models.BooleanField(default=False)),
+                ('editable', models.BooleanField(default=True)),
             ],
             options={
                 'verbose_name': 'Schema property',
@@ -31,11 +34,13 @@ class Migration(migrations.Migration):
             name='ArrayObjectProperty',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('slug', models.SlugField()),
+                ('slug', models.SlugField(editable=False)),
                 ('title', models.CharField(max_length=250)),
-                ('prop_type', models.CharField(max_length=50)),
-                ('options', django.contrib.postgres.fields.jsonb.JSONField(default=dict, help_text='Define extra options to json schema property')),
+                ('prop_type', models.CharField(choices=[('string', 'String'), ('integer', 'Integer'), ('number', 'Number'), ('boolean', 'Boolean'), ('array', 'Array')], max_length=50)),
+                ('options', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Define extra options to json schema property')),
                 ('array_property', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='array_properties', to='geostore.LayerSchemaProperty')),
+                ('array_type', models.CharField(blank=True, choices=[('string', 'String'), ('integer', 'Integer'), ('number', 'Number'), ('boolean', 'Boolean')], max_length=50)),
+                ('required', models.BooleanField(default=False)),
             ],
             options={
                 'verbose_name': 'Array object schema property',

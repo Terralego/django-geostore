@@ -15,7 +15,7 @@ def move_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geostore', '0038_merge_20191211_1306'),
+        ('geostore', '0037_arrayobjectproperty_layerschemaproperty'),
     ]
 
     operations = [
