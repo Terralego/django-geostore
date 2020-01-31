@@ -46,7 +46,7 @@ class FeatureSerializer(serializers.ModelSerializer):
         Validate schema if exists
         """
         if self.get_layer():
-            validate_json_schema_data(data, self.get_layer().generated_schema)
+            validate_json_schema_data(data, self.get_layer().schema)
         return data
 
     class Meta:
@@ -74,7 +74,7 @@ class LayerSerializer(serializers.ModelSerializer):
     routing_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
-    schema = serializers.JSONField(required=False, validators=[validate_json_schema], source='generated_schema')
+    schema = serializers.JSONField(required=False, validators=[validate_json_schema])
     layer_intersects = serializers.SerializerMethodField()
     tilejson = serializers.SerializerMethodField()
     layer_groups = GroupSerializer(many=True, read_only=True)
@@ -96,8 +96,8 @@ class LayerSerializer(serializers.ModelSerializer):
         return urlunquote(reverse('layer-tilejson', args=[obj.pk]))
 
     def save(self, **kwargs):
-        schema = self.validated_data.pop("generated_schema", None)
-        layer = super(LayerSerializer, self).save(**kwargs)
+        schema = self.validated_data.pop("schema", None)
+        layer = super().save(**kwargs)
         if schema:
             schema_to_schemamodel(layer, schema)
         return layer

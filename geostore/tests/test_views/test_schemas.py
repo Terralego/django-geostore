@@ -11,8 +11,8 @@ class SchemaValidationTest(APITestCase):
         self.client.force_authenticate(user=self.user)
         self.no_schema_layer = LayerFactory(name="no schema", geom_type=None)
         self.property_schema_layer = LayerFactory(name="tree")
-        SchemaFactory.create(slug="name", title="Name", layer=self.property_schema_layer)
-        SchemaFactory.create(slug="age", title="Age", prop_type="integer", layer=self.property_schema_layer)
+        SchemaFactory.create(title="Name", layer=self.property_schema_layer)
+        SchemaFactory.create(title="Age", prop_type="integer", layer=self.property_schema_layer)
         self.valid_schema = {
             "properties": {
                 "name": {

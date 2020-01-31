@@ -14,8 +14,8 @@ class LayerFeatureListOrderingTestCase(APITestCase):
         self.property_schema_layer = LayerFactory(
             name="tree",
         )
-        SchemaFactory.create(slug="name", title="Name", layer=self.property_schema_layer)
-        SchemaFactory.create(slug="age", title="Age", prop_type="int", layer=self.property_schema_layer)
+        SchemaFactory.create(title="Name", layer=self.property_schema_layer)
+        SchemaFactory.create(title="Age", prop_type="int", layer=self.property_schema_layer)
         Feature.objects.bulk_create([
             Feature(layer=self.property_schema_layer,
                     properties={'name': '1',
@@ -87,8 +87,8 @@ class LayerFeatureListSearchTestCase(APITestCase):
         self.property_schema_layer = LayerFactory(
             name="tree",
         )
-        SchemaFactory.create(slug="name", title="Name", layer=self.property_schema_layer)
-        SchemaFactory.create(slug="age", title="Age", prop_type="int", layer=self.property_schema_layer)
+        SchemaFactory.create(title="Name", layer=self.property_schema_layer)
+        SchemaFactory.create(title="Age", prop_type="int", layer=self.property_schema_layer)
         Feature.objects.bulk_create([
             Feature(layer=self.property_schema_layer,
                     properties={'name': 'John',

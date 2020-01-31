@@ -88,7 +88,6 @@ class UserFactory(factory.DjangoModelFactory):
 
 
 class SchemaFactory(factory.DjangoModelFactory):
-    slug = factory.Sequence(lambda n: "property%s" % n)
     prop_type = "string"
     layer = factory.SubFactory(Layer)
 

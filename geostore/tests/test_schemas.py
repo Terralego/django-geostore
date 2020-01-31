@@ -117,12 +117,12 @@ class SchemaToModelSchemaTestCase(TestCase):
         self.maxDiff = None
         schema_complex_before = deepcopy(schema_complex)
         schema_to_schemamodel(self.layer, schema_complex)
-        self.assertCountEqual(self.layer.generated_schema, schema_complex_before)
-        schema = self.layer.generated_schema
+        self.assertCountEqual(self.layer.schema, schema_complex_before)
+        schema = self.layer.schema
         self.assertDictEqual(schema, schema_complex_before)
 
     def test_empty_schema(self):
         self.maxDiff = None
         schema_to_schemamodel(self.layer, {})
-        schema = self.layer.generated_schema
+        schema = self.layer.schema
         self.assertDictEqual(schema, {})

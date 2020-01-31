@@ -21,7 +21,7 @@ class LayerModelTestCase(TestCase):
     def test_get_property_title_defined(self):
         """ method should return property title """
         self.assertEqual(self.layer_schema.get_property_title('age'),
-                         self.layer_schema.generated_schema['properties']['age']['title'])
+                         self.layer_schema.schema['properties']['age']['title'])
 
     def test_get_property_title_undefined(self):
         """ method should return property name """
@@ -38,22 +38,22 @@ class LayerModelTestCase(TestCase):
     def test_get_property_type_defined(self):
         """ method should return property type if property exists """
         self.assertEqual(self.layer_schema.get_property_type('age'),
-                         self.layer_schema.generated_schema['properties']['age']['type'])
+                         self.layer_schema.schema['properties']['age']['type'])
 
     def test_get_property_type_undefined(self):
         """ method should return None if property doesn't exist """
         self.assertIsNone(self.layer_schema.get_property_type('unknown'))
 
-    def test_generated_schema_without_slug(self):
+    def test_schema_without_slug(self):
         LayerSchemaProperty.objects.create(required=False, prop_type="string", layer=self.layer_schema)
-        self.assertEqual(len(self.layer_schema.generated_schema['properties']),
+        self.assertEqual(len(self.layer_schema.schema['properties']),
                          LayerSchemaProperty.objects.filter(layer=self.layer_schema).count() - 1)
 
-    def test_generated_schema_array_type_fail(self):
+    def test_schema_array_type_fail(self):
         with self.assertRaisesRegexp(ValidationError, 'Array type is only for array properties'):
             LayerSchemaProperty.objects.create(required=False, array_type="string", layer=self.layer_schema)
 
-    def test_generated_schema_array_type_fail_2(self):
+    def test_schema_array_type_fail_2(self):
         with self.assertRaisesRegexp(ValidationError, 'Array type is mandatory for array'):
             LayerSchemaProperty.objects.create(required=False, prop_type="array", layer=self.layer_schema)
 

@@ -301,8 +301,8 @@ class Layer(LayerBasedModelMixin):
         """
         Return properties based on layer features or layer schema definition
         """
-        if self.generated_schema:
-            results = list(self.generated_schema.get('properties', {}).keys())
+        if self.schema:
+            results = list(self.schema.get('properties', {}).keys())
 
         else:
             feature_table = Feature._meta.db_table
@@ -329,7 +329,7 @@ class Layer(LayerBasedModelMixin):
 
     def get_property_title(self, prop):
         """ Get json property title with its name. Return its name if not defined. """
-        json_form_properties = self.generated_schema.get('properties', {})
+        json_form_properties = self.schema.get('properties', {})
         if prop in json_form_properties:
             data = json_form_properties[prop]
             title = data.get('title', prop)
@@ -340,7 +340,7 @@ class Layer(LayerBasedModelMixin):
     def get_property_type(self, prop):
         """ Get json property type with its name """
         prop_type = None
-        json_form_properties = self.generated_schema.get('properties', {})
+        json_form_properties = self.schema.get('properties', {})
 
         if prop in json_form_properties:
             data = json_form_properties[prop]
@@ -361,7 +361,7 @@ class Layer(LayerBasedModelMixin):
     def __str__(self):
         return f"{self.name}"
 
-    def generated_schema_array(self, prop, options):
+    def schema_array(self, prop, options):
         array_type = prop.array_type
         if not array_type == 'object':
             options["items"]["type"] = array_type
@@ -391,7 +391,7 @@ class Layer(LayerBasedModelMixin):
         return options
 
     @property
-    def generated_schema(self):
+    def schema(self):
         """ Generate JSON schema according to linked schema properties  """
         schema = {}  # keep empty schema if no property defined to avoid validation
         schema_properties = self.schema_properties.filter(editable=True).prefetch_related('array_properties')
@@ -419,7 +419,7 @@ class Layer(LayerBasedModelMixin):
 
             if prop.prop_type == 'array':
                 # specify final type for arrays
-                options = self.generated_schema_array(prop, options)
+                options = self.schema_array(prop, options)
             prop_schema[prop.slug].update(options)
 
             schema['properties'].update(prop_schema)
@@ -532,7 +532,7 @@ class Feature(BaseUpdatableModel):
         Validate properties according schema if provided
         """
         validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
-        validate_json_schema_data(self.properties, self.layer.generated_schema)
+        validate_json_schema_data(self.properties, self.layer.schema)
 
     class Meta:
         ordering = ['id']
@@ -610,7 +610,7 @@ class LayerExtraGeom(LayerBasedModelMixin):
     order = models.PositiveSmallIntegerField(default=0)
     slug = models.SlugField(editable=False)
     title = models.CharField(max_length=250)
-    editable = models.BooleanField(default=True)
+    editable = models.BooleanField(default=True, db_index=True)
 
     @cached_property
     def name(self):
@@ -696,8 +696,8 @@ class LayerSchemaProperty(SchemaObjectProperty):
         return f"{self.layer}: {self.slug} ({self.prop_type})"
 
     def clean(self):
-        super(LayerSchemaProperty, self).clean()
-        validate_json_schema(self.layer.generated_schema)
+        super().clean()
+        validate_json_schema(self.layer.schema)
 
     class Meta:
         verbose_name = _("Schema property")
@@ -718,8 +718,8 @@ class ArrayObjectProperty(SchemaObjectProperty):
         return f"{self.array_property}: {self.slug} ({self.prop_type})"
 
     def clean(self):
-        super(ArrayObjectProperty, self).clean()
-        validate_json_schema(self.array_property.layer.generated_schema)
+        super().clean()
+        validate_json_schema(self.array_property.layer.schema)
 
     class Meta:
         verbose_name = _("Array object schema property")
