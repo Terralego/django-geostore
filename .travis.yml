@@ -13,7 +13,7 @@ env:
   matrix:
   - DJANGO_VERSION=2.2.*
   - DJANGO_VERSION=3.0.*
-  #- DJANGO_VERSION=dev
+  - DJANGO_VERSION=dev
 
 services:
 - postgresql
@@ -57,6 +57,9 @@ after_success:
   - codecov
 
 jobs:
+  allow_failures:
+    - env: DJANGO_VERSION=dev
+
   include:
   - stage: lint
     install:
