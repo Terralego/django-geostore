@@ -4,6 +4,8 @@ CHANGELOG
 0.3.17.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* Factorize Feature Extra Geom serializer to be customized directly in ViewsSet
+
 
 0.3.16         (2020-01-27)
 ---------------------------
