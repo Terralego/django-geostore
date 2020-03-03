@@ -120,6 +120,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin,
 class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
+    serializer_class_extra_geom = FeatureExtraGeomSerializer
     renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer)
     filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField)
     filter_fields = ('properties', )
@@ -199,14 +200,14 @@ class FeatureViewSet(viewsets.ModelViewSet):
         extra_geometry = get_object_or_404(feature.extra_geometries.all(), pk=id_extra_feature)
         extra_layer = extra_geometry.layer_extra_geom
         if request.method == 'GET':
-            return Response(FeatureExtraGeomSerializer(extra_geometry).data)
+            return Response(self.serializer_class_extra_geom(extra_geometry).data)
         if not extra_layer.editable:
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         if request.method == 'DELETE':
             extra_geometry.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         elif request.method in ('PUT', 'PATCH'):
-            serializer = FeatureExtraGeomSerializer(data=request.data, instance=extra_geometry)
+            serializer = self.serializer_class_extra_geom(data=request.data, instance=extra_geometry)
             if serializer.is_valid():
                 serializer.save()
             else:
@@ -221,7 +222,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
         extra_layer = get_object_or_404(layer.extra_geometries.all(), pk=id_extra_layer)
         if not extra_layer.editable:
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        serializer = FeatureExtraGeomSerializer(data=request.data)
+        serializer = self.serializer_class_extra_geom(data=request.data)
         if serializer.is_valid():
             serializer.save(feature=feature, layer_extra_geom=extra_layer)
         else:
