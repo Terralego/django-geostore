@@ -15,7 +15,7 @@ from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.contrib.postgres.fields import JSONField
-from django.contrib.postgres.indexes import GistIndex
+from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
@@ -479,6 +479,7 @@ class Feature(BaseUpdatableModel):
             models.Index(fields=['updated_at', 'layer', ]),
             models.Index(fields=['identifier', ]),
             GistIndex(fields=['layer', 'geom']),
+            GinIndex(name='properties_gin_index', fields=['properties']),
         ]
         constraints = [
             # geometry should be valid
@@ -582,3 +583,11 @@ class FeatureExtraGeom(BaseUpdatableModel):
         unique_together = (
             ('feature', 'layer_extra_geom'),
         )
+        indexes = [
+            models.Index(fields=['identifier', ]),
+            GinIndex(name='feg_properties_gin_index', fields=['properties']),
+        ]
+        constraints = [
+            # geometry should be valid
+            models.CheckConstraint(check=models.Q(geom__isvalid=True), name='feg_geom_is_valid'),
+        ]
