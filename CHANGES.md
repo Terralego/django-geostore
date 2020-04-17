@@ -4,6 +4,10 @@ CHANGELOG
 0.3.18.dev0     (XXX-XX-XX)
 ---------------------------
 
+* Add GIN index on feature properties json field
+* Add GIST index on Feature Extra geometry
+* Add some B-Tree indexes
+
 
 0.3.17         (2020-03-04)
 ---------------------------
