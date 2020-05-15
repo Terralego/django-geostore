@@ -23,6 +23,7 @@ from geostore.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
     }})
 class VectorTilesNoLayerTestCase(APITestCase):
     group_slug = 'mygroup'
+
     @override_settings(ALLOWED_HOSTS=['localhost'])
     def test_group_tilejson_fail_no_layer(self):
         response = self.client.get(

@@ -24,7 +24,7 @@ class UpdateTopologyTestCase(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'update_topology',
-                f'--layer-pk=999',
+                '--layer-pk=999',
                 verbosity=0, stdout=output)
         self.assertEqual("Layer with pk 999 doesn't exist", str(error.exception))
 

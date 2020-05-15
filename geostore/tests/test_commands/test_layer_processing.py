@@ -26,7 +26,7 @@ class LayerProcessingTestCase(TestCase):
         call_command(
             'layer_processing',
             f'--layer-pk-ins={layer.id}',
-            f'--make-valid',
+            '--make-valid',
             verbosity=1, stdout=output)
         self.assertIn('The created layer pk is', output.getvalue())
         self.assertEqual(len(Layer.objects.all()), 2)
@@ -38,7 +38,7 @@ class LayerProcessingTestCase(TestCase):
         call_command(
             'layer_processing',
             f'--layer-pk-ins={layer.id}',
-            f'--make-valid',
+            '--make-valid',
             verbosity=1, stdout=output)
         self.assertIn('The created layer pk is', output.getvalue())
         self.assertEqual(len(Layer.objects.all()), 2)
@@ -51,7 +51,7 @@ class LayerProcessingTestCase(TestCase):
                 'layer_processing',
                 f'--layer-name-ins={layer_1.name}',
                 f'--layer-name-ins={layer_2.name}',
-                f'--make-valid',
+                '--make-valid',
                 verbosity=0)
         self.assertEqual(str(error.exception), 'Exactly one input layer required')
 
@@ -62,8 +62,8 @@ class LayerProcessingTestCase(TestCase):
         call_command(
             'layer_processing',
             f'--layer-pk-ins={layer.id}',
-            f'--make-valid',
-            f'--dry-run',
+            '--make-valid',
+            '--dry-run',
             verbosity=1, stdout=output)
         self.assertIn('The created layer pk is', output.getvalue())
         self.assertEqual(len(Layer.objects.all()), 1)
@@ -83,7 +83,7 @@ class LayerProcessingTestCase(TestCase):
             'layer_processing',
             f'--layer-name-ins={in_layer.name}',
             f'--layer-name-out={out_layer.name}',
-            f'--sql-centroid',
+            '--sql-centroid',
             verbosity=0)
 
         out_layer = Layer.objects.get(name='out')
@@ -109,7 +109,7 @@ class LayerProcessingTestCase(TestCase):
             'layer_processing',
             f'--layer-name-ins={in_layer.name}',
             f'--layer-pk-out={out_layer.pk}',
-            f'--sql-centroid',
+            '--sql-centroid',
             verbosity=0)
 
         out_layer = Layer.objects.get(name='out')
@@ -119,9 +119,9 @@ class LayerProcessingTestCase(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'layer_processing',
-                f'--layer-pk-ins=999',
-                f'--layer-name-out=out_fail',
-                f'--sql-centroid',
+                '--layer-pk-ins=999',
+                '--layer-name-out=out_fail',
+                '--sql-centroid',
                 verbosity=0)
         self.assertIn("layer-pk-ins: 999", str(error.exception))
 
@@ -129,9 +129,9 @@ class LayerProcessingTestCase(TestCase):
         with self.assertRaises(CommandError) as error:
             call_command(
                 'layer_processing',
-                f'--layer-name-ins=in_fail',
-                f'--layer-name-out=out_fail',
-                f'--sql-centroid',
+                '--layer-name-ins=in_fail',
+                '--layer-name-out=out_fail',
+                '--sql-centroid',
                 verbosity=0)
         self.assertIn("layer-name-ins: in_fail", str(error.exception))
 
@@ -141,8 +141,8 @@ class LayerProcessingTestCase(TestCase):
             call_command(
                 'layer_processing',
                 f'--layer-pk-ins={layer.pk}',
-                f'--layer-name-out=out_fail',
-                f'--sql-centroid',
+                '--layer-name-out=out_fail',
+                '--sql-centroid',
                 verbosity=0)
         self.assertIn("Layer with name out_fail doesn't exist", str(error.exception))
 
@@ -152,8 +152,8 @@ class LayerProcessingTestCase(TestCase):
             call_command(
                 'layer_processing',
                 f'--layer-pk-ins={layer.pk}',
-                f'--layer-pk-out=999',
-                f'--sql-centroid',
+                '--layer-pk-out=999',
+                '--sql-centroid',
                 verbosity=0)
         self.assertIn("Layer with pk 999 doesn't exist", str(error.exception))
 
@@ -176,8 +176,8 @@ class LayerProcessingTestCase(TestCase):
             'layer_processing',
             f'--layer-name-ins={in_layer.name}',
             f'--layer-pk-out={out_layer.pk}',
-            f'--sql-centroid',
-            f'-co',
+            '--sql-centroid',
+            '-co',
             verbosity=0)
 
         out_layer = Layer.objects.get(name='out')
@@ -189,7 +189,7 @@ class LayerProcessingTestCase(TestCase):
         call_command(
             'layer_processing',
             f'--layer-name-ins={layer.name}',
-            f'--python=geostore.tests.test_commands.test_layer_processing.python_function',
+            '--python=geostore.tests.test_commands.test_layer_processing.python_function',
             verbosity=0)
         self.assertTrue(Layer.objects.filter(name="New_name").exists())
 
@@ -199,7 +199,7 @@ class LayerProcessingTestCase(TestCase):
             call_command(
                 'layer_processing',
                 f'--layer-name-ins={layer.name}',
-                f'--python=geostore.tests.test_commands.test_layer_processing.python_function_raise',
+                '--python=geostore.tests.test_commands.test_layer_processing.python_function_raise',
                 verbosity=0)
 
     def test_layer_processing_sql_like_simple_sql(self):
@@ -207,6 +207,6 @@ class LayerProcessingTestCase(TestCase):
         call_command(
             'layer_processing',
             f'--layer-name-ins={layer.name}',
-            f'--sql=SELECT identifier, properties, ST_MakeValid(geom::geometry) AS geom FROM in0',
+            '--sql=SELECT identifier, properties, ST_MakeValid(geom::geometry) AS geom FROM in0',
             verbosity=0)
         self.assertEqual(len(Layer.objects.all()), 2)

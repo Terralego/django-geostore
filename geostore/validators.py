@@ -40,5 +40,5 @@ def validate_json_schema_data(value, schema):
 def validate_geom_type(layer_geom_type_id, feature_geom_type_id):
     if isinstance(layer_geom_type_id, int):
         if layer_geom_type_id != feature_geom_type_id:
-            raise ValidationError(message=f'Geometry type is not the same on the layer')
+            raise ValidationError(message='Geometry type is not the same on the layer')
     return feature_geom_type_id

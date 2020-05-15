@@ -128,16 +128,16 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         return max(
             app_settings.MIN_TILE_ZOOM,
             min([
-                l.layer_settings_with_default('tiles', 'minzoom')
-                for l in self.layers
+                layer.layer_settings_with_default('tiles', 'minzoom')
+                for layer in self.layers
             ], default=app_settings.MIN_TILE_ZOOM))
 
     def get_max_zoom(self):
         return min(
             app_settings.MAX_TILE_ZOOM,
             max([
-                l.layer_settings_with_default('tiles', 'maxzoom')
-                for l in self.layers
+                layer.layer_settings_with_default('tiles', 'maxzoom')
+                for layer in self.layers
             ], default=app_settings.MAX_TILE_ZOOM))
 
     def _join_group_settings_link(self, layers, *args):
