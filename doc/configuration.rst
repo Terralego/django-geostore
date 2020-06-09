@@ -33,15 +33,18 @@ INTERNAL_GEOMETRY_SRID
 It's the installation SRID, it must be set before the first migration and never change after installation,
 else you must create your own migrations to change your database SRID.
 
-HOSTNAME
+HOSTNAME (DEPRECATED)
 --------
 **Default: empty**
+
+No more used anymore. Instead of, original TILE URL use request.build_absolute_uri
+So, take care of your headers if you are behind a proxy to keep original host and scheme used in called request
 
 Used to feed ``TERRA_TILES_HOSTNAMES`` setting
 
 TERRA_TILES_HOSTNAMES
 ---------------------
-**Default: [HOSTNAME, ]**
+**Default: []**
 
 It contains the list of base URLs where are served the vector tiles.
 Since web browsers limit the number of connections to one domain name, a workaround is to use

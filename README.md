@@ -28,7 +28,7 @@ $ docker-compose run web /code/venv/bin/python3.7 ./manage.py test
 
 ### with pip :
 ```bash
-$ python3.7 -m venv venv
+$ python3 -m venv venv
 $ source activate venv/bin/activate
 pip install -e .[dev]
 ```

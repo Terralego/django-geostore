@@ -51,13 +51,13 @@ From Pypi:
 
 ::
 
-    pip install xxxxxxxxxx-xxxxxxxxxxxx
+    pip install django-geostore
 
 From Github:
 
 ::
 
-    pip install -e https://github.com/Terralego/django-geostore.git@master#egg=geostore
+    pip install -e https://github.com/Terralego/django-geostore.git@master#egg=django-geostore
 
 With git
 --------

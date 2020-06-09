@@ -197,16 +197,11 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         minzoom = self.get_min_zoom()
         maxzoom = self.get_max_zoom()
 
-        tile_path = self.get_tile_path()
-
         # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
         return {
             'tilejson': '3.0.0',
             'name': self.get_object().name,
-            'tiles': [
-                unquote(urljoin(hostname, tile_path))
-                for hostname in app_settings.TERRA_TILES_HOSTNAMES
-            ],
+            'tiles': self.get_tile_url_prefixes(),
             'minzoom': minzoom,
             'maxzoom': maxzoom,
             # bounds
@@ -215,6 +210,19 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             'description': self.get_description(),
             'vector_layers': self.get_vector_layers(),
         }
+
+    def get_tile_url_prefixes(self):
+        """ Generate absolute urls to use by mapbox-gl js to load vector tiles """
+        if app_settings.TERRA_TILES_HOSTNAMES:
+            return [
+                unquote(urljoin(hostname, self.get_tile_path()))
+                for hostname in app_settings.TERRA_TILES_HOSTNAMES
+            ]
+        else:
+            absolute_uri = self.request.build_absolute_uri('/')
+            return [
+                unquote(urljoin(absolute_uri, self.get_tile_path())),
+            ]
 
     def get_last_update(self):
         features = Feature.objects.filter(layer__in=self.layers).order_by('-updated_at')
