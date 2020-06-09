@@ -25,11 +25,12 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from fiona.crs import from_epsg
 
-from . import GeometryTypes, settings as app_settings
+from . import GeometryTypes
 from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .routing.decorators import topology_update
+from .settings import app_settings
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance

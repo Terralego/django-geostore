@@ -10,9 +10,8 @@ from django.utils.html import escape
 from django.utils.timezone import now
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from geostore.settings import app_settings
 from ..models import Feature
-from .. import settings as app_settings
 from ..tokens import tiles_token_generator
 from .helpers import VectorTile
 

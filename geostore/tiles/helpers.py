@@ -11,7 +11,7 @@ from . import EARTH_RADIUS, EPSG_3857
 from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
                     ST_SimplifyPreserveTopology, ST_Transform)
 from .sigtools import SIGTools
-from .. import settings as app_settings
+from ..settings import app_settings
 
 
 def get_cache_version(layer):

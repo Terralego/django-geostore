@@ -1,6 +1,6 @@
 from django.db import transaction
 
-from geostore import settings as app_settings
+from geostore.settings import app_settings
 from geostore.tasks import feature_update_relations_destinations, layer_relations_set_destinations
 
 

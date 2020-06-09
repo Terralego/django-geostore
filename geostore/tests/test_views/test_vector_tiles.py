@@ -1,5 +1,4 @@
 import json
-from importlib import reload
 from urllib.parse import unquote
 
 from django.core.management import call_command
@@ -9,8 +8,9 @@ from rest_framework import status
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from rest_framework.test import APITestCase
 
-from geostore import GeometryTypes, settings
+from geostore import GeometryTypes
 from geostore.models import Layer, LayerGroup, LayerExtraGeom
+from geostore.settings import app_settings
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
 from geostore.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
@@ -24,7 +24,6 @@ from geostore.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 class VectorTilesNoLayerTestCase(APITestCase):
     group_slug = 'mygroup'
 
-    @override_settings(ALLOWED_HOSTS=['localhost'])
     def test_group_tilejson_fail_no_layer(self):
         response = self.client.get(
             reverse('group-tilejson', args=[self.group_slug]),
@@ -38,11 +37,6 @@ class VectorTilesNoLayerTestCase(APITestCase):
         self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
 
 
-@override_settings(CACHES={
-    'default': {
-        'BACKEND': ('django.core.cache.backends'
-                    '.locmem.LocMemCache')
-    }})
 class VectorTilesTestCase(TestCase):
     group_name = 'mygroup'
 
@@ -152,28 +146,28 @@ class VectorTilesTestCase(TestCase):
             f"http://localhost{unquoted_reverse}"
         )
 
-    @override_settings(TERRA_TILES_HOSTNAMES=['http://a.tiles.local',
-                                              'http://b.tiles.local',
-                                              'http://c.tiles.local'])
     def test_layer_tilejson_with_TERRA_TILES_HOSTNAMES(self):
-        reload(settings)
-        response = self.client.get(
-            reverse('layer-tilejson', args=[self.layer.pk]),
-            HTTP_HOST='localhost'
-        )
-        self.assertEqual(HTTP_200_OK, response.status_code)
-        self.assertGreater(len(response.content), 0)
+        with override_settings(GEOSTORE={'TERRA_TILES_HOSTNAMES': ['http://a.tiles.local',
+                                                                   'http://b.tiles.local',
+                                                                   'http://c.tiles.local']}):
+            response = self.client.get(
+                reverse('layer-tilejson', args=[self.layer.pk]),
+                HTTP_HOST='localhost'
+            )
+            self.assertEqual(HTTP_200_OK, response.status_code)
+            self.assertGreater(len(response.content), 0)
 
-        tilejson = response.json()
-        self.assertTrue(tilejson['attribution'])
-        self.assertTrue(tilejson['description'] is None)
-        self.assertGreater(len(tilejson['vector_layers']), 0)
-        self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
-        unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
-        self.assertListEqual(
-            tilejson['tiles'],
-            [f"{host}{unquoted_reverse}" for host in settings.TERRA_TILES_HOSTNAMES]
-        )
+            tilejson = response.json()
+            self.assertTrue(tilejson['attribution'])
+            self.assertTrue(tilejson['description'] is None)
+            self.assertGreater(len(tilejson['vector_layers']), 0)
+            self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
+            unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
+
+            self.assertListEqual(
+                tilejson['tiles'],
+                [f"{host}{unquoted_reverse}" for host in app_settings.TERRA_TILES_HOSTNAMES]
+            )
 
     def test_layer_tilejson_without_features(self):
         self.layer.features.all().delete()

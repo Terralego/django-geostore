@@ -5,7 +5,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from geostore.models import Layer
 from geostore.routing.helpers import Routing
-from .. import settings as app_settings
+from geostore.settings import app_settings
 from ..tests.factories import FeatureFactory, UserFactory
 from ..tests.utils import get_files_tests
 
