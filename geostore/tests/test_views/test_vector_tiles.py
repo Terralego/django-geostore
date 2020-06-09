@@ -6,7 +6,6 @@ from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.utils.http import urlunquote
 from geostore import GeometryTypes, settings
 from rest_framework import status
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
@@ -129,10 +128,10 @@ class VectorTilesTestCase(TestCase):
         self.assertTrue(tile_json['description'] is None)
         self.assertGreater(len(tile_json['vector_layers']), 0)
         self.assertGreater(len(tile_json['vector_layers'][0]['fields']), 0)
+        unquoted_reverse = unquote(reverse('group-tiles-pattern', args=[self.mygroup.slug]))
         self.assertEqual(
             tile_json['tiles'][0],
-            urlunquote(reverse('group-tiles-pattern',
-                               args=[self.mygroup.slug]))
+            f"http://localhost{unquoted_reverse}"
         )
 
     def test_layer_tilejson(self):
@@ -148,10 +147,10 @@ class VectorTilesTestCase(TestCase):
         self.assertTrue(tilejson['description'] is None)
         self.assertGreater(len(tilejson['vector_layers']), 0)
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
+        unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
         self.assertEqual(
             tilejson['tiles'][0],
-            urlunquote(reverse('layer-tiles-pattern',
-                               args=[self.layer.pk]))
+            f"http://localhost{unquoted_reverse}"
         )
 
     @override_settings(TERRA_TILES_HOSTNAMES=['http://a.tiles.local',
