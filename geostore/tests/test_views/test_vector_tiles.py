@@ -1,4 +1,5 @@
 import json
+from importlib import reload
 from urllib.parse import unquote
 
 from django.core.management import call_command
@@ -198,24 +199,24 @@ class VectorTilesTestCase(TestCase):
 
     def test_vector_group_tiles_view(self):
         # first query that generate the cache
-        response = self.client.get(
-            reverse(
-                'group-tiles',
-                kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
+        with self.assertNumQueries(9):
+            # verify data is cached
+            response = self.client.get(
+                reverse(
+                    'group-tiles',
+                    kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
-        query_count = len(connection.queries)
+
         original_content = response.content
 
-        # verify data is cached
-        response = self.client.get(
-            reverse(
-                'group-tiles',
-                kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
-        self.assertEqual(
-            len(connection.queries),
-            query_count - 3
-        )
+        with self.assertNumQueries(6):
+            # verify data is cached
+            response = self.client.get(
+                reverse(
+                    'group-tiles',
+                    kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
+
         self.assertEqual(
             original_content,
             response.content
