@@ -47,7 +47,7 @@ setup(
         "djangorestframework-gis>=0.15",
         'django-filter',
         "deepmerge",
-        "requests[security]",
+        "requests",
         "mercantile>=1.0",
         "psycopg2",
         "Fiona",
