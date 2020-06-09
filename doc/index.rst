@@ -1,11 +1,15 @@
 |Build Status| |Maintainability| |codecov|
 
 django-geostore
-=======================
+===============
 
-Geographic data store to handle vector and feature and layer.
+Geographic data store to handle vector data.
 
-Provide storage, endpoint to manage and generate vector tiles
+* Store your geographic data in layers
+* Define and validate geographic type by layer
+* Define and validate properties with json schema validation
+* Use provided API to manage data (list / creation / update / deletion /
+* Generate and serve JSON, Shape files, GeoJSON and Vector Tiles (mapbox protobuf) directly from PostGIS query ST_ASMVT
 
 .. toctree::
 

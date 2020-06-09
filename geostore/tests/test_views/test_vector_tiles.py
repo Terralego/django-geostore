@@ -153,7 +153,7 @@ class VectorTilesTestCase(TestCase):
         )
 
     def test_layer_tilejson_with_TERRA_TILES_HOSTNAMES(self):
-        # path settings manually because django test cant handle app settings correctly
+        # patch settings manually because django test evaluate app settings before django.setup()
         settings.TERRA_TILES_HOSTNAMES = ['http://a.tiles.local',
                                           'http://b.tiles.local',
                                           'http://c.tiles.local']
