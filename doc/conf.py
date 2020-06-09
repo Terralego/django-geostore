@@ -19,7 +19,7 @@ sys.path.insert(0, root)
 
 # -- Project information -----------------------------------------------------
 
-project = 'geostore-backend-crud'
+project = 'django-geostore'
 copyright = '2019, Makina Corpus'
 author = 'Makina Corpus'
 

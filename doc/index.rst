@@ -3,7 +3,9 @@
 django-geostore
 =======================
 
-Terralego backend app
+Geographic data store to handle vector and feature and layer.
+
+Provide storage, endpoint to manage and generate vector tiles
 
 .. toctree::
 
