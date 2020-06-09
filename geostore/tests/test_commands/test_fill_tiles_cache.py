@@ -2,7 +2,6 @@ from io import StringIO
 
 from django.core.cache import cache
 from django.core.management import call_command
-from django.db import connection
 from django.test import TestCase, override_settings
 
 from geostore.models import LayerGroup
@@ -10,7 +9,7 @@ from geostore.tests.factories import LayerFactory
 from geostore.tiles.helpers import VectorTile, get_cache_version
 
 
-@override_settings(DEBUG=True, CACHES={
+@override_settings(CACHES={
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
     }})
@@ -55,20 +54,16 @@ class FillTilesCacheTestCase(TestCase):
         cache_version = get_cache_version(self.layer)
 
         x, y, z = 515, 373, 10
-        query_count_before = len(connection.queries)
 
-        call_command('fill_tiles_cache', stdout=StringIO())
-
-        query_count_after = len(connection.queries)
-        self.assertLess(query_count_before, query_count_after)
+        with self.assertNumQueries(9):
+            call_command('fill_tiles_cache', stdout=StringIO())
 
         tile.get_tile(x, y, z)
 
-        self.assertIsNotNone(
-            cache.get(
-                tile.get_tile_cache_key(x, y, z),
-                version=cache_version,
+        with self.assertNumQueries(0):
+            self.assertIsNotNone(
+                cache.get(
+                    tile.get_tile_cache_key(x, y, z),
+                    version=cache_version,
+                )
             )
-        )
-
-        self.assertEqual(len(connection.queries), query_count_after + 1)

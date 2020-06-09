@@ -1,11 +1,10 @@
 from django.contrib.gis.geos import LineString, Point
-from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
-from geostore.routing.helpers import Routing
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from geostore.models import Layer
+from geostore.routing.helpers import Routing
 from .. import settings as app_settings
 from ..tests.factories import FeatureFactory, UserFactory
 from ..tests.utils import get_files_tests
@@ -120,32 +119,24 @@ class RoutingTestCase(TestCase):
         self.assertTrue(points[0].distance(start) <= 0.001)
         self.assertTrue(points[-1].distance(end) <= 0.001)
 
+    @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
     def test_routing_cache(self):
-        geometry = LineString(*[Point(
-            *point['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points])
-
-        with self.settings(DEBUG=True,
-                           CACHES={'default': {
-                               'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}
-                           }):
-
+        geometry = LineString(
+            *[Point(*point['coordinates'],
+                    srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points
+              ]
+        )
+        with self.assertNumQueries(12):
             self.client.post(reverse('layer-route',
                                      args=[self.layer.pk]),
                              {'geom': geometry.geojson, })
 
-            initial_count = len(connection.queries)
-            counts = []
+        with self.assertNumQueries(20):
             for x in range(2):
                 self.client.post(
                     reverse('layer-route', args=[self.layer.pk]),
                     {'geom': geometry.geojson, }
                 )
-
-                counts.append(len(connection.queries))
-
-            self.assertTrue(all([counts[0] == c for c in counts]))
-            self.assertTrue(all([initial_count > c for c in counts]))
 
     def test_layer_with_polygon(self):
         # test that a layer with another kind of geometry raise the right

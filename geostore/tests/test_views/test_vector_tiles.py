@@ -1,4 +1,5 @@
 import json
+from importlib import reload
 from urllib.parse import unquote
 
 from django.core.management import call_command
@@ -152,13 +153,14 @@ class VectorTilesTestCase(TestCase):
             f"http://localhost{unquoted_reverse}"
         )
 
+    @override_settings(TERRA_TILES_HOSTNAMES=['http://a.tiles.local',
+                                              'http://b.tiles.local',
+                                              'http://c.tiles.local'])
     def test_layer_tilejson_with_TERRA_TILES_HOSTNAMES(self):
-        # patch settings manually because django test evaluate app settings before django.setup()
-        settings.TERRA_TILES_HOSTNAMES = ['http://a.tiles.local',
-                                          'http://b.tiles.local',
-                                          'http://c.tiles.local']
+        reload(settings)
         response = self.client.get(
-            reverse('layer-tilejson', args=[self.layer.pk])
+            reverse('layer-tilejson', args=[self.layer.pk]),
+            HTTP_HOST='localhost'
         )
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
@@ -173,7 +175,6 @@ class VectorTilesTestCase(TestCase):
             tilejson['tiles'],
             [f"{host}{unquoted_reverse}" for host in settings.TERRA_TILES_HOSTNAMES]
         )
-        settings.TERRA_TILES_HOSTNAMES = []
 
     def test_layer_tilejson_without_features(self):
         self.layer.features.all().delete()
@@ -203,7 +204,8 @@ class VectorTilesTestCase(TestCase):
             response = self.client.get(
                 reverse(
                     'group-tiles',
-                    kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
+                    kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373})
+            )
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
 
@@ -214,7 +216,8 @@ class VectorTilesTestCase(TestCase):
             response = self.client.get(
                 reverse(
                     'group-tiles',
-                    kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
+                    kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373})
+            )
 
         self.assertEqual(
             original_content,
@@ -229,28 +232,22 @@ class VectorTilesTestCase(TestCase):
 
     def test_vector_layer_tiles_view(self):
         # first query that generate the cache
-        response = self.client.get(
-            reverse(
-                'layer-tiles',
-                kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
+        with self.assertNumQueries(10):
+            response = self.client.get(
+                reverse(
+                    'layer-tiles',
+                    kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373})
+            )
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
-        query_count = len(connection.queries)
-        original_content = response.content
 
-        # verify data is cached
-        response = self.client.get(
-            reverse(
-                'layer-tiles',
-                kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
-        self.assertEqual(
-            len(connection.queries),
-            query_count - 3
-        )
-        self.assertEqual(
-            original_content,
-            response.content
-        )
+        with self.assertNumQueries(7):
+            # verify data is cached
+            response = self.client.get(
+                reverse(
+                    'layer-tiles',
+                    kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373})
+            )
 
         response = self.client.get(
             reverse('layer-tiles', kwargs={'pk': self.layer.pk, 'z': 10, 'x': 1, 'y': 1}))
