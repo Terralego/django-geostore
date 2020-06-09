@@ -1,5 +1,4 @@
 import json
-from importlib import reload
 from urllib.parse import unquote
 
 from django.core.management import call_command
