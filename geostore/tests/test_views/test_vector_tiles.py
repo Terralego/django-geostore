@@ -3,7 +3,6 @@ from importlib import reload
 from urllib.parse import unquote
 
 from django.core.management import call_command
-from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
