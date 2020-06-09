@@ -1,4 +1,3 @@
-import importlib
 import json
 from urllib.parse import unquote
 
@@ -6,11 +5,11 @@ from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from geostore import GeometryTypes, settings
 from rest_framework import status
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from rest_framework.test import APITestCase
 
+from geostore import GeometryTypes, settings
 from geostore.models import Layer, LayerGroup, LayerExtraGeom
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
@@ -39,7 +38,7 @@ class VectorTilesNoLayerTestCase(APITestCase):
         self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
 
 
-@override_settings(DEBUG=True, CACHES={
+@override_settings(CACHES={
     'default': {
         'BACKEND': ('django.core.cache.backends'
                     '.locmem.LocMemCache')
@@ -48,9 +47,9 @@ class VectorTilesTestCase(TestCase):
     group_name = 'mygroup'
 
     def setUp(self):
-        settings = {'metadata': {'attribution': 'plop'}}
+        layer_settings = {'metadata': {'attribution': 'plop'}}
 
-        self.layer = LayerFactory(name="layerLine", settings=settings)
+        self.layer = LayerFactory(name="layerLine", settings=layer_settings)
         self.layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
                                                               geom_type=GeometryTypes.LineString,
                                                               title='Extra geometry')
@@ -86,7 +85,7 @@ class VectorTilesTestCase(TestCase):
             }
         ''')
 
-        self.layerPoint = LayerFactory(name="layerPoint", settings=settings)
+        self.layerPoint = LayerFactory(name="layerPoint", settings=layer_settings)
         self.yourgroup = LayerGroup.objects.create(name='yourgroup', slug='yourgroup')
         self.yourgroup.layers.add(self.layerPoint)
 
@@ -153,11 +152,11 @@ class VectorTilesTestCase(TestCase):
             f"http://localhost{unquoted_reverse}"
         )
 
-    @override_settings(TERRA_TILES_HOSTNAMES=['http://a.tiles.local',
-                                              'http://b.tiles.local',
-                                              'http://c.tiles.local'])
     def test_layer_tilejson_with_TERRA_TILES_HOSTNAMES(self):
-        importlib.reload(settings)
+        # path settings manually because django test cant handle app settings correctly
+        settings.TERRA_TILES_HOSTNAMES = ['http://a.tiles.local',
+                                          'http://b.tiles.local',
+                                          'http://c.tiles.local']
         response = self.client.get(
             reverse('layer-tilejson', args=[self.layer.pk])
         )
@@ -174,6 +173,7 @@ class VectorTilesTestCase(TestCase):
             tilejson['tiles'],
             [f"{host}{unquoted_reverse}" for host in settings.TERRA_TILES_HOSTNAMES]
         )
+        settings.TERRA_TILES_HOSTNAMES = []
 
     def test_layer_tilejson_without_features(self):
         self.layer.features.all().delete()
