@@ -1,4 +1,5 @@
 import json
+from time import sleep
 from urllib.parse import unquote
 
 from django.core.management import call_command
@@ -10,6 +11,7 @@ from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
 from geostore.models import Layer, LayerGroup, LayerExtraGeom
+from geostore.settings import app_settings
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
 from geostore.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
@@ -145,15 +147,23 @@ class VectorTilesTestCase(TestCase):
             f"http://localhost{unquoted_reverse}"
         )
 
-    @override_settings(GEOSTORE={'TERRA_TILES_HOSTNAMES': ['http://a.tiles.local',
-                                                           'http://b.tiles.local',
-                                                           'http://c.tiles.local']})
-    def test_layer_tilejson_with_TERRA_TILES_HOSTNAMES(self):
+    @override_settings(TERRA_TILES_HOSTNAMES=['http://a.tiles.local',
+                                              'http://b.tiles.local',
+                                              'http://c.tiles.local'])
+    def test_layer_tilejson_with_custom_hostnames(self):
+        sleep(1)
+        unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
         response = self.client.get(
-            reverse('layer-tilejson', args=[self.layer.pk]),
-            HTTP_HOST='localhost'
+            reverse('layer-tilejson', args=[self.layer.pk])
         )
         self.assertEqual(HTTP_200_OK, response.status_code)
+        tilejson = response.json()
+        self.assertListEqual(
+            tilejson['tiles'],
+            [f"{host}{unquoted_reverse}" for host in ['http://a.tiles.local',
+                                                      'http://b.tiles.local',
+                                                      'http://c.tiles.local']]
+        )
 
     def test_layer_tilejson_without_features(self):
         self.layer.features.all().delete()
