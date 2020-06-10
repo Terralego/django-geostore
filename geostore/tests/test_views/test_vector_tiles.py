@@ -147,9 +147,10 @@ class VectorTilesTestCase(TestCase):
         )
 
     def test_layer_tilejson_with_TERRA_TILES_HOSTNAMES(self):
-        with override_settings(GEOSTORE={'TERRA_TILES_HOSTNAMES': ['http://a.tiles.local',
-                                                                   'http://b.tiles.local',
-                                                                   'http://c.tiles.local']}):
+        tile_hosts = ['http://a.tiles.local',
+                      'http://b.tiles.local',
+                      'http://c.tiles.local']
+        with override_settings(GEOSTORE={'TERRA_TILES_HOSTNAMES': tile_hosts}):
             response = self.client.get(
                 reverse('layer-tilejson', args=[self.layer.pk]),
                 HTTP_HOST='localhost'
@@ -166,7 +167,7 @@ class VectorTilesTestCase(TestCase):
 
             self.assertListEqual(
                 tilejson['tiles'],
-                [f"{host}{unquoted_reverse}" for host in app_settings.TERRA_TILES_HOSTNAMES]
+                [f"{host}{unquoted_reverse}" for host in tile_hosts]
             )
 
     def test_layer_tilejson_without_features(self):
