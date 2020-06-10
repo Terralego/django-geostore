@@ -146,29 +146,25 @@ class VectorTilesTestCase(TestCase):
             f"http://localhost{unquoted_reverse}"
         )
 
+    @override_settings(GEOSTORE={'TERRA_TILES_HOSTNAMES': ['http://a.tiles.local',
+                                                           'http://b.tiles.local',
+                                                           'http://c.tiles.local']})
     def test_layer_tilejson_with_TERRA_TILES_HOSTNAMES(self):
-        tile_hosts = ['http://a.tiles.local',
-                      'http://b.tiles.local',
-                      'http://c.tiles.local']
-        with override_settings(GEOSTORE={'TERRA_TILES_HOSTNAMES': tile_hosts}):
-            response = self.client.get(
-                reverse('layer-tilejson', args=[self.layer.pk]),
-                HTTP_HOST='localhost'
-            )
-            self.assertEqual(HTTP_200_OK, response.status_code)
-            self.assertGreater(len(response.content), 0)
+        response = self.client.get(
+            reverse('layer-tilejson', args=[self.layer.pk]),
+            HTTP_HOST='localhost'
+        )
+        self.assertEqual(HTTP_200_OK, response.status_code)
 
-            tilejson = response.json()
-            self.assertTrue(tilejson['attribution'])
-            self.assertTrue(tilejson['description'] is None)
-            self.assertGreater(len(tilejson['vector_layers']), 0)
-            self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
-            unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
+        tilejson = response.json()
+        unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
 
-            self.assertListEqual(
-                tilejson['tiles'],
-                [f"{host}{unquoted_reverse}" for host in tile_hosts]
-            )
+        self.assertListEqual(
+            tilejson['tiles'],
+            [f"{host}{unquoted_reverse}" for host in ['http://a.tiles.local',
+                                                      'http://b.tiles.local',
+                                                      'http://c.tiles.local']]
+        )
 
     def test_layer_tilejson_without_features(self):
         self.layer.features.all().delete()
