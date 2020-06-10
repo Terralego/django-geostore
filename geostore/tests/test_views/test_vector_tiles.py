@@ -10,7 +10,6 @@ from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
 from geostore.models import Layer, LayerGroup, LayerExtraGeom
-from geostore.settings import app_settings
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
 from geostore.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
