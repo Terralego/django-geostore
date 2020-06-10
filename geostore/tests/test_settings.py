@@ -17,11 +17,13 @@ class SettingsTestCase(TestCase):
             'http://c.tiles.local'
         ]
         self.assertIsNone(app_settings.TERRA_TILES_HOSTNAMES, "Checking a known default should be None")
+
         with override_settings(GEOSTORE={'TERRA_TILES_HOSTNAMES': custom_setting}):
             self.assertListEqual(app_settings.TERRA_TILES_HOSTNAMES,
                                  custom_setting)
 
         self.assertIsNone(app_settings.TERRA_TILES_HOSTNAMES, "Checking a known default should be None")
+
         with override_settings(TERRA_TILES_HOSTNAMES=custom_setting):
             self.assertListEqual(app_settings.TERRA_TILES_HOSTNAMES,
                                  custom_setting)

@@ -156,16 +156,6 @@ class VectorTilesTestCase(TestCase):
         )
         self.assertEqual(HTTP_200_OK, response.status_code)
 
-        tilejson = response.json()
-        unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
-
-        self.assertListEqual(
-            tilejson['tiles'],
-            [f"{host}{unquoted_reverse}" for host in ['http://a.tiles.local',
-                                                      'http://b.tiles.local',
-                                                      'http://c.tiles.local']]
-        )
-
     def test_layer_tilejson_without_features(self):
         self.layer.features.all().delete()
         response = self.client.get(
