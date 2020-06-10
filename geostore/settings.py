@@ -4,8 +4,9 @@ from rest_framework.settings import APISettings as BaseAPISettings
 
 
 DEFAULTS = {
-    # Custom array to generate final absolute url for tilejson.
-    # Default None : use request.build_absolute_url to handle correct full absolute url
+    # Set custom array to generate final absolute url for tilejson. (ex : ['https://a.tiles.xxx', 'https://b.tiles.xxx']
+    # Improve final performances
+    # These urls should be resolved by your client and route to this app
     'TERRA_TILES_HOSTNAMES': None,
     # Max zoom value (Mapbox can auto scale max zoom +2)
     'MAX_TILE_ZOOM': 18,
