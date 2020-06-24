@@ -15,7 +15,7 @@ from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.contrib.postgres.fields import JSONField
-from django.contrib.postgres.indexes import GistIndex
+from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
@@ -477,8 +477,9 @@ class Feature(BaseUpdatableModel):
             models.Index(fields=['layer', ]),
             models.Index(fields=['updated_at', ]),
             models.Index(fields=['updated_at', 'layer', ]),
-            models.Index(fields=['identifier', ]),
+            models.Index(fields=['layer', 'identifier']),
             GistIndex(fields=['layer', 'geom']),
+            GinIndex(name='properties_gin_index', fields=['properties']),
         ]
         constraints = [
             # geometry should be valid
@@ -574,7 +575,7 @@ class LayerExtraGeom(LayerBasedModelMixin):
 class FeatureExtraGeom(BaseUpdatableModel):
     feature = models.ForeignKey(Feature, on_delete=models.CASCADE, related_name='extra_geometries')
     layer_extra_geom = models.ForeignKey(LayerExtraGeom, on_delete=models.CASCADE, related_name='features')
-    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID)
+    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID, spatial_index=False)
     properties = JSONField(default=dict, blank=True)
     identifier = models.UUIDField(blank=True, null=True, editable=False, default=uuid.uuid4)
 
@@ -582,3 +583,8 @@ class FeatureExtraGeom(BaseUpdatableModel):
         unique_together = (
             ('feature', 'layer_extra_geom'),
         )
+        indexes = [
+            models.Index(fields=['layer_extra_geom', 'identifier']),
+            GistIndex(name='feg_geom_gist_index', fields=['layer_extra_geom', 'geom']),
+            GinIndex(name='feg_properties_gin_index', fields=['properties']),
+        ]
