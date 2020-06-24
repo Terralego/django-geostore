@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.3.18.dev0     (XXX-XX-XX)
+0.3.18         (2020-06-24)
 ---------------------------
 
 * Improve database indexes
