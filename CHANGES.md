@@ -4,6 +4,10 @@ CHANGELOG
 0.3.19.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* WARNING : Ordering and Searching in feature properties are disabled for layers without schema.
+* OPTIMIZATIONS : Improve API feature by disabling big queries to find layer's properties
+* Fix duplicated index
+
 0.3.18         (2020-06-24)
 ---------------------------
 

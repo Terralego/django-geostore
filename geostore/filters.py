@@ -31,8 +31,9 @@ class JSONFieldOrderingFilter(OrderingFilter):
     def get_valid_fields(self, queryset, view, context={}):
         fields = super().get_valid_fields(queryset, view, context=context)
         layer = view.get_layer()
-        if layer:
-            # allow filter by property name
+        if layer and layer.schema:
+            # allow ordering by property name ONLY if schema specified.
+            # This prevents big queries on all layer's feature to find them
             for prop in layer.layer_properties:
                 fields.append((f'properties__{prop}', layer.get_property_title(prop)))
         return fields
@@ -42,8 +43,9 @@ class JSONSearchField(SearchFilter):
     def get_search_fields(self, view, request):
         fields = []
         layer = view.get_layer()
-        if layer:
-            # allow filter by property name
+        if layer and layer.schema:
+            # allow search by property name ONLY if schema specified.
+            # This prevents big queries on all layer's feature to find them
             for prop in layer.layer_properties:
                 fields.append(f'properties__{prop}')
         return fields

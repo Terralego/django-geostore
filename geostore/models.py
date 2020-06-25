@@ -391,7 +391,8 @@ class Feature(BaseUpdatableModel):
     properties = JSONField(default=dict, blank=True)
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
-                              related_name='features')
+                              related_name='features',
+                              db_index=False)
 
     source = models.IntegerField(null=True,
                                  blank=True,
