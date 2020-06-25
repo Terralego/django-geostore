@@ -9,6 +9,10 @@ CHANGELOG
   * Some changes in routing API response. Now geometry and segments list is provided by API
   * Configurable tolerance for routing topologies (Default value from 0.0001 to 0.00001)
 
+* Improvements :
+  * source / target routing attributes :
+    * add indexes
+    * Hide by default (editable=False)
 
 0.3.19         (2020-06-25)
 ---------------------------
