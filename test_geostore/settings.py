@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'debug_toolbar',
     'geostore',
-    'debug_toolbar',
+    'geostore.routing',
     'test_geostore.test_app'
 ]
 
@@ -127,10 +127,6 @@ USE_L10N = True
 USE_TZ = True
 
 
-MIDDLEWARE += (
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-)
-
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda x: True,
 }
@@ -144,7 +140,4 @@ STATIC_URL = '/static/'
 # set required DRF settings
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
-}
-DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': lambda x: True,
 }
