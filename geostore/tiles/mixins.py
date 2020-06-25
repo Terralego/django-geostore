@@ -193,6 +193,18 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
 
         return data
 
+    def get_tile_urls(self, tile_pattern):
+        unquoted_tile_pattern = unquote(tile_pattern)
+        if settings.TERRA_TILES_HOSTNAMES:
+            return [
+                urljoin(hostname, unquoted_tile_pattern)
+                for hostname in settings.TERRA_TILES_HOSTNAMES
+            ]
+        else:
+            return [
+                urljoin(self.request.build_absolute_uri('/'), tile_pattern)
+            ]
+
     def get_tilejson(self):
         minzoom = self.get_min_zoom()
         maxzoom = self.get_max_zoom()
@@ -202,10 +214,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         return {
             'tilejson': '3.0.0',
             'name': self.get_object().name,
-            'tiles': [
-                unquote(urljoin(hostname, tile_path))
-                for hostname in app_settings.TERRA_TILES_HOSTNAMES
-            ],
+            'tiles': self.get_tile_urls(tile_pattern),
             'minzoom': minzoom,
             'maxzoom': maxzoom,
             # bounds
