@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.3.19.dev0    (XXXX-XX-XX)
+0.3.19         (2020-06-25)
 ---------------------------
 
 * WARNING : Ordering and Searching in feature properties are disabled for layers without schema.
