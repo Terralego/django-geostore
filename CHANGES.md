@@ -6,7 +6,7 @@ CHANGELOG
 
 * WARNING Breaking Changes !!
   * to continue to use PGRouting features, please add geostore.routing to INSTALLED_APPS
-  * Some changes in routing API response. Now geometry and segments list is provided by API
+  * Some changes in routing API response. Now final geometry and full feature segment list are provided by API
   * Configurable tolerance for routing topologies (Default value from 0.0001 to 0.00001)
 
 * Improvements :
