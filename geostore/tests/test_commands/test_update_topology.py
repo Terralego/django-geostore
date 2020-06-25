@@ -44,6 +44,6 @@ class UpdateTopologyTestCase(TestCase):
         call_command(
             'update_topology',
             f'--layer-pk={in_layer.pk}',
-            f'--tolerance=0.0001',
+            '--tolerance=0.0001',
             verbosity=1, stdout=output)
         self.assertIn('Topology successfully updated', output.getvalue())
