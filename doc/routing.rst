@@ -19,11 +19,15 @@ Prerequisites
     ...
   )
 
-Settings
+Settings up
+-----------
+
+pgRouting needs to update a table that contains all linestring to create topological connection.
+You need to execute a command to create topology at first. Once, after every feature update topology will be automatically updated.
+
+Commands
 --------
 
-pgRouting needs to update a table that contains all linestring connections, to do you need to execute
-the management command we made:
 
 .. code-block:: bash
 
