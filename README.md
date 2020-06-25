@@ -38,7 +38,7 @@ recommended
 ### from PYPI
 
 ```bash
-pip install django-geocrud
+pip install django-geostore
 ```
 
 ### from GitHub
