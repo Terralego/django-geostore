@@ -10,6 +10,7 @@ CHANGELOG
   * Configurable tolerance for routing topologies (Default value from 0.0001 to 0.00001)
 
 * Improvements :
+  * Installing PGRouting is not required anymore.
   * source / target routing attributes :
     * add indexes
     * Hide by default (editable=False)
