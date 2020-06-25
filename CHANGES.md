@@ -4,6 +4,7 @@ CHANGELOG
 0.3.20.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* WARNING !! : to continue to use PGRouting features, please add geostore.routing to INSTALLED_APPS
 * Configurable tolerance for routing topologies (Now default from 0.0001 ti 0.00001)
 
 
