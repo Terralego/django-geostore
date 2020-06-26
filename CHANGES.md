@@ -5,14 +5,15 @@ CHANGELOG
 ---------------------------
 
 * WARNING Breaking Changes !!
+  * settings default name change. they are now prefixed by GEOSTORE_. Please take a look and fix your project settings.
   * to continue to use PGRouting features, please add geostore.routing to INSTALLED_APPS
   * Some changes in routing API response. Now final geometry and full feature segment list are provided by API
   * Configurable tolerance for routing topologies (Default value from 0.0001 to 0.00001)
   * HOSTNAME setting is deprecated. Default request HOST is now used to generate absolute full urls for vector tiles.
-You can set TERRA_TILES_HOSTNAMES = [HOSTNAME, ] to avoid this
+You can set GEOSTORE_TILE_HOSTNAMES = [HOSTNAME, ] to avoid this
 
 * Improvements :
-  * Set HOSTNAME or TERRA_TILES_HOSTNAMES is not required anymore. Now full absolute urls are prefixed with current host request
+  * Set GEOSTORE_TILE_HOSTNAMES is not required anymore. Now full absolute urls are prefixed with current host request by default.
   * Installing PGRouting is not required anymore.
   * source / target routing attributes :
     * add indexes
