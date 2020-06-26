@@ -156,7 +156,7 @@ class VectorTilesTestCase(TestCase):
                                     args=[self.layer.pk])))
         )
 
-    @skipIf(not app_settings.GEOSTORE_TILE_HOSTNAMES, 'Test with custom tile hostnames only')
+    @skipIf(not app_settings.TILE_HOSTNAMES, 'Test with custom tile hostnames only')
     def test_layer_tilejson_with_custom_hostnames(self):
         unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
         response = self.client.get(
@@ -166,7 +166,7 @@ class VectorTilesTestCase(TestCase):
         tilejson = response.json()
         self.assertListEqual(
             tilejson['tiles'],
-            [urljoin(host, unquoted_reverse) for host in app_settings.GEOSTORE_TILE_HOSTNAMES]
+            [urljoin(host, unquoted_reverse) for host in app_settings.TILE_HOSTNAMES]
         )
 
     def test_layer_tilejson_without_features(self):

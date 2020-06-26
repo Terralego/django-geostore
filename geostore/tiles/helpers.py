@@ -126,7 +126,7 @@ class VectorTile(object):
                 ymin - pixel_width_y * self.pixel_buffer,
                 xmax + pixel_width_x * self.pixel_buffer,
                 ymax + pixel_width_y * self.pixel_buffer,
-                EPSG_3857), app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID),
+                EPSG_3857), app_settings.INTERNAL_GEOMETRY_SRID),
             outgeom3857=ST_Transform('geom', EPSG_3857),
         ).filter(
             bbox_select__intersects=F('geom')

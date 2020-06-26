@@ -197,7 +197,7 @@ class Layer(LayerBasedModelMixin):
                     driver='ESRI Shapefile',
                     schema=schema,
                     encoding='UTF-8',
-                    crs=from_epsg(app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID)
+                    crs=from_epsg(app_settings.INTERNAL_GEOMETRY_SRID)
                 )
 
             # Export features to each kind of geometry
@@ -267,7 +267,7 @@ class Layer(LayerBasedModelMixin):
                 if reproject:
                     geometry = fiona.transform.transform_geom(
                         shape.crs,
-                        f'EPSG:{app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID}',
+                        f'EPSG:{app_settings.INTERNAL_GEOMETRY_SRID}',
                         geometry)
                 identifier = properties.get(id_field, uuid.uuid4())
 
@@ -384,7 +384,7 @@ class LayerGroup(BaseUpdatableModel):
 
 
 class Feature(BaseUpdatableModel, PgRoutingMixin):
-    geom = models.GeometryField(srid=app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID)
+    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID)
     identifier = models.CharField(max_length=255,
                                   blank=False,
                                   null=False,
@@ -574,7 +574,7 @@ class LayerExtraGeom(LayerBasedModelMixin):
 class FeatureExtraGeom(BaseUpdatableModel):
     feature = models.ForeignKey(Feature, on_delete=models.CASCADE, related_name='extra_geometries')
     layer_extra_geom = models.ForeignKey(LayerExtraGeom, on_delete=models.CASCADE, related_name='features')
-    geom = models.GeometryField(srid=app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID, spatial_index=False)
+    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID, spatial_index=False)
     properties = JSONField(default=dict, blank=True)
     identifier = models.UUIDField(blank=True, null=True, editable=False, default=uuid.uuid4)
 
