@@ -1,15 +1,17 @@
 import json
+from unittest import skipIf
+from urllib.parse import unquote, urljoin
 
 from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from django.utils.http import urlunquote
-from geostore import GeometryTypes
 from rest_framework import status
 from rest_framework.status import HTTP_200_OK, HTTP_404_NOT_FOUND
 from rest_framework.test import APITestCase
 
+from geostore import GeometryTypes
+from geostore import settings as app_settings
 from geostore.models import Layer, LayerGroup, LayerExtraGeom
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
@@ -129,8 +131,9 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tile_json['vector_layers'][0]['fields']), 0)
         self.assertEqual(
             tile_json['tiles'][0],
-            urlunquote(reverse('group-tiles-pattern',
-                               args=[self.mygroup.slug]))
+            unquote(urljoin("http://localhost",
+                            reverse('group-tiles-pattern',
+                                    args=[self.mygroup.slug])))
         )
 
     def test_layer_tilejson(self):
@@ -148,8 +151,22 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(tilejson['vector_layers'][0]['fields']), 0)
         self.assertEqual(
             tilejson['tiles'][0],
-            urlunquote(reverse('layer-tiles-pattern',
-                               args=[self.layer.pk]))
+            unquote(urljoin("http://localhost",
+                            reverse('layer-tiles-pattern',
+                                    args=[self.layer.pk])))
+        )
+
+    @skipIf(not app_settings.TERRA_TILES_HOSTNAMES, 'Test with custom tile hostnames only')
+    def test_layer_tilejson_with_custom_hostnames(self):
+        unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
+        response = self.client.get(
+            reverse('layer-tilejson', args=[self.layer.pk])
+        )
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        tilejson = response.json()
+        self.assertListEqual(
+            tilejson['tiles'],
+            [urljoin(host, unquoted_reverse) for host in app_settings.TERRA_TILES_HOSTNAMES]
         )
 
     def test_layer_tilejson_without_features(self):
