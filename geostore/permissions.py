@@ -28,6 +28,15 @@ class LayerPermission(BasePermission):
             return (request.method in SAFE_METHODS) or has_perm
 
 
+class LayerImportExportPermission(BasePermission):
+    def has_permission(self, request, view):
+        if request.method not in SAFE_METHODS:
+            return request.user.has_perm('geostore.can_import_layers')
+
+        else:
+            return request.user.has_perm('geostore.can_export_layers')
+
+
 class FeaturePermission(LayerPermission):
     def has_object_permission(self, request, view, obj):
         return super().has_object_permission(request, view, obj.layer)

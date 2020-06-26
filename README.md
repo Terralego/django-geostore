@@ -17,7 +17,9 @@ Dynamic geographic datastore with Vector Tiles generation from PostGIS and json 
 * Python 3.6+
 * Postgresql 10+
 * PostGIS 2.4+
-* PgRouting 2.5+
+
+Optionnal to use PgRouting functionnalities :
+  * PgRouting 2.5+
 
 ### Libraries
 
@@ -49,6 +51,14 @@ cd django-geostore
 python3 setup.py install
 ```
 
+### in your project settings
+
+```python
+INSTALLED_APPS = (
+    'geostore',
+    #'geostore.routing'  # uncomment to enable routing functionality
+)
+```
 
 ## Development
 

@@ -1,6 +1,6 @@
 import json
 
-from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import GEOSGeometry, MultiLineString, LineString
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
@@ -28,19 +28,25 @@ class Routing(object):
         if not layer.is_linestring or layer.is_multi:
             raise ValueError('Layer is not routable')
 
-        self.points, self.layer = points, layer
+        self.layer = layer
+        self.points = self._get_points_in_lines(points)
+        self.routes = self._points_route()
 
     def get_route(self):
-        '''Return the geometry of the route from the given points'''
-        self.points = self._get_points_in_lines()
+        """ Return the geometry of the route from the given points """
 
-        routes = self._points_route()
+        if self.routes:
+            return self._serialize_routes(self.routes)
 
-        if routes:
-            return self._serialize_routes(routes)
+    def get_linestring(self):
+        if self.routes:
+            way = MultiLineString(*[GEOSGeometry(route['geometry'])
+                                    for route in self.routes if isinstance(GEOSGeometry(route['geometry']),
+                                                                           LineString)])
+            return way.merged
 
     @classmethod
-    def create_topology(cls, layer, tolerance=0.0001, clean=False):
+    def create_topology(cls, layer, tolerance=0.00001, clean=False):
         cursor = connection.cursor()
         raw_query = """
                     SELECT
@@ -51,11 +57,12 @@ class Routing(object):
                             'id',
                             'source',
                             'target',
+                            rows_where := %s,
                             clean := %s)
                     """
 
         cursor.execute(raw_query,
-                       [layer.features.model._meta.db_table, tolerance, clean])
+                       [layer.features.model._meta.db_table, tolerance, f'layer_id={layer.pk} ', clean])
         return ('OK',) == cursor.fetchone()
 
     def _serialize_routes(self, routes):
@@ -72,11 +79,11 @@ class Routing(object):
             ]
         }
 
-    def _get_points_in_lines(self):
+    def _get_points_in_lines(self, points):
         '''Returns position of the point in the closed geometry'''
         snapped_points = []
 
-        for point in self.points:
+        for point in points:
             closest_feature = self._get_closest_geometry(point)
 
             snapped_points.append(
@@ -195,8 +202,8 @@ class Routing(object):
             LEFT OUTER JOIN geostore_feature ON pgr.edge = geostore_feature.id
         ),
         route AS (
-            /* Finaly we reconstruct the geometry by collecting each edge.
-                At point 1 and 2, we get the splited edge.
+            /* Finally we reconstruct the geometry by collecting each edge.
+                At point 1 and 2, we get the split edge.
             */
             SELECT
                 CASE
@@ -204,8 +211,8 @@ class Routing(object):
                     (SELECT points.geom
                         FROM points
                         WHERE points.pid = -pgr.node
-                        -- Non topologic graph,
-                        -- get the closest to the next egde
+                        -- Non topological graph,
+                        -- get the closest to the next edge
                         ORDER BY ST_Distance(points.geom, pgr.next_geom) ASC
                         LIMIT 1)
                 WHEN next_node = -2 THEN  -- Going to End Point
@@ -248,8 +255,6 @@ class Routing(object):
                     'properties': properties
                 } for geometry, properties in cursor.fetchall()
             ]
-
-        return None
 
     def _fix_point_fraction(self, point):
         """ This function is used to fix problem with pgrouting when point
