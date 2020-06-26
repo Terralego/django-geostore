@@ -156,7 +156,7 @@ class VectorTilesTestCase(TestCase):
                                     args=[self.layer.pk])))
         )
 
-    @skipIf(not app_settings.TERRA_TILES_HOSTNAMES, 'Test with custom tile hostnames only')
+    @skipIf(not app_settings.GEOSTORE_TILE_HOSTNAMES, 'Test with custom tile hostnames only')
     def test_layer_tilejson_with_custom_hostnames(self):
         unquoted_reverse = unquote(reverse('layer-tiles-pattern', args=[self.layer.pk]))
         response = self.client.get(
@@ -166,7 +166,7 @@ class VectorTilesTestCase(TestCase):
         tilejson = response.json()
         self.assertListEqual(
             tilejson['tiles'],
-            [urljoin(host, unquoted_reverse) for host in app_settings.TERRA_TILES_HOSTNAMES]
+            [urljoin(host, unquoted_reverse) for host in app_settings.GEOSTORE_TILE_HOSTNAMES]
         )
 
     def test_layer_tilejson_without_features(self):
@@ -252,7 +252,7 @@ class VectorTilesTestCase(TestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(b'', response.content)
 
-    @override_settings(MAX_TILE_ZOOM=9)
+    @override_settings(GEOSTORE_MAX_TILE_ZOOM=9)
     def test_vector_group_tiles_view_max_tile_zoom_lower_actual_zoom(self):
         # first query that generate the cache
         response = self.client.get(
@@ -260,7 +260,7 @@ class VectorTilesTestCase(TestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(len(response.content), 113)
 
-    @override_settings(MAX_TILE_ZOOM=9)
+    @override_settings(GEOSTORE_MAX_TILE_ZOOM=9)
     def test_vector_layer_tiles_view_max_tile_zoom_lower_actual_zoom(self):
         # first query that generate the cache
         response = self.client.get(

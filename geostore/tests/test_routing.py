@@ -52,7 +52,7 @@ class RoutingTestCase(TestCase):
     def test_points_in_line(self):
         routing = Routing(
             [Point(*p['coordinates'],
-                   srid=app_settings.INTERNAL_GEOMETRY_SRID) for p in self.points
+                   srid=app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID) for p in self.points
              ],
             self.layer)
 
@@ -73,7 +73,7 @@ class RoutingTestCase(TestCase):
     def test_routing_view(self):
         points = [Point(
             *point['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points]
+            srid=app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID) for point in self.points]
 
         geometry = LineString(*points)
 
@@ -98,7 +98,7 @@ class RoutingTestCase(TestCase):
     def test_routing_view_edge_case(self):
         points = [Point(
             *p['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for p in
+            srid=app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID) for p in
             [self.points[0], self.points[0]]]
 
         geometry = LineString(*points)
@@ -123,7 +123,7 @@ class RoutingTestCase(TestCase):
     def test_routing_cache(self):
         geometry = LineString(*[Point(
             *point['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points])
+            srid=app_settings.GEOSTORE_INTERNAL_GEOMETRY_SRID) for point in self.points])
 
         with self.settings(DEBUG=True,
                            CACHES={'default': {

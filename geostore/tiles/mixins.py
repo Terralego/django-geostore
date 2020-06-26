@@ -126,19 +126,19 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
 
     def get_min_zoom(self):
         return max(
-            app_settings.MIN_TILE_ZOOM,
+            app_settings.GEOSTORE_MIN_TILE_ZOOM,
             min([
                 layer.layer_settings_with_default('tiles', 'minzoom')
                 for layer in self.layers
-            ], default=app_settings.MIN_TILE_ZOOM))
+            ], default=app_settings.GEOSTORE_MIN_TILE_ZOOM))
 
     def get_max_zoom(self):
         return min(
-            app_settings.MAX_TILE_ZOOM,
+            app_settings.GEOSTORE_MAX_TILE_ZOOM,
             max([
                 layer.layer_settings_with_default('tiles', 'maxzoom')
                 for layer in self.layers
-            ], default=app_settings.MAX_TILE_ZOOM))
+            ], default=app_settings.GEOSTORE_MAX_TILE_ZOOM))
 
     def _join_group_settings_link(self, layers, *args):
         return ','.join(set([
@@ -194,10 +194,10 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         return data
 
     def get_tile_urls(self, tile_pattern):
-        if app_settings.TERRA_TILES_HOSTNAMES:
+        if app_settings.GEOSTORE_TILE_HOSTNAMES:
             return [
                 unquote(urljoin(hostname, tile_pattern))
-                for hostname in app_settings.TERRA_TILES_HOSTNAMES
+                for hostname in app_settings.GEOSTORE_TILE_HOSTNAMES
             ]
         else:
             return [
