@@ -29,6 +29,7 @@ from . import GeometryTypes, settings as app_settings
 from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
 from .helpers import ChunkIterator, make_zipfile_bytesio
+from .routing.db.mixins import PgRoutingMixin
 from .routing.decorators import topology_update
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
@@ -382,7 +383,7 @@ class LayerGroup(BaseUpdatableModel):
         super().save(**kwargs)
 
 
-class Feature(BaseUpdatableModel):
+class Feature(BaseUpdatableModel, PgRoutingMixin):
     geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID)
     identifier = models.CharField(max_length=255,
                                   blank=False,
@@ -393,13 +394,6 @@ class Feature(BaseUpdatableModel):
                               on_delete=models.PROTECT,
                               related_name='features',
                               db_index=False)
-
-    source = models.IntegerField(null=True,
-                                 blank=True,
-                                 help_text='Internal field used by pgRouting')
-    target = models.IntegerField(null=True,
-                                 blank=True,
-                                 help_text='Internal field used by pgRouting')
 
     objects = Manager.from_queryset(FeatureQuerySet)()
 
@@ -479,6 +473,10 @@ class Feature(BaseUpdatableModel):
             models.Index(fields=['updated_at', ]),
             models.Index(fields=['updated_at', 'layer', ]),
             models.Index(fields=['layer', 'identifier']),
+            models.Index(fields=['id', 'layer', ]),
+            models.Index(fields=['source', 'layer', ]),
+            models.Index(fields=['target', 'layer', ]),
+            models.Index(fields=['source', 'target', 'layer']),
             GistIndex(fields=['layer', 'geom']),
             GinIndex(name='properties_gin_index', fields=['properties']),
         ]

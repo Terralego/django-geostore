@@ -6,6 +6,7 @@ from rest_framework.fields import empty
 
 from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
+from geostore.routing.serializers.mixins import RoutingLayerSerializer
 from geostore.validators import (validate_json_schema_data,
                                  validate_json_schema, validate_geom_type)
 
@@ -69,8 +70,7 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class LayerSerializer(serializers.ModelSerializer):
-    routing_url = serializers.SerializerMethodField()
+class LayerSerializer(RoutingLayerSerializer, serializers.ModelSerializer):
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
     schema = serializers.JSONField(required=False, validators=[validate_json_schema])
@@ -78,9 +78,6 @@ class LayerSerializer(serializers.ModelSerializer):
     tilejson = serializers.SerializerMethodField()
     layer_groups = GroupSerializer(many=True, read_only=True)
     authorized_groups = serializers.PrimaryKeyRelatedField(required=False, many=True, queryset=Group.objects.all())
-
-    def get_routing_url(self, obj):
-        return reverse('layer-route', args=[obj.pk, ])
 
     def get_shapefile_url(self, obj):
         return reverse('layer-shapefile', args=[obj.pk, ])

@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'debug_toolbar',
     'geostore',
+    'geostore.routing',
     'test_geostore.test_app'
 ]
 
@@ -126,6 +127,11 @@ USE_L10N = True
 USE_TZ = True
 
 
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda x: True,
+}
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
@@ -134,7 +140,4 @@ STATIC_URL = '/static/'
 # set required DRF settings
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
-}
-DEBUG_TOOLBAR_CONFIG = {
-    'SHOW_TOOLBAR_CALLBACK': lambda x: True,
 }

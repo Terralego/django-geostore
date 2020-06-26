@@ -15,7 +15,7 @@ def update_name(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('geostore', '0012_extension_pgrouting'),
+        ('geostore', '0011_auto_20180711_0831'),
     ]
 
     operations = [

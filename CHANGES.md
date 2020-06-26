@@ -4,6 +4,16 @@ CHANGELOG
 0.3.20.dev0    (XXXX-XX-XX)
 ---------------------------
 
+* WARNING Breaking Changes !!
+  * to continue to use PGRouting features, please add geostore.routing to INSTALLED_APPS
+  * Some changes in routing API response. Now final geometry and full feature segment list are provided by API
+  * Configurable tolerance for routing topologies (Default value from 0.0001 to 0.00001)
+
+* Improvements :
+  * Installing PGRouting is not required anymore.
+  * source / target routing attributes :
+    * add indexes
+    * Hide by default (editable=False)
 
 0.3.19         (2020-06-25)
 ---------------------------

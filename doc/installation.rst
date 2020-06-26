@@ -8,13 +8,21 @@ DATABASE
 ^^^^^^^^
 
 Minimum configuration :
- * Postgresql 10
+ * Python 3.6+
+ * PostgreSQL 10
  * PostGIS 2.4
+
+And if you want to use Routing :
+
  * PgRouting 2.5
 
 Recommended configuration :
- * Postgresql 11
+ * Python 3.8
+ * PostgreSQL 11
  * PostGIS 2.5
+
+And if you want to use Routing :
+
  * PgRouting 2.6
 
 Your final django project should use django.contrib.gis.backend.postgis as default DATABASE backend
@@ -24,25 +32,22 @@ USING docker image :
 
 Prebuilt docker image builded by makinacorpus
 
-https://cloud.docker.com/u/makinacorpus/repository/docker/makinacorpus/pgrouting/general
+https://hub.docker.com/r/makinacorpus/pgrouting
 
 SYSTEM REQUIREMENTS
 ^^^^^^^^^^^^^^^^^^^
 
-For django
-""""""""""
+these are debian packages required
 
-libpq-dev
-gettext
+- libpq-dev   (psycopg2)
+- gettext     (translations)
+- binutils    (django.contrib.gis)
+- libproj-dev (django.contrib.gis)
+- gdal-bin    (django.contrib.gis)
 
+recommended
 
-For geodjango
-"""""""""""""
-
-gdal-bin
-binutils
-libproj-dev
-
+- postgresql-client (if you want to use ./manage.py dbshell command)
 
 With pip
 --------
@@ -51,7 +56,7 @@ From Pypi:
 
 ::
 
-    pip install xxxxxxxxxx-xxxxxxxxxxxx
+    pip install django-geostore
 
 From Github:
 
