@@ -2,7 +2,6 @@ import hashlib
 from random import uniform
 
 import mercantile
-from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F
@@ -12,6 +11,7 @@ from . import EARTH_RADIUS, EPSG_3857
 from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
                     ST_SimplifyPreserveTopology, ST_Transform)
 from .sigtools import SIGTools
+from .. import settings as app_settings
 
 
 def get_cache_version(layer):
@@ -126,7 +126,7 @@ class VectorTile(object):
                 ymin - pixel_width_y * self.pixel_buffer,
                 xmax + pixel_width_x * self.pixel_buffer,
                 ymax + pixel_width_y * self.pixel_buffer,
-                EPSG_3857), settings.INTERNAL_GEOMETRY_SRID),
+                EPSG_3857), app_settings.INTERNAL_GEOMETRY_SRID),
             outgeom3857=ST_Transform('geom', EPSG_3857),
         ).filter(
             bbox_select__intersects=F('geom')

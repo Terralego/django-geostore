@@ -1,6 +1,5 @@
 from urllib.parse import unquote, urljoin
 
-from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Q
 from django.http import HttpResponse, QueryDict
@@ -13,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from ..models import Feature
+from .. import settings as app_settings
 from ..tokens import tiles_token_generator
 from .helpers import VectorTile
 
@@ -126,19 +126,19 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
 
     def get_min_zoom(self):
         return max(
-            settings.MIN_TILE_ZOOM,
+            app_settings.MIN_TILE_ZOOM,
             min([
                 layer.layer_settings_with_default('tiles', 'minzoom')
                 for layer in self.layers
-            ], default=settings.MIN_TILE_ZOOM))
+            ], default=app_settings.MIN_TILE_ZOOM))
 
     def get_max_zoom(self):
         return min(
-            settings.MAX_TILE_ZOOM,
+            app_settings.MAX_TILE_ZOOM,
             max([
                 layer.layer_settings_with_default('tiles', 'maxzoom')
                 for layer in self.layers
-            ], default=settings.MAX_TILE_ZOOM))
+            ], default=app_settings.MAX_TILE_ZOOM))
 
     def _join_group_settings_link(self, layers, *args):
         return ','.join(set([
@@ -208,7 +208,8 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
     def get_tilejson(self):
         minzoom = self.get_min_zoom()
         maxzoom = self.get_max_zoom()
-        tile_pattern = self.get_tile_path()
+
+        tile_path = self.get_tile_path()
 
         # https://github.com/mapbox/tilejson-spec/tree/3.0/3.0.0
         return {
