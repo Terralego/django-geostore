@@ -166,10 +166,7 @@ class VectorTilesTestCase(TestCase):
         tilejson = response.json()
         self.assertListEqual(
             tilejson['tiles'],
-            [urljoin(host, unquoted_reverse) for host in ['http://a.tiles.local',
-                                                          'http://b.tiles.local',
-                                                          'http://c.tiles.local']],
-            app_settings.TERRA_TILES_HOSTNAMES
+            [urljoin(host, unquoted_reverse) for host in app_settings.TERRA_TILES_HOSTNAMES]
         )
 
     def test_layer_tilejson_without_features(self):
