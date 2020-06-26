@@ -8,7 +8,28 @@
 
 # django-geostore
 
-Dynamic geographic datastore with Vector Tiles generation from PostGIS and json schema definition and validation.
+Dynamic geographic data store with Vector Tiles generation from PostGIS and json schema definition and validation.
+
+## Create geographic layers
+
+### With fixed geometry type
+
+### With json schema feature properties validation
+
+## import data
+
+### Commands
+
+### API calls
+
+### Group vector tiles layers
+
+## Show group or single layer Vector Tiles on MapBox
+
+## Show GeoJSON on MapBox
+
+## Routing features
+
 
 ## Requirements
 
