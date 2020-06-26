@@ -3,26 +3,42 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/b6119d8175fa6f5f5949/maintainability)](https://codeclimate.com/github/Terralego/django-geostore/maintainability)
 [![Documentation Status](https://readthedocs.org/projects/django-geostore/badge/?version=latest)](https://django-geostore.readthedocs.io/en/latest/?badge=latest)
 
-![Python Version](https://img.shields.io/badge/python-%3E%3D%203.6-blue.svg)
-![Django Version](https://img.shields.io/badge/django-%3E%3D%202.2-blue.svg)
-
 # django-geostore
 
 Dynamic geographic data store with Vector Tiles generation from PostGIS and json schema definition and validation.
 
 ## Create geographic layers
 
-### With fixed geometry type
+By :
 
-### With json schema feature properties validation
+* using django admin
+* using geostore.Layer model
+* Directly call an import command
 
-## import data
+### (optional) With fixed geometry type
+
+* Accept only feature according a Geometry Type (see geostore.GeometryTypes)
+
+
+### (optionnal) With json schema feature properties validation
+
+* Define a schema in layer definition
+* Using django admin or api will validate schema before saving. (use Feature.clean() method in custom cases) 
+
+## Import data
+
+There are several methods to import data in geostore
 
 ### Commands
 
+* import_csv
+* import_geojson
+* import_osm
+* import_shapefile
+
 ### API calls
 
-### Group vector tiles layers
+### (optional) Group vector tiles layers, secure access by token
 
 ## Show group or single layer Vector Tiles on MapBox
 
