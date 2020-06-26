@@ -77,7 +77,7 @@ jobs:
       - psql -c "ALTER USER travis_ci_test WITH SUPERUSER;" -U postgres
       - psql -c 'CREATE DATABASE travis_ci_test WITH OWNER travis_ci_test;' -U postgres
       - psql -d travis_ci_test -c 'CREATE EXTENSION postgis;'
-    script: coverage run ./manage.py test --exclude-tag=routing
+    script: coverage run ./manage.py test --settings=test_geostore.settings_without_routing --exclude-tag=routing
   - stage: deploy
     install: skip
     before_script: skip
