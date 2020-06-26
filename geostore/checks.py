@@ -8,7 +8,7 @@ def check_deprecated_settings(app_configs, **kwargs):
     if getattr(settings, 'HOSTNAME', None):
         errors.append(
             Warning(
-                "HOSTNAME setting is deprecated for geostore.",
+                "HOSTNAME setting is deprecated for geostore. It will be removed in next version.",
                 hint="Please set GEOSTORE_TILE_HOSTNAMES.",
                 obj=None,
                 id='geostore.W001',
@@ -18,7 +18,7 @@ def check_deprecated_settings(app_configs, **kwargs):
     if getattr(settings, 'TERRA_TILES_HOSTNAMES', None):
         errors.append(
             Warning(
-                "TERRA_TILES_HOSTNAMES setting is deprecated for geostore.",
+                "TERRA_TILES_HOSTNAMES setting is deprecated for geostore. It will be removed in next version.",
                 hint="Please set GEOSTORE_TILE_HOSTNAMES.",
                 obj=None,
                 id='geostore.W002',
@@ -28,7 +28,7 @@ def check_deprecated_settings(app_configs, **kwargs):
     if getattr(settings, 'MAX_TILE_ZOOM', None):
         errors.append(
             Warning(
-                "MAX_TILE_ZOOM setting is deprecated for geostore.",
+                "MAX_TILE_ZOOM setting is deprecated for geostore. It will be removed in next version.",
                 hint="Please set GEOSTORE_MAX_TILE_ZOOM.",
                 obj=None,
                 id='geostore.W003',
@@ -38,7 +38,7 @@ def check_deprecated_settings(app_configs, **kwargs):
     if getattr(settings, 'MIN_TILE_ZOOM', None):
         errors.append(
             Warning(
-                "MIN_TILE_ZOOM setting is deprecated for geostore.",
+                "MIN_TILE_ZOOM setting is deprecated for geostore. It will be removed in next version.",
                 hint="Please fill GEOSTORE_MIN_TILE_ZOOM.",
                 obj=None,
                 id='geostore.W004',
