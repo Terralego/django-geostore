@@ -78,8 +78,6 @@ jobs:
       - psql -c 'CREATE DATABASE travis_ci_test WITH OWNER travis_ci_test;' -U postgres
       - psql -d travis_ci_test -c 'CREATE EXTENSION postgis;'
     script: coverage run ./manage.py test --exclude-tag=routing
-  - name: "Test with PgRouting"
-
   - stage: deploy
     install: skip
     before_script: skip
