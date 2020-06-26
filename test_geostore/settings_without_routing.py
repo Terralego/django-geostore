@@ -1,3 +1,3 @@
 from .settings import *  # NOQA
 
-INSTALLED_APPS = INSTALLED_APPS - ['geostore.routing', ]
+INSTALLED_APPS.remove('geostore.routing')
