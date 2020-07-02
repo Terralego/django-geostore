@@ -16,21 +16,3 @@ INTERNAL_GEOMETRY_SRID = getattr(settings, 'GEOSTORE_INTERNAL_GEOMETRY_SRID', 43
 
 # If you want use relations auto sync, add a celery worker and set to True
 RELATION_CELERY_ASYNC = getattr(settings, 'GEOSTORE_RELATION_CELERY_ASYNC', False)
-
-
-# Workaround to avoid breaking changes
-if getattr(settings, 'TERRA_TILES_HOSTNAMES', None):
-    TILE_HOSTNAMES = getattr(settings, 'TERRA_TILES_HOSTNAMES')
-
-if getattr(settings, 'MAX_TILE_ZOOM', None) is not None:
-    MAX_TILE_ZOOM = getattr(settings, 'MAX_TILE_ZOOM')
-
-if getattr(settings, 'MIN_TILE_ZOOM', None) is not None:
-    MIN_TILE_ZOOM = getattr(settings, 'MIN_TILE_ZOOM')
-
-if getattr(settings, 'INTERNAL_GEOMETRY_SRID', None) is not None:
-    INTERNAL_GEOMETRY_SRID = getattr(settings, 'INTERNAL_GEOMETRY_SRID')
-
-# Last workaround if HOSTNAME is set and not TERRA_TILES_HOSTNAMES:
-if getattr(settings, 'HOSTNAME', None) and not TILE_HOSTNAMES:
-    TILE_HOSTNAMES = [getattr(settings, 'HOSTNAME'), ]
