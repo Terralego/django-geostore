@@ -238,7 +238,7 @@ class FeatureDetailTestCase(APITestCase):
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', ]), data)
 
-    @patch('geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC', new_callable=PropertyMock)
+    @patch('geostore.settings.RELATION_CELERY_ASYNC', new_callable=PropertyMock)
     def test_relation(self, mock_relation):
         mock_relation.return_value = True
         city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
