@@ -5,11 +5,11 @@ from django.conf import settings
 # Don't forget to redirect and allow these hosts in ALLOWED_HOST
 TILE_HOSTNAMES = getattr(settings, 'GEOSTORE_TILE_HOSTNAMES', [])
 
-# Define a default maximum zoom value for tile generation. Can be overrided in layer settings.
-MAX_TILE_ZOOM = getattr(settings, 'GEOSTORE_MAX_TILE_ZOOM', 15)
+# Define a default maximum zoom value for tile generation. Can be override in layer settings.
+MAX_TILE_ZOOM = getattr(settings, 'GEOSTORE_MAX_TILE_ZOOM', 18)
 
-# Define a default minimum zoom value for tile generation. Can be overrided in layer settings.
-MIN_TILE_ZOOM = getattr(settings, 'GEOSTORE_MIN_TILE_ZOOM', 10)
+# Define a default minimum zoom value for tile generation. Can be override in layer settings.
+MIN_TILE_ZOOM = getattr(settings, 'GEOSTORE_MIN_TILE_ZOOM', 2)
 
 # For the moment, 4326 only
 INTERNAL_GEOMETRY_SRID = getattr(settings, 'GEOSTORE_INTERNAL_GEOMETRY_SRID', 4326)
