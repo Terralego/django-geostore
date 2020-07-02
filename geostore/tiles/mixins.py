@@ -194,10 +194,10 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         return data
 
     def get_tile_urls(self, tile_pattern):
-        if app_settings.TERRA_TILES_HOSTNAMES:
+        if app_settings.TILE_HOSTNAMES:
             return [
                 unquote(urljoin(hostname, tile_pattern))
-                for hostname in app_settings.TERRA_TILES_HOSTNAMES
+                for hostname in app_settings.TILE_HOSTNAMES
             ]
         else:
             return [

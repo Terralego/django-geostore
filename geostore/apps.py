@@ -7,6 +7,8 @@ class GeostoreConfig(AppConfig):
     verbose_name = "Geographic Store"
 
     def ready(self):
+        # execute checks
+        from . import checks  # NOQA
         # force use specific geojson serializer
         modules = getattr(settings, 'SERIALIZATION_MODULES', {})
         modules.update({
