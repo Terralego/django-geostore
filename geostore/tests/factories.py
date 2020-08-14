@@ -17,7 +17,7 @@ def _get_perm(perm_name):
         content_type__app_label=app_label, codename=codename)
 
 
-class LayerFactory(factory.DjangoModelFactory):
+class LayerFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Layer
 
@@ -30,7 +30,7 @@ class LayerFactory(factory.DjangoModelFactory):
             FeatureFactory(layer=self)
 
 
-class LayerSchemaFactory(factory.DjangoModelFactory):
+class LayerSchemaFactory(factory.django.DjangoModelFactory):
     geom_type = GeometryTypes.Point
     schema = {
         "type": "object",
@@ -54,7 +54,7 @@ class LayerSchemaFactory(factory.DjangoModelFactory):
         model = Layer
 
 
-class FeatureFactory(factory.DjangoModelFactory):
+class FeatureFactory(factory.django.DjangoModelFactory):
     layer = factory.SubFactory(LayerFactory)
     geom = GEOSGeometry('''{
         "type": "Point",
@@ -72,7 +72,7 @@ class FeatureFactory(factory.DjangoModelFactory):
 UserModel = get_user_model()
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = UserModel
