@@ -2,7 +2,10 @@ from copy import deepcopy
 from functools import reduce
 
 from deepmerge import always_merger
-from django.contrib.postgres.fields import JSONField
+try:
+    from django.db.models import JSONField
+except ImportError:  # TODO Remove when dropping Django releases < 3.1
+    from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils.functional import cached_property
 

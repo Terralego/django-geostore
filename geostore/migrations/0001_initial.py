@@ -3,7 +3,10 @@
 import uuid
 
 import django.contrib.gis.db.models.fields
-import django.contrib.postgres.fields.jsonb
+try:
+    from django.db.models import JSONField
+except ImportError:  # TODO Remove when dropping Django releases < 3.1
+    from django.contrib.postgres.fields import JSONField
 import django.db.models.deletion
 from django.db import migrations, models
 
@@ -22,7 +25,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('geom', django.contrib.gis.db.models.fields.GeometryField()),
                 ('identifier', models.CharField(default=uuid.uuid4, max_length=255)),
-                ('properties', django.contrib.postgres.fields.jsonb.JSONField()),
+                ('properties', JSONField()),
                 ('from_date', models.DateField(default='1970-01-01', help_text='Layer validity period start')),
                 ('to_date', models.DateField(default='1970-12-31', help_text='Layer validity period end')),
             ],
@@ -31,7 +34,7 @@ class Migration(migrations.Migration):
             name='FeatureRelation',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('properties', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict)),
+                ('properties', JSONField(blank=True, default=dict)),
                 ('destination', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_destination', to='geostore.Feature')),
                 ('origin', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_origin', to='geostore.Feature')),
             ],
@@ -42,14 +45,14 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=256)),
                 ('group', models.CharField(default='__nogroup__', max_length=255)),
-                ('schema', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict)),
+                ('schema', JSONField(blank=True, default=dict)),
             ],
         ),
         migrations.CreateModel(
             name='LayerRelation',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('schema', django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict)),
+                ('schema', JSONField(blank=True, default=dict)),
                 ('destination', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_destination', to='geostore.Layer')),
                 ('origin', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_origin', to='geostore.Layer')),
             ],

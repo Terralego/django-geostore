@@ -1,5 +1,8 @@
 import operator
-from django.contrib.postgres.fields.jsonb import JSONField
+try:
+    from django.db.models import JSONField
+except ImportError:  # TODO Remove when dropping Django releases < 3.1
+    from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend, OrderingFilter, SearchFilter
