@@ -17,6 +17,8 @@ You can set TERRA_TILES_HOSTNAMES = [HOSTNAME, ] to avoid this
   * source / target routing attributes :
     * add indexes
     * Hide by default (editable=False)
+  * Using JSONField from django.db.models
+  * Updating DjangoModelFactory location
 
 
 0.3.19         (2020-06-25)
