@@ -12,6 +12,7 @@ CHANGELOG
 You can set TERRA_TILES_HOSTNAMES = [HOSTNAME, ] to avoid this
 
 * Improvements :
+  * Officially support django 3.1
   * Set HOSTNAME or TERRA_TILES_HOSTNAMES is not required anymore. Now full absolute urls are prefixed with current host request
   * Installing PGRouting is not required anymore.
   * source / target routing attributes :
