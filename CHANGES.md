@@ -3,7 +3,7 @@ CHANGELOG
 
 0.3.20.dev0    (XXXX-XX-XX)
 ---------------------------
-* Officially support django 3.1
+
 * WARNING Breaking Changes !!
   * to continue to use PGRouting features, please add geostore.routing to INSTALLED_APPS
   * Some changes in routing API response. Now final geometry and full feature segment list are provided by API
@@ -12,6 +12,7 @@ CHANGELOG
 You can set TERRA_TILES_HOSTNAMES = [HOSTNAME, ] to avoid this
 
 * Improvements :
+  * Officially support django 3.1
   * Set HOSTNAME or TERRA_TILES_HOSTNAMES is not required anymore. Now full absolute urls are prefixed with current host request
   * Installing PGRouting is not required anymore.
   * source / target routing attributes :
