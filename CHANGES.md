@@ -3,7 +3,7 @@ CHANGELOG
 
 0.3.20.dev0    (XXXX-XX-XX)
 ---------------------------
-
+* Officially support django 3.1
 * WARNING Breaking Changes !!
   * to continue to use PGRouting features, please add geostore.routing to INSTALLED_APPS
   * Some changes in routing API response. Now final geometry and full feature segment list are provided by API
