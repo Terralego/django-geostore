@@ -6,8 +6,9 @@ from rest_framework_gis import serializers as geo_serializers
 
 
 class RoutingSerializer(serializers.Serializer):
-    geom = geo_serializers.GeometryField()
-    callback_id = serializers.CharField(required=False)
+    geom = geo_serializers.GeometryField(help_text=_("A linestring with ordered waypoints."))
+    callback_id = serializers.CharField(required=False,
+                                        help_text=_("Optional callback id to match with your request."))
 
     def validate_geom(self, value):
         if not isinstance(value, LineString):
