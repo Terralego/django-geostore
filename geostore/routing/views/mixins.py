@@ -1,7 +1,7 @@
 import json
 
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point, GEOSException
+from django.contrib.gis.geos import Point
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
