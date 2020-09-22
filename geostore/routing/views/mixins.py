@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..helpers import Routing
+from ..helpers import Routing, RoutingException
 from ..serializers import RoutingSerializer
 
 
@@ -19,24 +19,35 @@ class RoutingViewsSetMixin:
         def route(self, request, pk=None):
             layer = self.get_object()
             serializer = self.serializer_class(data=request.data)
+            data = {}
+            response_status = status.HTTP_200_OK
 
             if serializer.is_valid():
                 geometry = serializer.validated_data['geom']
-                points = [Point(c, srid=geometry.srid) for c in geometry.coords]
-                routing = Routing(points, layer)
-                route = routing.get_route()
 
-                if not route:
-                    return Response(status=status.HTTP_204_NO_CONTENT)
+                try:
+                    points = [Point(c, srid=geometry.srid) for c in geometry.coords]
+                    routing = Routing(points, layer)
+                    route = routing.get_route()
 
-                way = routing.get_linestring()
-                response_data = {
-                    'request': serializer.data,
-                    'route': route,
-                    'geom': json.loads(way.geojson)
-                }
-                return Response(response_data)
+                    if not route:
+                        return Response(status=status.HTTP_204_NO_CONTENT)
+
+                    way = routing.get_linestring()
+                    response_data = {
+                        'request': serializer.data,
+                        'route': route,
+                        'geom': json.loads(way.geojson)
+                    }
+                    data = response_data
+
+                except RoutingException as exc:
+                    data = {"errors": [str(exc), ]}
+                    response_status = status.HTTP_400_BAD_REQUEST
 
             else:
-                return Response(serializer.errors,
-                                status=status.HTTP_400_BAD_REQUEST)
+                data = serializer.errors
+                response_status = status.HTTP_400_BAD_REQUEST
+
+            return Response(data,
+                            status=response_status)
