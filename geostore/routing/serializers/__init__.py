@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.gis.geos import LineString
 from django.utils.translation import gettext as _
 from rest_framework import serializers
@@ -8,8 +9,8 @@ from rest_framework_gis import serializers as geo_serializers
 class RoutingSerializer(serializers.Serializer):
     geom = geo_serializers.GeometryField(help_text=_("A linestring with ordered waypoints."))
     callback_id = serializers.CharField(required=False, help_text=_("Optional callback id to match with your request."))
-    route = serializers.JSONField(read_only=True)
-    way = geo_serializers.GeometryField(read_only=True)
+    route = serializers.JSONField(read_only=True, help_text=_("All features used, in geojson format."))
+    way = geo_serializers.GeometryField(read_only=True, help_text=_("Routed way, as Linestring."))
 
     def validate_geom(self, value):
         if not isinstance(value, LineString):
