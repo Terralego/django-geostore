@@ -35,9 +35,9 @@ class RoutingViewsSetMixin:
 
                     way = routing.get_linestring()
                     response_data = {
-                        'request': serializer.data,
                         'route': route,
-                        'geom': json.loads(way.geojson)
+                        'way': json.loads(way.geojson),
+                        **serializer.data
                     }
                     data = response_data
 
