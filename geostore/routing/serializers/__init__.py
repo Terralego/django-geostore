@@ -12,5 +12,5 @@ class RoutingSerializer(serializers.Serializer):
 
     def validate_geom(self, value):
         if not isinstance(value, LineString):
-            raise ValidationError(_("Geometry value should be a LineString object."))
+            raise ValidationError(_("Geometry should be a LineString object."))
         return value

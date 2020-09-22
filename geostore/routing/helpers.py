@@ -9,6 +9,10 @@ from django.db.models import F, Value
 from ..tiles.funcs import ST_LineLocatePoint, ST_LineSubstring
 
 
+class RoutingException(Exception):
+    pass
+
+
 def cached_segment(func, expiration=3600 * 24):
     def wrapper(self, from_point, to_point, *args, **kwargs):
         cache_key = (f'route_{self.layer.pk}'
@@ -27,7 +31,7 @@ class Routing(object):
 
     def __init__(self, points, layer):
         if not layer.is_linestring or layer.is_multi:
-            raise ValueError('Layer is not routable')
+            raise RoutingException('Layer is not routable')
 
         self.layer = layer
         self.points = self._get_points_in_lines(points)
