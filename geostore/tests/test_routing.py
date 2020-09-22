@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from geostore.models import Layer
-from geostore.routing.helpers import Routing
+from geostore.routing.helpers import Routing, RoutingException
 from .. import settings as app_settings
 from ..tests.factories import FeatureFactory, UserFactory
 from ..tests.utils import get_files_tests
@@ -148,9 +148,8 @@ class RoutingTestCase(TestCase):
             self.assertTrue(all([initial_count > c for c in counts]))
 
     def test_layer_with_polygon(self):
-        # test that a layer with another kind of geometry raise the right
-        # exception
-
+        """test that a layer with another kind of geometry raise the right exception"""
         feature = FeatureFactory()
-        with self.assertRaises(ValueError):
+
+        with self.assertRaises(RoutingException):
             Routing(self.points, feature.layer)
