@@ -1,4 +1,4 @@
-import json
+import types
 
 from django.conf import settings
 from django.contrib.gis.geos import Point
@@ -18,7 +18,8 @@ class RoutingViewsSetMixin:
                 permission_classes=[IsAuthenticated])
         def route(self, request, pk=None):
             layer = self.get_object()
-            serializer = self.serializer_class(data=request.data)
+            data = request.data
+            serializer = self.serializer_class(data=data)
             response_status = status.HTTP_200_OK
 
             if serializer.is_valid():
@@ -33,12 +34,16 @@ class RoutingViewsSetMixin:
                         return Response(status=status.HTTP_204_NO_CONTENT)
 
                     way = routing.get_linestring()
-                    response_data = {
-                        'route': route,
-                        'way': json.loads(way.geojson),
-                        **serializer.data
-                    }
-                    data = response_data
+
+                    # generate response data by using serializer, to keep serialization rules (precision / perfs.)
+                    response = types.SimpleNamespace()
+                    response.geom = None
+                    response.callback_id = None
+                    response.route = route
+                    response.way = way
+                    serializer = self.serializer_class(response, data=request.data)
+                    serializer.is_valid()
+                    data = serializer.data
 
                 except RoutingException as exc:
                     data = {"errors": [str(exc), ]}
