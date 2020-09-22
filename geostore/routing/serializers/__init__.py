@@ -9,7 +9,7 @@ from rest_framework_gis import serializers as geo_serializers
 class RoutingSerializer(serializers.Serializer):
     geom = geo_serializers.GeometryField(help_text=_("A linestring with ordered waypoints."))
     callback_id = serializers.CharField(required=False, help_text=_("Optional callback id to match with your request."))
-    route = serializers.JSONField(read_only=True, help_text=_("All features used, in geojson format."))
+    #route = serializers.JSONField(read_only=True, help_text=_("All features used, in geojson format."))
     way = geo_serializers.GeometryField(read_only=True, help_text=_("Routed way, as Linestring."), precision=6)
 
     def validate_geom(self, value):
