@@ -19,7 +19,6 @@ class RoutingViewsSetMixin:
         def route(self, request, pk=None):
             layer = self.get_object()
             serializer = self.serializer_class(data=request.data)
-            data = {}
             response_status = status.HTTP_200_OK
 
             if serializer.is_valid():
