@@ -44,6 +44,8 @@ class RoutingViewsSetMixin:
                     serializer = self.serializer_class(response, data=request.data)
                     serializer.is_valid()
                     data = serializer.data
+                    data['geom'] = request.data['geom']
+                    data['callback_id'] = request.data['callback_id']
 
                 except RoutingException as exc:
                     data = {"errors": [str(exc), ]}
