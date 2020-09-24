@@ -28,10 +28,10 @@ class RoutingViewsSetMixin:
                 try:
                     points = [Point(c, srid=geometry.srid) for c in geometry.coords]
                     routing = Routing(points, layer)
-                    route = routing.get_route()
+                    # route = routing.get_route()
 
-                    if not route:
-                        return Response(status=status.HTTP_204_NO_CONTENT)
+                    # if not route:
+                    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
                     way = routing.get_linestring()
 
@@ -39,13 +39,13 @@ class RoutingViewsSetMixin:
                     response = types.SimpleNamespace()
                     response.geom = None
                     response.callback_id = None
-                    response.route = route
+                    response.route = None
                     response.way = way
                     serializer = self.serializer_class(response, data=request.data)
                     serializer.is_valid()
                     data = serializer.data
                     data['geom'] = request.data['geom']
-                    data['callback_id'] = request.data['callback_id']
+                    data['callback_id'] = request.data.get('callback_id', None)
 
                 except RoutingException as exc:
                     data = {"errors": [str(exc), ]}
