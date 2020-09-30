@@ -4,7 +4,6 @@ from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection, Point, LineString, Polygon
 from rest_framework.renderers import JSONRenderer, BaseRenderer
 from rest_framework.utils.serializer_helpers import ReturnDict
-from rest_framework_xml.renderers import XMLRenderer
 
 from geostore.models import Feature
 
@@ -20,7 +19,6 @@ class GeoJSONRenderer(JSONRenderer):
 class KMLRenderer(BaseRenderer):
     format = 'kml'
     media_type = 'application/vnd.google-earth.kml+xml'
-    name_tag = 'identifier'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -72,7 +70,7 @@ class KMLRenderer(BaseRenderer):
         return self.kml.kml()
 
 
-class GPXRenderer(XMLRenderer):
+class GPXRenderer(BaseRenderer):
     format = 'gpx'
     media_type = 'application/gpx+xml'
 
