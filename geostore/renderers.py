@@ -41,25 +41,21 @@ class KMLRenderer(BaseRenderer):
         )
 
     def parse_element(self, element):
+        mapping = {
+            'point': 'newpoint',
+            'linestring': 'newlinestring',
+            'polygon': 'newpolygon'
+        }
         geom_type, identifier, coordinates, description = self.get_element_infos(element)
 
-        if geom_type == 'point':
-            self.kml.newpoint(name=identifier, description=description, coords=coordinates)
-        elif geom_type == 'linestring':
-            self.kml.newlinestring(name=identifier, description=description, coords=coordinates)
-        elif geom_type == 'polygon':
-            self.kml.newpolygon(name=identifier, description=description, coords=coordinates)
+        if geom_type in mapping.keys():
+            getattr(self.kml, mapping[geom_type])(name=identifier, description=description, coords=coordinates)
         else:
+            # geom is multi
             multi = self.kml.newmultigeometry(name=identifier, description=description)
-            if geom_type == 'multipoint':
-                for point in coordinates:
-                    multi.newpoint(coords=point)
-            elif geom_type == 'multilinestring':
-                for line in coordinates:
-                    multi.newlinestring(coords=line)
-            elif geom_type == 'multipolygon':
-                for polygon in coordinates:
-                    multi.newpolygon(coords=polygon)
+            final_geom_type = geom_type.lstrip('multi')  # get geom_type without multi
+            for simple_object_coords in coordinates:
+                getattr(multi, mapping[final_geom_type])(coords=simple_object_coords)
 
         return self.kml.kml()
 
