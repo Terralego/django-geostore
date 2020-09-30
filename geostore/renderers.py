@@ -1,12 +1,12 @@
+import gpxpy.gpx
+import simplekml
 from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection, Point, LineString, Polygon
+from rest_framework.renderers import JSONRenderer, BaseRenderer
 from rest_framework.utils.serializer_helpers import ReturnDict
+from rest_framework_xml.renderers import XMLRenderer
 
 from geostore.models import Feature
-from rest_framework.renderers import JSONRenderer, BaseRenderer
-from rest_framework_xml.renderers import XMLRenderer
-import simplekml
-import gpxpy.gpx
 
 
 class GeoJSONRenderer(JSONRenderer):

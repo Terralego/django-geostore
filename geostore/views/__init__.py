@@ -8,7 +8,6 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
-from geostore.renderers import KMLRenderer, GPXRenderer
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -16,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
+from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..models import Layer, LayerGroup
