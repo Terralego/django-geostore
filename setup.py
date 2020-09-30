@@ -45,6 +45,8 @@ setup(
         'django-token-tools',
         'djangorestframework>=3.10',
         "djangorestframework-gis>=0.15",
+        "gpxpy",
+        "simplekml",
         'django-filter',
         "deepmerge",
         "requests>=2.19",

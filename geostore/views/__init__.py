@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
+from geostore.renderers import KMLRenderer, GPXRenderer
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -119,7 +120,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
     serializer_class_extra_geom = FeatureExtraGeomSerializer
-    renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer)
+    renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer, KMLRenderer, GPXRenderer)
     filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField)
     filter_fields = ('properties', )
     ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')
