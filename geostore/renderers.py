@@ -47,13 +47,42 @@ class KMLRenderer(BaseRenderer):
         geom_type, identifier, coordinates, description = self.get_element_infos(element)
 
         if geom_type in mapping.keys():
-            getattr(self.kml, mapping[geom_type])(name=identifier, description=description, coords=coordinates)
+            if geom_type == "polygon":
+                polygon = self.kml.newpolygon(name=identifier, description=description)
+                polygon.outerboundaryis = coordinates[0]
+                if len(coordinates) > 1:
+                    # manage holes
+                    polygon.innerboundaryis = coordinates[1]
+            else:
+                getattr(self.kml, mapping[geom_type])(
+                    name=identifier,
+                    description=description,
+                    coords=(coordinates, ) if geom_type == "point" else coordinates
+                )
         else:
             # geom is multi
             multi = self.kml.newmultigeometry(name=identifier, description=description)
-            final_geom_type = geom_type.lstrip('multi')  # get geom_type without multi
-            for simple_object_coords in coordinates:
-                getattr(multi, mapping[final_geom_type])(coords=simple_object_coords)
+            final_geom_type = geom_type.replace('multi', '')  # get geom_type without multi
+            if final_geom_type == "geometrycollection":
+                geometries = element.get('geom').get('geometries')
+                for geometry in geometries:
+                    geom_type = geometry.get('type').lower()
+                    coordinates = geometry.get('coordinates')
+                    getattr(multi, mapping[geom_type])(
+                        coords=(coordinates, ) if geom_type == "point" else coordinates
+                    )
+            else:
+                for simple_object_coords in coordinates:
+                    if final_geom_type == "polygon":
+                        polygon = multi.newpolygon(name=identifier, description=description)
+                        polygon.outerboundaryis = (simple_object_coords[0], )
+                        if len(simple_object_coords) > 1:
+                            # manage holes
+                            polygon.innerboundaryis = (simple_object_coords[1], )
+                    else:
+                        getattr(multi, mapping[final_geom_type])(
+                            coords=(simple_object_coords, ) if final_geom_type == "point" else simple_object_coords
+                        )
 
         return self.kml.kml()
 
