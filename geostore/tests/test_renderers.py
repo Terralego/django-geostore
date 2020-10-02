@@ -9,24 +9,31 @@ class BaseRendererTestCase:
     @classmethod
     def setUpTestData(cls):
         # create a geometry undefined layer with all kind of geometry as features
+        props = {"name": "test", "label": "Test"}
         cls.layer = LayerFactory()
         cls.point = FeatureFactory(layer=cls.layer,
-                                   geom="POINT(0 0)")
+                                   geom="POINT(0 0)", properties=props)
         cls.line = FeatureFactory(layer=cls.layer,
-                                  geom="LINESTRING(0 0, 1 1)")
-        cls.polygon = FeatureFactory(layer=cls.layer,
-                                     geom="POLYGON((0 0, 1 0, 1 1, 0 1, 0 0))")
+                                  geom="LINESTRING(0 0, 1 1)", properties=props)
+        cls.polygon = FeatureFactory(
+            layer=cls.layer,
+            geom="POLYGON((0 0, 1 0, 1 1, 0 1, 0 0), (0.4 0.4, 0.5 0.4, 0.5 0.5, 0.4 0.5, 0.4 0.4 ))",
+            properties=props
+        )
         cls.multipoint = FeatureFactory(layer=cls.layer,
-                                        geom="MULTIPOINT((0 0), (1 0))")
+                                        geom="MULTIPOINT((0 0), (1 0))", properties=props)
         cls.multilinestring = FeatureFactory(layer=cls.layer,
-                                             geom="MULTILINESTRING((3 4,10 50,20 25),(-5 -8,-10 -8,-15 -4))")
+                                             geom="MULTILINESTRING((3 4,10 50,20 25),(-5 -8,-10 -8,-15 -4))",
+                                             properties=props)
         cls.multipolygon = FeatureFactory(
             layer=cls.layer,
-            geom="MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3)))"
+            geom="MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3)))",
+            properties=props
         )
         cls.geometrycollection = FeatureFactory(
             layer=cls.layer,
-            geom="GEOMETRYCOLLECTION(POINT(4 6),LINESTRING(4 6,7 10))"
+            geom="GEOMETRYCOLLECTION(POINT(4 6),LINESTRING(4 6,7 10))",
+            properties=props
         )
 
     def test_feature_list(self):
@@ -119,6 +126,10 @@ class BaseRendererTestCase:
 
 class GPXRendererTestCase(BaseRendererTestCase, APITestCase):
     format = "gpx"
+
+    def test_feature_list(self):
+        """ Not Implemented """
+        pass
 
 
 class KMLRendererTestCase(BaseRendererTestCase, APITestCase):

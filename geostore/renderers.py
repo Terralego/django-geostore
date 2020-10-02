@@ -24,9 +24,6 @@ class KMLRenderer(BaseRenderer):
         super().__init__(*args, **kwargs)
         self.kml = simplekml.Kml()
 
-    def render_line(self, kml, name, line_geom):
-        kml.newlinestring(name=name, coords=line_geom.coords)
-
     def get_element_infos(self, element):
         description = ""
         for key, value in element.get('properties').items():
@@ -49,10 +46,10 @@ class KMLRenderer(BaseRenderer):
         if geom_type in mapping.keys():
             if geom_type == "polygon":
                 polygon = self.kml.newpolygon(name=identifier, description=description)
-                polygon.outerboundaryis = coordinates[0]
+                polygon.outerboundaryis = (coordinates[0], )
                 if len(coordinates) > 1:
                     # manage holes
-                    polygon.innerboundaryis = coordinates[1]
+                    polygon.innerboundaryis = (coordinates[1], )
             else:
                 getattr(self.kml, mapping[geom_type])(
                     name=identifier,
@@ -120,7 +117,6 @@ class GPXRenderer(BaseRenderer):
 
     def geom_to_gpx(self, geom, name, description):
         """Convert a geometry to a gpx entity.
-        Raise ValueError if it is not a Point, LineString or a collection of those
         Point -> add as a Way Point
         LineString -> add all Points in a Route
         Polygon -> add all Points of the external linering in a Route
@@ -142,6 +138,5 @@ class GPXRenderer(BaseRenderer):
             self.gpx.tracks.append(gpx_track)
         elif isinstance(geom, Polygon):
             self.geom_to_gpx(geom[0], name, description)
-        else:
-            raise ValueError("Unsupported geometry %s" % geom)
+
         return self.gpx.to_xml()

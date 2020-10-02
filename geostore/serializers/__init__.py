@@ -89,7 +89,6 @@ class LayerSerializer(RoutingLayerSerializer, serializers.ModelSerializer):
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
     kml_url = serializers.SerializerMethodField()
-    gpx_url = serializers.SerializerMethodField()
     schema = serializers.JSONField(required=False, validators=[validate_json_schema])
     layer_intersects = serializers.SerializerMethodField()
     tilejson = serializers.SerializerMethodField()
@@ -105,10 +104,6 @@ class LayerSerializer(RoutingLayerSerializer, serializers.ModelSerializer):
     def get_kml_url(self, obj):
         return reverse('feature-list',
                        kwargs={'layer': obj.pk, 'format': 'kml', })
-
-    def get_gpx_url(self, obj):
-        return reverse('feature-list',
-                       kwargs={'layer': obj.pk, 'format': 'gpx', })
 
     def get_layer_intersects(self, obj):
         return reverse('layer-intersects', args=[obj.name, ])
