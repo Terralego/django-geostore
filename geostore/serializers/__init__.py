@@ -1,8 +1,8 @@
 from django.contrib.auth.models import Group
-from django.urls import reverse
 from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
+from rest_framework.reverse import reverse
 
 from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
@@ -11,9 +11,32 @@ from geostore.validators import (validate_json_schema_data,
                                  validate_json_schema, validate_geom_type)
 
 
+class GeometryFileSerializer(serializers.Serializer):
+    geojson = serializers.SerializerMethodField()
+    kml = serializers.SerializerMethodField()
+    gpx = serializers.SerializerMethodField()
+
+    def get_geojson(self, obj):
+        return reverse('feature-detail',
+                       kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'geojson', })
+
+    def get_kml(self, obj):
+        return reverse('feature-detail',
+                       kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'kml', })
+
+    def get_gpx(self, obj):
+        return reverse('feature-detail',
+                       kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'gpx', })
+
+
 class FeatureSerializer(serializers.ModelSerializer):
     properties = serializers.JSONField(required=False)
     relations = serializers.SerializerMethodField()
+    geometry_files = serializers.SerializerMethodField()
+
+    def get_geometry_files(self, obj):
+        serializer = GeometryFileSerializer(obj)
+        return serializer.data
 
     def get_relations(self, obj):
         return {
@@ -51,7 +74,7 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations')
+        fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations', 'geometry_files')
         read_only_fields = ('id', 'layer')
 
 
@@ -73,6 +96,7 @@ class GroupSerializer(serializers.ModelSerializer):
 class LayerSerializer(RoutingLayerSerializer, serializers.ModelSerializer):
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
+    kml_url = serializers.SerializerMethodField()
     schema = serializers.JSONField(required=False, validators=[validate_json_schema])
     layer_intersects = serializers.SerializerMethodField()
     tilejson = serializers.SerializerMethodField()
@@ -84,6 +108,10 @@ class LayerSerializer(RoutingLayerSerializer, serializers.ModelSerializer):
 
     def get_geojson_url(self, obj):
         return reverse('feature-list', kwargs={'layer': obj.pk, 'format': 'geojson'})
+
+    def get_kml_url(self, obj):
+        return reverse('feature-list',
+                       kwargs={'layer': obj.pk, 'format': 'kml', })
 
     def get_layer_intersects(self, obj):
         return reverse('layer-intersects', args=[obj.name, ])

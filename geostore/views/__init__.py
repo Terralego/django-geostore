@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
+from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..models import Layer, LayerGroup
@@ -119,7 +120,7 @@ class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )
     serializer_class = FeatureSerializer
     serializer_class_extra_geom = FeatureExtraGeomSerializer
-    renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer)
+    renderer_classes = (JSONRenderer, GeoJSONRenderer, BrowsableAPIRenderer, KMLRenderer, GPXRenderer)
     filter_backends = (JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField)
     filter_fields = ('properties', )
     ordering_fields = ('id', 'identifier', 'created_at', 'updated_at')

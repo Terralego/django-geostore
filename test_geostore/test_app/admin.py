@@ -25,4 +25,5 @@ class FeatureExtraGeomInline(admin.TabularInline):
 
 @admin.register(Feature)
 class FeatureAdmin(OSMGeoAdmin):
+    list_filter = ('layer', )
     inlines = [FeatureExtraGeomInline]
