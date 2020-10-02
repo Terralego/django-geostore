@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.4.1.dev0     (XXXX-XX-XX)
+0.4.1          (2020-10-02)
 ---------------------------
 
 * Add KML and GPX renderers
