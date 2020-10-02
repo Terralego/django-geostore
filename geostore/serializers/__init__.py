@@ -11,24 +11,32 @@ from geostore.validators import (validate_json_schema_data,
                                  validate_json_schema, validate_geom_type)
 
 
-class FeatureSerializer(serializers.ModelSerializer):
-    properties = serializers.JSONField(required=False)
-    relations = serializers.SerializerMethodField()
-    geojson_url = serializers.SerializerMethodField()
-    kml_url = serializers.SerializerMethodField()
-    gpx_url = serializers.SerializerMethodField()
+class GeometryFileSerializer(serializers.Serializer):
+    geojson = serializers.SerializerMethodField()
+    kml = serializers.SerializerMethodField()
+    gpx = serializers.SerializerMethodField()
 
-    def get_geojson_url(self, obj):
+    def get_geojson(self, obj):
         return reverse('feature-detail',
                        kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'geojson', })
 
-    def get_kml_url(self, obj):
+    def get_kml(self, obj):
         return reverse('feature-detail',
                        kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'kml', })
 
-    def get_gpx_url(self, obj):
+    def get_gpx(self, obj):
         return reverse('feature-detail',
                        kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'gpx', })
+
+
+class FeatureSerializer(serializers.ModelSerializer):
+    properties = serializers.JSONField(required=False)
+    relations = serializers.SerializerMethodField()
+    geometry_files = serializers.SerializerMethodField()
+
+    def get_geometry_files(self, obj):
+        serializer = GeometryFileSerializer(obj)
+        return serializer.data
 
     def get_relations(self, obj):
         return {
@@ -66,7 +74,7 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations', 'geojson_url', 'kml_url', 'gpx_url')
+        fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations', 'geometry_files')
         read_only_fields = ('id', 'layer')
 
 
