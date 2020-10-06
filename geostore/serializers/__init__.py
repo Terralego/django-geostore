@@ -12,19 +12,19 @@ from geostore.validators import (validate_json_schema_data,
 
 
 class GeometryFileSerializer(serializers.Serializer):
-    geojson = serializers.SerializerMethodField()
-    kml = serializers.SerializerMethodField()
-    gpx = serializers.SerializerMethodField()
+    GeoJSON = serializers.SerializerMethodField()
+    KML = serializers.SerializerMethodField()
+    GPX = serializers.SerializerMethodField()
 
-    def get_geojson(self, obj):
+    def get_GeoJSON(self, obj):
         return reverse('feature-detail',
                        kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'geojson', })
 
-    def get_kml(self, obj):
+    def get_KML(self, obj):
         return reverse('feature-detail',
                        kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'kml', })
 
-    def get_gpx(self, obj):
+    def get_GPX(self, obj):
         return reverse('feature-detail',
                        kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'gpx', })
 
