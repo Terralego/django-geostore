@@ -1,8 +1,10 @@
 CHANGELOG
 =========
 
-0.4.2.dev0     (XXXX-XX-XX)
+0.4.2          (2020-10-06)
 ---------------------------
+
+* Fix geometry file labels in feature serializer
 
 
 0.4.1          (2020-10-02)
