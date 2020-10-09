@@ -50,15 +50,19 @@ class Routing(object):
             way = MultiLineString(*[GEOSGeometry(route['geometry'])
                                     for route in self.routes if isinstance(GEOSGeometry(route['geometry']),
                                                                            LineString)])
-            # merge in linestring
+            # merge in linestring if possible
             way = way.merged
 
             start_point = GEOSGeometry(self.waypoints[0])
             end_point = GEOSGeometry(self.waypoints[-1])
-
-            first_point_on_way = Point(way.coords[0])
-            last_point_on_way = Point(way.coords[-1])
-
+            if way.geom_type == "MultiLineString":
+                first_point_on_way = Point(way[0].coords[0])
+                last_point_on_way = Point(way[-1].coords[-1])
+            elif way.geom_type == "LineString":
+                first_point_on_way = Point(way.coords[0])
+                last_point_on_way = Point(way.coords[-1])
+            else:
+                return way
             # find closest point for start_point
             if start_point.distance(first_point_on_way) <= start_point.distance(last_point_on_way):
                 first_point = first_point_on_way
@@ -70,7 +74,11 @@ class Routing(object):
             # add first and final segments
             segment_1 = LineString(start_point, first_point)
             segment_2 = LineString(end_point, last_point)
-            final_way = MultiLineString(*[way, segment_1, segment_2])
+            if way.geom_type == "MultiLineString":
+                way_linestrings = [line for line in way]
+                final_way = MultiLineString(*way_linestrings, *[segment_1, segment_2])
+            else:
+                final_way = MultiLineString(*[way, segment_1, segment_2])
             final_way.simplify(tolerance=0.00001, preserve_topology=True)
             return final_way.merged
 
@@ -92,6 +100,27 @@ class Routing(object):
 
         cursor.execute(raw_query,
                        [layer.features.model._meta.db_table, tolerance, f'layer_id={layer.pk} ', clean])
+        return ('OK',) == cursor.fetchone()
+
+    @classmethod
+    def update_topology(cls, layer, feature, tolerance=0.1, clean=False):
+        cursor = connection.cursor()
+        raw_query = """
+                    SELECT
+                        pgr_createTopology(
+                            %s,
+                            %s,
+                            'geom',
+                            'id',
+                            'source',
+                            'target',
+                            rows_where := %s,
+                            clean := %s)
+                    """
+        rows_where = f"""id IN (SELECT id FROM {layer.features.model._meta.db_table}
+            WHERE layer_id={layer.pk} AND ST_DWithin('{feature.geom}', geom, {tolerance}))"""
+        cursor.execute(raw_query,
+                       [layer.features.model._meta.db_table, tolerance, rows_where, clean])
         return ('OK',) == cursor.fetchone()
 
     def _serialize_routes(self, routes):
