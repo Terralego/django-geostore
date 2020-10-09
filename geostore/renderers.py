@@ -1,10 +1,10 @@
 import gpxpy.gpx
 import simplekml
-from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection, Point, LineString, Polygon
 from rest_framework.renderers import JSONRenderer, BaseRenderer
 from rest_framework.utils.serializer_helpers import ReturnDict
 
+from geostore import settings as app_settings
 from geostore.models import Feature
 
 
@@ -110,7 +110,7 @@ class GPXRenderer(BaseRenderer):
 
     def _point_to_gpx(self, point, klass=gpxpy.gpx.GPXWaypoint):
         if isinstance(point, (tuple, list)):
-            point = Point(*point, srid=settings.INTERNAL_GEOMETRY_SRID)
+            point = Point(*point, srid=app_settings.INTERNAL_GEOMETRY_SRID)
         newpoint = point.transform(4326, clone=True)  # transformation: gps uses 4326
         # transform looses the Z parameter
         return klass(latitude=newpoint.y, longitude=newpoint.x, elevation=point.z)
