@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.4.3.dev0     (XXXX-XX-XX)
+0.4.3          (2020-10-09)
 ---------------------------
 
 * Fix settings used by renderers
