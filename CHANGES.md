@@ -4,6 +4,8 @@ CHANGELOG
 0.4.3.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Fix settings used by renderers
+
 
 0.4.2          (2020-10-06)
 ---------------------------
