@@ -8,5 +8,5 @@ def feature_update_routing(feature=None):
     """Update all feature topologies"""
     layer = feature.layer
     if getattr(layer, 'routable', False):
-        Routing.create_topology(layer)
+        Routing.update_topology(layer, feature)
     return True
