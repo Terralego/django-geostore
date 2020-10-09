@@ -22,7 +22,7 @@ from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, pre_delete
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -492,7 +492,7 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
 
 post_save.connect(save_feature, sender=Feature)
 post_save.connect(feature_routing, sender=Feature)
-post_delete.connect(feature_routing, sender=Feature)
+pre_delete.connect(feature_routing, sender=Feature)
 
 
 class LayerRelation(models.Model):
