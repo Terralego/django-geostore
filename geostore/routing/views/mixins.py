@@ -28,7 +28,6 @@ class RoutingViewsSetMixin:
                 try:
                     points = [Point(c, srid=geometry.srid) for c in geometry.coords]
                     routing = Routing(points, layer)
-                    # route = routing.get_route()
 
                     # if not route:
                     #     return Response(status=status.HTTP_204_NO_CONTENT)
@@ -39,7 +38,7 @@ class RoutingViewsSetMixin:
                     response = types.SimpleNamespace()
                     response.geom = None
                     response.callback_id = None
-                    response.route = None
+                    response.route = routing.get_route()
                     response.way = way
                     serializer = self.serializer_class(response, data=request.data)
                     serializer.is_valid()
