@@ -175,6 +175,22 @@ class RoutingTestCase(TestCase):
         with self.assertRaises(RoutingException):
             Routing(self.points, feature.layer)
 
+
+@tag("routing")
+class RoutingTestCase(TestCase):
+    points = [Point(0, 40, srid=app_settings.INTERNAL_GEOMETRY_SRID),
+              Point(10, 40, srid=app_settings.INTERNAL_GEOMETRY_SRID)]
+
+    def setUp(self):
+        self.layer = Layer.objects.create(name='test_layer', routable=True)
+        self.user = UserFactory(is_superuser=True)
+        self.client.force_login(self.user)
+        self.feature1 = Feature.objects.create(layer=self.layer, geom="LINESTRING(0 40, 1 40)")
+        self.feature2 = Feature.objects.create(layer=self.layer, geom="LINESTRING(1 40, 9 40)")
+        self.feature3 = Feature.objects.create(layer=self.layer, geom="LINESTRING(9 40, 10 40)")
+        self.feature4 = Feature.objects.create(layer=self.layer, geom="LINESTRING(1 40, 1 41, 9 41, 9 40)")
+        self.assertTrue(Routing.create_topology(self.layer, tolerance=0.0001))
+
     @mock.patch('geostore.settings.GEOSTORE_ROUTING_CELERY_ASYNC', new_callable=mock.PropertyMock)
     @mock.patch('geostore.routing.signals.execute_async_func')
     @override_settings(CELERY_ALWAYS_EAGER=False)
@@ -183,23 +199,19 @@ class RoutingTestCase(TestCase):
             async_func(*args)
         mock_async.side_effect = side_effect
         mock_routing.return_value = True
-        points = [Point(
-            *point['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points]
 
-        geometry = LineString(*points)
+        geometry = LineString(self.points, srid=app_settings.INTERNAL_GEOMETRY_SRID)
         old_response = self.client.post(reverse('layer-route',
                                                 args=[self.layer.pk]),
                                         {'geom': geometry.geojson})
         self.assertEqual(HTTP_200_OK, old_response.status_code)
         old_json = old_response.json()
         old_features = old_json.get('route').get('features')
-        first_id = old_features[0]['properties']['id']
+        first_id = self.feature3.pk
         id_new_features = [feature['properties']['id'] for feature in old_features]
         self.assertIn(first_id, id_new_features)
 
-        feature = Feature.objects.get(id=first_id)
-        feature.delete()
+        self.feature3.delete()
 
         new_response = self.client.post(reverse('layer-route',
                                                 args=[self.layer.pk]),
@@ -218,24 +230,20 @@ class RoutingTestCase(TestCase):
             async_func(*args)
         mock_async.side_effect = side_effect
         mock_routing.return_value = True
-        points = [Point(
-            *point['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points]
 
-        geometry = LineString(*points)
+        geometry = LineString(self.points, srid=app_settings.INTERNAL_GEOMETRY_SRID)
         old_response = self.client.post(reverse('layer-route',
                                                 args=[self.layer.pk]),
                                         {'geom': geometry.geojson})
         self.assertEqual(HTTP_200_OK, old_response.status_code)
         old_json = old_response.json()
         old_features = old_json.get('route').get('features')
-        first_id = old_features[0]['properties']['id']
+        first_id = self.feature3.pk
         id_new_features = [feature['properties']['id'] for feature in old_features]
         self.assertIn(first_id, id_new_features)
 
-        feature = Feature.objects.get(id=first_id)
-        feature.geom = LineString((1.3, 43.5), (1.32, 43.5))
-        feature.save()
+        self.feature3.geom = LineString((1, 40), (1, 38), (9, 38), (9, 40))
+        self.feature3.save()
 
         new_response = self.client.post(reverse('layer-route',
                                                 args=[self.layer.pk]),
