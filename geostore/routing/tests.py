@@ -49,7 +49,7 @@ class RoutingTestCase(TestCase):
                   encoding="utf-8") as geojson:
             self.layer.from_geojson(geojson.read())
 
-        self.assertTrue(Routing.create_topology(self.layer, tolerance=0.0001))
+        self.assertTrue(Routing.update_topology(self.layer, tolerance=0.0001))
 
     def test_points_in_line(self):
         routing = Routing(
@@ -81,32 +81,11 @@ class RoutingTestCase(TestCase):
 
         response = self.client.post(reverse('layer-route',
                                             args=[self.layer.pk]),
-                                    {'geom': geometry.geojson})
-        self.assertEqual(HTTP_200_OK, response.status_code)
-        response = response.json()
-
-        self.assertEqual(response.get('route').get('type'), 'FeatureCollection')
-        self.assertTrue(len(response.get('route').get('features')) >= 2)
-
-        # Ensure End Points are close to requested points
-        start = Point(*response.get('route').get('features')[0].get('geometry')
-                      .get('coordinates')[0])
-        end = Point(*response.get('route').get('features')[-1].get('geometry')
-                    .get('coordinates')[-1])
-        self.assertTrue(points[0].distance(start) <= 0.001)
-        self.assertTrue(points[-1].distance(end) <= 0.001)
-
-    def test_routing_update_view(self):
-        points = [Point(
-            *point['coordinates'],
-            srid=app_settings.INTERNAL_GEOMETRY_SRID) for point in self.points]
-
-        geometry = LineString(*points)
-        response = self.client.post(reverse('layer-route',
-                                            args=[self.layer.pk]),
                                     {'geom': geometry.geojson, })
+
         self.assertEqual(HTTP_200_OK, response.status_code)
         response = response.json()
+
         self.assertEqual(response.get('route').get('type'), 'FeatureCollection')
         self.assertTrue(len(response.get('route').get('features')) >= 2)
 
@@ -185,11 +164,11 @@ class RoutingTestCase(TestCase):
         self.layer = Layer.objects.create(name='test_layer', routable=True)
         self.user = UserFactory(is_superuser=True)
         self.client.force_login(self.user)
-        self.feature1 = Feature.objects.create(layer=self.layer, geom="LINESTRING(0 40, 1 40)")
-        self.feature2 = Feature.objects.create(layer=self.layer, geom="LINESTRING(1 40, 9 40)")
-        self.feature3 = Feature.objects.create(layer=self.layer, geom="LINESTRING(9 40, 10 40)")
-        self.feature4 = Feature.objects.create(layer=self.layer, geom="LINESTRING(1 40, 1 41, 9 41, 9 40)")
-        self.assertTrue(Routing.create_topology(self.layer, tolerance=0.0001))
+        self.feature1 = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(0 40, 1 40)")
+        self.feature2 = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(1 40, 9 40)")
+        self.feature3 = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(9 40, 10 40)")
+        self.feature4 = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(1 40, 1 41, 9 41, 9 40)")
+        self.assertTrue(Routing.update_topology(self.layer, tolerance=0.0001))
 
     @mock.patch('geostore.settings.GEOSTORE_ROUTING_CELERY_ASYNC', new_callable=mock.PropertyMock)
     @mock.patch('geostore.routing.signals.execute_async_func')
