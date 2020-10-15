@@ -36,7 +36,7 @@ from .routing.db.mixins import PgRoutingMixin
 from .routing.decorators import topology_update
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
-from .tiles.funcs import ST_HausdorffDistance
+from .tiles.funcs import ST_HausdorffDistance, Force2D
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
 
@@ -402,9 +402,7 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
 
     def save(self, *args, **kwargs):
         if self.geom.hasz:
-            with connection.cursor() as cursor:
-                cursor.execute(f"SELECT ST_Force2D('{self.geom}')")
-                self.geom = cursor.fetchone()[0]
+            self.geom = Force2D(self.geom)
         super(Feature, self).save(*args, **kwargs)
 
     def get_bounding_box(self):
