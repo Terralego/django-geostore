@@ -462,7 +462,7 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
                     break
                 FeatureRelation.objects.bulk_create(batch, batch_size)
 
-    @property
+    @cached_property
     def relations(self):
         return {
             slugify(relation.name): self.relations_as_origin.filter(relation=relation)
