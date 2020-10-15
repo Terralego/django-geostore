@@ -37,8 +37,8 @@ from .routing.decorators import topology_update
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
-from .validators import (validate_geom_type, validate_json_schema,
-                         validate_json_schema_data)
+from .validators import (validate_geom_type, validate_geom,
+                         validate_json_schema, validate_json_schema_data)
 
 logger = logging.getLogger(__name__)
 
@@ -475,6 +475,7 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
         """
         validate_geom_type(self.layer.geom_type, self.geom.geom_typeid)
         validate_json_schema_data(self.properties, self.layer.schema)
+        validate_geom(self.geom)
 
     class Meta:
         ordering = ['id']

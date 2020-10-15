@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.utils.text import slugify
 
@@ -34,3 +35,12 @@ class FeatureTestCase(TestCase):
                                          })
         feature.clean()
         self.assertIsNotNone(feature.pk)
+
+    def test_clean_empty_feature(self):
+        feature = Feature.objects.create(layer=self.layer_schema,
+                                         geom='POINT EMPTY',
+                                         properties={
+                                             'name': 'toto'
+                                         })
+        with self.assertRaisesRegex(ValidationError, 'Geometry is empty'):
+            feature.clean()
