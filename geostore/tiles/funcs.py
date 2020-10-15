@@ -1,5 +1,7 @@
 from django.contrib.gis.db.models import (FloatField, GeometryField,
-                                          IntegerField)
+                                          IntegerField, BooleanField)
+from django.contrib.gis.db.models.fields import BaseSpatialField
+from django.db.models.lookups import Transform
 from django.db.models import Func
 
 
@@ -9,6 +11,13 @@ class RawGeometryField(GeometryField):
         Override compiler format to not cast as bytea
         """
         return sql, params
+
+
+@BaseSpatialField.register_lookup
+class IsEmpty(Transform):
+    lookup_name = 'isempty'
+    function = 'ST_ISEMPTY'
+    output_field = BooleanField()
 
 
 class ST_AsMvtGeom(Func):
