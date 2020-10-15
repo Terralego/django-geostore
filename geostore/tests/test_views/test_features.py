@@ -238,6 +238,14 @@ class FeatureDetailTestCase(APITestCase):
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', ]), data)
 
+    def test_feature_put_polygon_empty(self):
+        response = self.client.put(self.detail_url, data={'geom': 'POLYGON EMPTY',
+                                                          "properties": {"name": "Divona"}})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertListEqual(sorted(list(data['properties'].keys())),
+                             sorted(['name', ]), data)
+
     @patch('geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC', new_callable=PropertyMock)
     def test_relation(self, mock_relation):
         mock_relation.return_value = True
