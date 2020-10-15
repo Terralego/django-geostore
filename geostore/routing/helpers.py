@@ -51,10 +51,13 @@ class Routing(object):
                                                                            LineString)])
             # merge in linestring if possible
             way = way.merged
+
             start_point = GEOSGeometry(self.waypoints[0])
             end_point = GEOSGeometry(self.waypoints[-1])
+
             first_point_on_way = Point(way.coords[0])
             last_point_on_way = Point(way.coords[-1])
+
             # find closest point for start_point
             if start_point.distance(first_point_on_way) <= start_point.distance(last_point_on_way):
                 first_point = first_point_on_way
@@ -71,7 +74,7 @@ class Routing(object):
             return final_way.merged
 
     @classmethod
-    def create_topology(cls, layer, tolerance=0.00001, clean=False):
+    def update_topology(cls, layer, feature=None, tolerance=0.00001, create=True, clean=False):
         cursor = connection.cursor()
         raw_query = """
                     SELECT
@@ -86,27 +89,12 @@ class Routing(object):
                             clean := %s)
                     """
 
-        cursor.execute(raw_query,
-                       [layer.features.model._meta.db_table, tolerance, f'layer_id={layer.pk} ', clean])
-        return ('OK',) == cursor.fetchone()
+        if create:
+            rows_where = f'layer_id={layer.pk} '
+        elif feature and create:
+            rows_where = f"""id IN (SELECT id FROM {layer.features.model._meta.db_table}
+                WHERE layer_id={layer.pk} AND ST_DWithin('{feature.geom}', geom, {tolerance}))"""
 
-    @classmethod
-    def update_topology(cls, layer, feature, tolerance=0.00001, clean=False):
-        cursor = connection.cursor()
-        raw_query = """
-                    SELECT
-                        pgr_createTopology(
-                            %s,
-                            %s,
-                            'geom',
-                            'id',
-                            'source',
-                            'target',
-                            rows_where := %s,
-                            clean := %s)
-                    """
-        rows_where = f"""id IN (SELECT id FROM {layer.features.model._meta.db_table}
-            WHERE layer_id={layer.pk} AND ST_DWithin('{feature.geom}', geom, {tolerance}))"""
         cursor.execute(raw_query,
                        [layer.features.model._meta.db_table, tolerance, rows_where, clean])
         return ('OK',) == cursor.fetchone()
@@ -162,12 +150,10 @@ class Routing(object):
                 next_point = self.points[index + 1]
             except IndexError:
                 break
-
             segment = self._get_segment(point, next_point)
 
             if segment:
                 route.extend(segment)
-
         return route
 
     @cached_segment
