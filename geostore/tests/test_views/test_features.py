@@ -238,13 +238,22 @@ class FeatureDetailTestCase(APITestCase):
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', ]), data)
 
-    def test_feature_put_polygon_empty(self):
+    def test_feature_put_polygon_empty_wkt(self):
         response = self.client.put(self.detail_url, data={'geom': 'POLYGON EMPTY',
                                                           "properties": {"name": "Divona"}})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', ]), data)
+
+    def test_feature_put_polygon_empty_geojson(self):
+        response = self.client.put(self.detail_url, data={'geom': '{"type": "Point", "coordinates": []}',
+                                                          "properties": {"name": "Divona"}})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data = response.json()
+        self.assertEqual(data['geom'],
+                         ['Unable to convert to python object: Invalid geometry pointer '
+                          'returned from "OGR_G_CreateGeometryFromJson".'])
 
     @patch('geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC', new_callable=PropertyMock)
     def test_relation(self, mock_relation):
