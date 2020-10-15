@@ -46,8 +46,6 @@ INSTALLED_APPS = [
     'test_geostore.test_app'
 ]
 
-INTERNAL_GEOMETRY_SRID = 4326
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

@@ -465,7 +465,8 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
     @property
     def relations(self):
         return {
-            relation.slug: self.relations_as_origin.filter(relation=relation) for relation in self.layer.relations_as_origin.all()
+            slugify(relation.name): self.relations_as_origin.filter(relation=relation)
+            for relation in self.layer.relations_as_origin.all()
         }
 
     def clean(self):
