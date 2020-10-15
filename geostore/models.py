@@ -400,6 +400,13 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
 
     objects = Manager.from_queryset(FeatureQuerySet)()
 
+    def save(self, *args, **kwargs):
+        if self.geom.hasz:
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT ST_Force2D('{self.geom}')")
+                self.geom = cursor.fetchone()[0]
+        super(Feature, self).save(*args, **kwargs)
+
     def get_bounding_box(self):
         return self.geom.extent
 

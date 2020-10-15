@@ -1,8 +1,10 @@
+from django.contrib.gis.geos import Point
 from django.test import TestCase
 from django.utils.text import slugify
 
 from geostore import GeometryTypes
 from geostore.models import LayerExtraGeom, Feature
+from geostore import settings as app_settings
 from geostore.tests.factories import LayerSchemaFactory
 
 
@@ -34,3 +36,11 @@ class FeatureTestCase(TestCase):
                                          })
         feature.clean()
         self.assertIsNotNone(feature.pk)
+
+    def test_feature_geom_3d(self):
+        feature = Feature.objects.create(layer=self.layer_schema,
+                                         geom='POINT(0 0 0)',
+                                         properties={
+                                             'name': 'toto'
+                                         })
+        self.assertEqual(feature.geom, Point(0, 0, srid=app_settings.INTERNAL_GEOMETRY_SRID))
