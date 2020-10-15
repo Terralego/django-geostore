@@ -462,6 +462,13 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
                     break
                 FeatureRelation.objects.bulk_create(batch, batch_size)
 
+    @cached_property
+    def relations(self):
+        return {
+            slugify(relation.name): self.relations_as_origin.filter(relation=relation)
+            for relation in self.layer.relations_as_origin.all()
+        }
+
     def clean(self):
         """
         Validate properties according schema if provided

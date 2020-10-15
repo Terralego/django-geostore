@@ -67,3 +67,6 @@ class LayerRelationTestCase(TestCase):
         self.assertListEqual(list(self.trek.get_computed_relation_qs(relation=bad_relation)
                                   .values_list('pk', flat=True)),
                              [])
+
+    def test_relation_property(self):
+        self.assertEqual(self.trek.relations, {})
