@@ -1,7 +1,9 @@
 import json
 
 from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.db.models.functions import GeometryDistance
+from django import VERSION as DJANGO_VERSION
+if DJANGO_VERSION >= (3, 0):
+    from django.contrib.gis.db.models.functions import GeometryDistance
 from django.contrib.gis.geos import GEOSGeometry, MultiLineString, LineString, Point
 from django.core.cache import cache
 from django.db import connection
@@ -127,10 +129,15 @@ class Routing(object):
         return snapped_points
 
     def _get_closest_geometry(self, point):
-        # get 10 closest feature in layer with bbox / index operator (fast, use bbox center for distance)
-        first_ordered = self.layer.features.all().order_by(GeometryDistance(F('geom'),
-                                                                            GEOSGeometry(str(point))))\
-                            .values_list('id', flat=True)[:10]
+        if DJANGO_VERSION >= (3, 0):
+
+            # get 10 closest feature in layer with bbox / index operator (fast, use bbox center for distance)
+            first_ordered = self.layer.features.all().order_by(GeometryDistance(F('geom'),
+                                                                                GEOSGeometry(str(point))))\
+                                .values_list('id', flat=True)[:10]
+            features = self.layer.features.filter(pk__in=first_ordered)
+        else:
+            features = self.layer.features.all()
         # annotate and filter by real min. distance on these
         features = self.layer.features.filter(pk__in=first_ordered).annotate(
             distance=Distance(F('geom'), Value(str(point)))
