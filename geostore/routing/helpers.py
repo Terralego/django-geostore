@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
 
+from geostore import settings as app_settings
 from ..tiles.funcs import ST_Distance, ST_LineLocatePoint, ST_LineSubstring
 
 
@@ -74,9 +75,7 @@ class Routing(object):
             return final_way.merged
 
     @classmethod
-    def update_topology(cls, layer, features=None, tolerance=0.00001, clean=False):
-        if not features:
-            features = layer.features.values_list('pk', flat=True)
+    def update_topology(cls, layer, features=None, tolerance=app_settings.GEOSTORE_TOLERANCE_ROUTING, clean=False):
         cursor = connection.cursor()
         raw_query = """
                     SELECT
@@ -90,7 +89,10 @@ class Routing(object):
                             rows_where := %s,
                             clean := %s)
                     """
-        rows_where = f"""id IN {tuple(features)}"""
+        if not features:
+            rows_where = f'layer_id={layer.pk} '
+        else:
+            rows_where = f"""id IN {tuple(features)}"""
 
         cursor.execute(raw_query,
                        [layer.features.model._meta.db_table, tolerance, rows_where, clean])
