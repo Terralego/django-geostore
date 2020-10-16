@@ -238,15 +238,15 @@ class FeatureDetailTestCase(APITestCase):
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', ]), data)
 
-    def test_feature_put_polygon_empty_wkt(self):
-        response = self.client.put(self.detail_url, data={'geom': 'POLYGON EMPTY',
+    def test_feature_put_point_empty_wkt(self):
+        response = self.client.put(self.detail_url, data={'geom': 'POINT EMPTY',
                                                           "properties": {"name": "Divona"}})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', ]), data)
 
-    def test_feature_put_polygon_empty_geojson(self):
+    def test_feature_put_point_empty_geojson(self):
         response = self.client.put(self.detail_url, data={'geom': '{"type": "Point", "coordinates": []}',
                                                           "properties": {"name": "Divona"}})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
