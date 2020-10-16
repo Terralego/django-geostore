@@ -108,8 +108,7 @@ class Routing(object):
                     "geometry":
                         json.loads(GEOSGeometry(route['geometry']).geojson),
                     "properties": {
-                        "id": route['id'],
-                    }
+                        "id": route['id']}
                 }
                 for route in routes
             ]
