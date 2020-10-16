@@ -164,6 +164,7 @@ class RoutingTestCase(TestCase):
         self.layer = Layer.objects.create(name='test_layer', routable=True)
         self.user = UserFactory(is_superuser=True)
         self.client.force_login(self.user)
+        self.other_feature = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(5 40, 6 40)")
         self.feature1 = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(0 40, 1 40)")
         self.feature2 = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(1 40, 9 40)")
         self.feature3 = Feature.objects.create(layer=self.layer, geom="SRID=4326;LINESTRING(9 40, 10 40)")
@@ -200,6 +201,7 @@ class RoutingTestCase(TestCase):
         self.assertNotEqual(old_json, new_json)
         id_new_features = [feature['properties']['id'] for feature in new_json.get('route').get('features')]
         self.assertNotIn(first_id, id_new_features)
+        self.assertNotIn(self.other_feature.pk, id_new_features)
 
     @mock.patch('geostore.settings.GEOSTORE_ROUTING_CELERY_ASYNC', new_callable=mock.PropertyMock)
     @mock.patch('geostore.routing.signals.execute_async_func')
@@ -232,3 +234,4 @@ class RoutingTestCase(TestCase):
         self.assertNotEqual(old_json, new_json)
         id_new_features = [feature['properties']['id'] for feature in new_json.get('route').get('features')]
         self.assertNotIn(first_id, id_new_features)
+        self.assertNotIn(self.other_feature.pk, id_new_features)
