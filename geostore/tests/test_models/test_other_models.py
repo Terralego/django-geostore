@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.utils.text import slugify
 
@@ -36,11 +36,12 @@ class FeatureTestCase(TestCase):
         feature.clean()
         self.assertIsNotNone(feature.pk)
 
-    def test_clean_empty_feature(self):
-        feature = Feature.objects.create(layer=self.layer_schema,
-                                         geom='POINT EMPTY',
-                                         properties={
-                                             'name': 'toto'
-                                         })
-        with self.assertRaisesRegex(ValidationError, 'Geometry is empty'):
-            feature.clean()
+    def test_constraint_feature_empty_geom(self):
+        with self.assertRaises(IntegrityError):
+            Feature.objects.create(layer=self.layer_schema,
+                                   geom='POINT EMPTY',)
+
+    def test_constraint_feature_valid_geom(self):
+        with self.assertRaises(IntegrityError):
+            Feature.objects.create(layer=self.layer_schema,
+                                   geom='POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))',)
