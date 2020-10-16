@@ -58,8 +58,14 @@ class Routing(object):
             start_point = GEOSGeometry(self.waypoints[0])
             end_point = GEOSGeometry(self.waypoints[-1])
 
-            first_point_on_way = Point(way.coords[0])
-            last_point_on_way = Point(way.coords[-1])
+            if way.geom_type == "MultiLineString":
+                first_point_on_way = Point(way[0].coords[0])
+                last_point_on_way = Point(way[-1].coords[-1])
+            elif way.geom_type == "LineString":
+                first_point_on_way = Point(way.coords[0])
+                last_point_on_way = Point(way.coords[-1])
+            else:
+                return way
 
             # find closest point for start_point
             if start_point.distance(first_point_on_way) <= start_point.distance(last_point_on_way):
@@ -72,7 +78,11 @@ class Routing(object):
             # add first and final segments
             segment_1 = LineString(start_point, first_point)
             segment_2 = LineString(end_point, last_point)
-            final_way = MultiLineString(*[way, segment_1, segment_2])
+            if way.geom_type == "MultiLineString":
+                way_linestrings = [line for line in way]
+                final_way = MultiLineString(*way_linestrings, *[segment_1, segment_2])
+            else:
+                final_way = MultiLineString(*[way, segment_1, segment_2])
             final_way.simplify(tolerance=0.00001, preserve_topology=True)
             return final_way.merged
 
