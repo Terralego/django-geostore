@@ -156,7 +156,7 @@ class RoutingTestCase(TestCase):
 
 
 @tag("routing")
-class RoutingTestCase(TestCase):
+class UpdateTopologyTestCase(TestCase):
     points = [Point(0, 40, srid=app_settings.INTERNAL_GEOMETRY_SRID),
               Point(10, 40, srid=app_settings.INTERNAL_GEOMETRY_SRID)]
 

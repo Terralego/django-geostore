@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.translation import gettext as _
 
-from geostore.models import Feature, Layer
+from geostore.models import Layer
 from geostore.routing.helpers import Routing
 
 
