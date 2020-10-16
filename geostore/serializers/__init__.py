@@ -1,10 +1,5 @@
-import json
 from django.contrib.auth.models import Group
-from django.contrib.gis.gdal.error import GDALException
-from django.contrib.gis.geos import GEOSException, GEOSGeometry
-from django.core.exceptions import ValidationError
 from django.utils.http import urlunquote
-from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.reverse import reverse
@@ -14,42 +9,7 @@ from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
 from geostore.routing.serializers.mixins import RoutingLayerSerializer
 from geostore.validators import (validate_json_schema_data,
-                                 validate_json_schema, validate_geom_type)
-
-
-class GeostoreGeometryField(GeometryField):
-    def validate_geom_constraints(self, geometry):
-        if geometry.empty:
-            raise ValidationError(
-                _('Geometry is empty')
-            )
-        if not geometry.valid:
-            raise ValidationError(
-                _('Geometry is not valid')
-            )
-
-    def to_internal_value(self, value):
-        if value == '' or value is None:
-            return value
-        if isinstance(value, GEOSGeometry):
-            # value already has the correct representation
-            return value
-        if isinstance(value, dict):
-            value = json.dumps(value)
-        try:
-            geometry = GEOSGeometry(value)
-            self.validate_geom_constraints(geometry)
-            return geometry
-        except (GEOSException):
-            raise ValidationError(
-                _(
-                    'Invalid format: string or unicode input unrecognized as GeoJSON, WKT EWKT or HEXEWKB.'
-                )
-            )
-        except (ValueError, TypeError, GDALException) as e:
-            raise ValidationError(
-                _('Unable to convert to python object: {}'.format(str(e)))
-            )
+                                 validate_json_schema, validate_geom_type, validate_geom)
 
 
 class GeometryFileSerializer(serializers.Serializer):
@@ -71,7 +31,7 @@ class GeometryFileSerializer(serializers.Serializer):
 
 
 class FeatureSerializer(serializers.ModelSerializer):
-    geom = GeostoreGeometryField()
+    geom = GeometryField(validators=[validate_geom])
     properties = serializers.JSONField(required=False)
     relations = serializers.SerializerMethodField()
     geometry_files = serializers.SerializerMethodField()
