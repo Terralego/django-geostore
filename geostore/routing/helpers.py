@@ -75,7 +75,9 @@ class Routing(object):
             return final_way.merged
 
     @classmethod
-    def update_topology(cls, layer, feature=None, tolerance=0.00001, create=True, clean=False):
+    def update_topology(cls, layer, features=None, tolerance=0.00001, clean=False):
+        if not features:
+            features = layer.features.values_list('pk', flat=True)
         cursor = connection.cursor()
         raw_query = """
                     SELECT
@@ -89,12 +91,7 @@ class Routing(object):
                             rows_where := %s,
                             clean := %s)
                     """
-
-        if create:
-            rows_where = f'layer_id={layer.pk} '
-        elif feature and create:
-            rows_where = f"""id IN (SELECT id FROM {layer.features.model._meta.db_table}
-                WHERE layer_id={layer.pk} AND ST_DWithin('{feature.geom}', geom, {tolerance}))"""
+        rows_where = f"""id IN {tuple(features)}"""
 
         cursor.execute(raw_query,
                        [layer.features.model._meta.db_table, tolerance, rows_where, clean])
