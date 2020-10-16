@@ -92,7 +92,7 @@ class Routing(object):
         if not features:
             rows_where = f'layer_id={layer.pk} '
         else:
-            rows_where = f"""id IN {tuple(features)}"""
+            rows_where = f"""layer_id={layer.pk}  AND id IN {tuple(features)}"""
 
         cursor.execute(raw_query,
                        [layer.features.model._meta.db_table, tolerance, rows_where, clean])
