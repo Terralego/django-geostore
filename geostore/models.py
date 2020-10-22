@@ -37,7 +37,7 @@ from .routing.db.mixins import PgRoutingMixin
 from .routing.decorators import topology_update
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
-from .tiles.funcs import ST_HausdorffDistance, Force2D
+from .tiles.funcs import ST_HausdorffDistance
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
 
