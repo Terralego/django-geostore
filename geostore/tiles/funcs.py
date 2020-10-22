@@ -11,11 +11,6 @@ class RawGeometryField(GeometryField):
         return sql, params
 
 
-class Force2D(Func):
-    function = 'ST_FORCE2D'
-    output_field = RawGeometryField()
-
-
 class ST_AsMvtGeom(Func):
     function = 'ST_AsMvtGeom'
     output_field = RawGeometryField()
