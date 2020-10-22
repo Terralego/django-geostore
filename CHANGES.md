@@ -4,7 +4,9 @@ CHANGELOG
 0.4.4.dev0     (XXXX-XX-XX)
 ---------------------------
 
-* add relation property to handle relations directly in feature
+* Add relation property to handle relations directly in feature
+* Add constraint empty geometries
+* Add validation of constraints on geometries
 
 
 0.4.3          (2020-10-09)
