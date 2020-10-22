@@ -37,7 +37,7 @@ class FeatureTestCase(TestCase):
         feature.clean()
         self.assertIsNotNone(feature.pk)
 
-    def test_feature_geom_3d(self):
+    def test_feature_geom_3d_to_2d(self):
         feature = Feature.objects.create(layer=self.layer_schema,
                                          geom='POINT(0 0 0)',
                                          properties={
