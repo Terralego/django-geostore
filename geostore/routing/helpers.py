@@ -1,11 +1,12 @@
 import json
 
+from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import GEOSGeometry, MultiLineString, LineString
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
 
-from ..tiles.funcs import ST_Distance, ST_LineLocatePoint, ST_LineSubstring
+from ..tiles.funcs import ST_LineLocatePoint, ST_LineSubstring
 
 
 def cached_segment(func, expiration=3600 * 24):
@@ -93,7 +94,7 @@ class Routing(object):
 
     def _get_closest_geometry(self, point):
         return self.layer.features.all().annotate(
-            distance=ST_Distance(F('geom'), Value(str(point)))
+            distance=Distance(F('geom'), point)
         ).order_by('distance').first()
 
     def _snap_point_on_feature(self, point, feature):

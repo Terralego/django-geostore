@@ -5,6 +5,7 @@ CHANGELOG
 ---------------------------
 
 * add relation property to handle relations directly in feature
+* Improve tile generation
 
 
 0.4.3          (2020-10-09)
