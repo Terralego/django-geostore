@@ -11,6 +11,7 @@ import fiona.transform
 from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Extent
+from django.contrib.gis.db.models.fields import BaseSpatialField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.gis.measure import D
@@ -31,6 +32,7 @@ from fiona.crs import from_epsg
 from . import GeometryTypes, settings as app_settings
 from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
+from .functions import ST_IsEmpty
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .routing.db.mixins import PgRoutingMixin
 from .routing.decorators import topology_update
@@ -599,3 +601,8 @@ class FeatureExtraGeom(BaseUpdatableModel):
             GistIndex(name='feg_geom_gist_index', fields=['layer_extra_geom', 'geom']),
             GinIndex(name='feg_properties_gin_index', fields=['properties']),
         ]
+
+
+@BaseSpatialField.register_lookup
+class IsEmpty(ST_IsEmpty):
+    lookup_name = 'isempty'
