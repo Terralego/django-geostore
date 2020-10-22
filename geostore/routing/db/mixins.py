@@ -23,7 +23,7 @@ class UpdateRoutingMixin(models.Model):
     def clean(self, *args, **kwargs):
         if self.routable and not self.is_linestring:
             raise ValidationError(_('Invalid geom type for routing'), code='invalid')
-        super(UpdateRoutingMixin, self).clean(*args, **kwargs)
+        super().clean(*args, **kwargs)
 
     class Meta:
         abstract = True

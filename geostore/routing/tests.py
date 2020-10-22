@@ -1,4 +1,5 @@
 from django.contrib.gis.geos import LineString, Point
+from django.core.exceptions import ValidationError
 from django.db import connection
 from django.test import override_settings, TestCase, tag
 from django.urls import reverse
@@ -6,6 +7,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from unittest import mock
 
+from geostore import GeometryTypes
 from geostore.models import Feature, Layer
 from geostore.routing.helpers import Routing, RoutingException
 from .. import settings as app_settings
@@ -153,6 +155,17 @@ class RoutingTestCase(TestCase):
 
         with self.assertRaises(RoutingException):
             Routing(self.points, feature.layer)
+
+    def test_routable_point(self):
+        self.layer.geom_type = GeometryTypes.Point
+        with self.assertRaisesRegex(ValidationError, 'Invalid geom type for routing'):
+            self.layer.clean()
+
+    def test_routable_linestring(self):
+        self.layer.geom_type = GeometryTypes.LineString
+        self.layer.clean()
+        self.assertEqual(self.layer.geom_type, GeometryTypes.LineString)
+        self.assertEqual(self.layer.routable, True)
 
 
 @tag("routing")
