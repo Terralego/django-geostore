@@ -55,4 +55,3 @@ class FeatureTestCase(TestCase):
         with self.assertRaises(IntegrityError):
             Feature.objects.create(layer=self.layer_schema,
                                    geom='POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))',)
-
