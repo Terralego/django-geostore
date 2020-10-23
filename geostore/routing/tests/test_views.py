@@ -10,9 +10,9 @@ from unittest import mock
 from geostore import GeometryTypes
 from geostore.models import Feature, Layer
 from geostore.routing.helpers import Routing, RoutingException
-from .. import settings as app_settings
-from ..tests.factories import FeatureFactory, UserFactory
-from ..tests.utils import get_files_tests
+from geostore import settings as app_settings
+from geostore.tests.factories import FeatureFactory, UserFactory
+from geostore.tests.utils import get_files_tests
 
 
 @tag("routing")
