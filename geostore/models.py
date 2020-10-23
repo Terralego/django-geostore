@@ -19,6 +19,7 @@ try:
     from django.db.models import JSONField
 except ImportError:  # TODO Remove when dropping Django releases < 3.1
     from django.contrib.postgres.fields import JSONField
+from django.contrib.gis.geos import WKBWriter
 from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
@@ -401,6 +402,11 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
                               db_index=False)
 
     objects = Manager.from_queryset(FeatureQuerySet)()
+
+    def save(self, *args, **kwargs):
+        if self.geom.hasz:
+            self.geom = GEOSGeometry(WKBWriter().write(self.geom))
+        super(Feature, self).save(*args, **kwargs)
 
     def get_bounding_box(self):
         return self.geom.extent
