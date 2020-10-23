@@ -2,14 +2,13 @@ import hashlib
 from random import uniform
 
 import mercantile
+from django.contrib.gis.db.models.functions import Transform, Length, Area
 from django.core.cache import cache
 from django.db import connection
-from django.db.models import F
 from math import ceil, floor, log, pi
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import (ST_Area, ST_Length, ST_MakeEnvelope,
-                    ST_SimplifyPreserveTopology, ST_Transform)
+from .funcs import ST_MakeEnvelope, ST_SimplifyPreserveTopology
 from .sigtools import SIGTools
 from .. import settings as app_settings
 
@@ -74,14 +73,14 @@ class VectorTile(object):
         if self.layer.is_linestring:
             # Larger then a half of pixel
             layer_query = layer_query.annotate(
-                length3857=ST_Length('outgeom3857')
+                length3857=Length('outgeom3857')
             ).filter(
                 length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2
             )
         elif self.layer.is_polygon:
             # Larger than a quarter of pixel
             layer_query = layer_query.annotate(
-                area3857=ST_Area('outgeom3857')
+                area3857=Area('outgeom3857')
             ).filter(
                 area3857__gt=pixel_width_x * pixel_width_y / 4
             )
@@ -113,23 +112,17 @@ class VectorTile(object):
         xmin, ymin, xmax, ymax = self.get_tile_bbox(x, y, z)
         pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
 
-        layer_query = self.layer.features.annotate(
-            bbox=ST_MakeEnvelope(
-                xmin,
-                ymin,
-                xmax,
-                ymax,
-                EPSG_3857),
-            # Intersects on internal data projection using pixel buffer
-            bbox_select=ST_Transform(ST_MakeEnvelope(
-                xmin - pixel_width_x * self.pixel_buffer,
-                ymin - pixel_width_y * self.pixel_buffer,
-                xmax + pixel_width_x * self.pixel_buffer,
-                ymax + pixel_width_y * self.pixel_buffer,
-                EPSG_3857), app_settings.INTERNAL_GEOMETRY_SRID),
-            outgeom3857=ST_Transform('geom', EPSG_3857),
-        ).filter(
-            bbox_select__intersects=F('geom')
+        # Intersects on internal data projection using pixel buffer
+        layer_query = self.layer.features.filter(
+            geom__intersects=Transform(
+                ST_MakeEnvelope(xmin - pixel_width_x * self.pixel_buffer,
+                                ymin - pixel_width_y * self.pixel_buffer,
+                                xmax + pixel_width_x * self.pixel_buffer,
+                                ymax + pixel_width_y * self.pixel_buffer,
+                                EPSG_3857),
+                app_settings.INTERNAL_GEOMETRY_SRID))\
+            .annotate(
+            outgeom3857=Transform('geom', EPSG_3857),
         )
 
         # Filter features
@@ -169,7 +162,7 @@ class VectorTile(object):
                         ({properties}) AS properties,
                         ST_AsMvtGeom(
                             outgeom3857,
-                            bbox,
+                            ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {EPSG_3857}),
                             {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
                             {self.pixel_buffer * self.EXTENT_RATIO},
                             true) AS geometry
@@ -220,7 +213,7 @@ class VectorTile(object):
 def guess_maxzoom(layer):
     features = layer.features.all()
     layer_query = features.annotate(
-        geom3857=ST_Transform('geom', EPSG_3857)
+        geom3857=Transform('geom', EPSG_3857)
     )
 
     layer_raw_query, args = layer_query.query.sql_with_params()
