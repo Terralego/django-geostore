@@ -139,18 +139,16 @@ class Routing(object):
         return snapped_points
 
     def _get_closest_geometry(self, point):
+        features = self.layer.features.all()
         if DJANGO_VERSION >= (3, 0):
-
             # get 10 closest feature in layer with bbox / index operator (fast, use bbox center for distance)
-            first_ordered = self.layer.features.all().order_by(GeometryDistance(F('geom'),
-                                                                                GEOSGeometry(str(point))))\
-                                .values_list('id', flat=True)[:10]
-            features = self.layer.features.filter(pk__in=first_ordered)
-        else:
-            features = self.layer.features.all()
+            first_ordered = features.order_by(GeometryDistance(F('geom'),
+                                                               point)).values_list('id', flat=True)[:10]
+            features = features.filter(pk__in=first_ordered)
+
         # annotate and filter by real min. distance on these
-        features = self.layer.features.filter(pk__in=first_ordered).annotate(
-            distance=Distance(F('geom'), Value(str(point)))
+        features = features.annotate(
+            distance=Distance(F('geom'), point)
         ).order_by('distance')
         return features.first()
 
