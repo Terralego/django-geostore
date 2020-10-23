@@ -83,7 +83,7 @@ class LayerFromCSVDictReaderTestCase(TestCase):
     def test_init_options(self):
         """Create fake features to test features reinit"""
         for i in range(2):
-            self.layer.features.create(geom=Point(),
+            self.layer.features.create(geom=Point(0, 0),
                                        properties={'SIREN': '', 'NIC': ''}, )
         self.assertEqual(self.layer.features.all().count(), 2)
 

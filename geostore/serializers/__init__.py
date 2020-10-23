@@ -3,12 +3,13 @@ from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.reverse import reverse
+from rest_framework_gis.serializers import GeometryField
 
 from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
 from geostore.routing.serializers.mixins import RoutingLayerSerializer
 from geostore.validators import (validate_json_schema_data,
-                                 validate_json_schema, validate_geom_type)
+                                 validate_json_schema, validate_geom_type, validate_geom)
 
 
 class GeometryFileSerializer(serializers.Serializer):
@@ -30,6 +31,7 @@ class GeometryFileSerializer(serializers.Serializer):
 
 
 class FeatureSerializer(serializers.ModelSerializer):
+    geom = GeometryField(validators=[validate_geom])
     properties = serializers.JSONField(required=False)
     relations = serializers.SerializerMethodField()
     geometry_files = serializers.SerializerMethodField()
