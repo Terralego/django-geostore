@@ -15,9 +15,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
+from geostore import settings as app_settings
 from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
+from ..helpers import execute_async_func
+from ..tasks import generate_shapefile
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
@@ -39,37 +42,45 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin,
     serializer_class = LayerSerializer
     lookup_fields = ('pk', 'name')
 
+    def post_shapefile(self, request, layer):
+        try:
+            shape_file = request.data['shapefile']
+            with transaction.atomic():
+                layer.features.all().delete()
+                layer.from_shapefile(shape_file)
+                response = Response(status=status.HTTP_200_OK)
+
+        except (ValueError, MultiValueDictKeyError):
+            response = Response(status=status.HTTP_400_BAD_REQUEST)
+        return response
+
+    def get_shapefile(self, layer):
+        if app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
+            execute_async_func(generate_shapefile, (layer.id,))
+            return Response(status=status.HTTP_202_ACCEPTED)
+        else:
+            shape_file = generate_shapefile(layer.id)
+
+        if shape_file:
+            response = HttpResponse(content_type='application/zip')
+            response['Content-Disposition'] = (
+                'attachment; '
+                f'filename="{layer.name}.zip"')
+
+            response.write(shape_file.getvalue())
+        else:
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+        return response
+
     @action(methods=['get', 'post'],
             url_name='shapefile', detail=True, permission_classes=[IsAuthenticated,
                                                                    LayerImportExportPermission])
     def shapefile(self, request, *args, **kwargs):
         layer = self.get_object()
-
         if request.method == 'POST':
-            try:
-                shape_file = request.data['shapefile']
-                with transaction.atomic():
-                    layer.features.all().delete()
-                    layer.from_shapefile(shape_file)
-                    response = Response(status=status.HTTP_200_OK)
-
-            except (ValueError, MultiValueDictKeyError):
-                response = Response(status=status.HTTP_400_BAD_REQUEST)
-
+            return self.post_shapefile(request, layer)
         else:
-            shape_file = layer.to_shapefile()
-
-            if shape_file:
-                response = HttpResponse(content_type='application/zip')
-                response['Content-Disposition'] = (
-                    'attachment; '
-                    f'filename="{layer.name}.zip"')
-
-                response.write(shape_file.getvalue())
-            else:
-                response = Response(status=status.HTTP_204_NO_CONTENT)
-
-        return response
+            return self.get_shapefile(layer)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def intersects(self, request, *args, **kwargs):

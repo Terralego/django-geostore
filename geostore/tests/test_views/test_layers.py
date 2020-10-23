@@ -1,18 +1,20 @@
 import json
 from io import BytesIO
+from unittest import mock
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import override_settings, TestCase
 from django.urls import reverse
-from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, HTTP_202_ACCEPTED,
                                    HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
                                    HTTP_403_FORBIDDEN)
 from rest_framework.test import APIClient
 
 from geostore import GeometryTypes
+from geostore.helpers import get_serialized_properties
 from geostore.models import Feature, LayerGroup
 from geostore.tests.factories import (FeatureFactory, LayerFactory,
                                       UserFactory)
@@ -278,7 +280,7 @@ class LayerShapefileTestCase(TestCase):
             }
         }
 
-        serialized_properties = layer._get_serialized_properties(test_properties)
+        serialized_properties = get_serialized_properties(layer, test_properties)
         self.assertEqual(serialized_properties['str'], test_properties['str'])
         self.assertIsInstance(serialized_properties['int'], str)
         self.assertIsInstance(serialized_properties['dict'], str)
@@ -309,12 +311,26 @@ class LayerShapefileTestCase(TestCase):
                          new_layer.features.first().properties)
 
     def test_empty_shapefile_export(self):
-        # Create en ampty layer to test its behavior
+        # Create en empty layer to test its behavior
         LayerFactory()
         self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
+
+    @mock.patch('geostore.settings.GEOSTORE_EXPORT_CELERY_ASYNC', new_callable=mock.PropertyMock)
+    @mock.patch('geostore.views.execute_async_func')
+    @override_settings(CELERY_ALWAYS_EAGER=True)
+    def test_async_shapefile_export(self, mock_async, mock_execute):
+        def side_effect(async_func, args):
+            async_func(*args)
+        mock_async.side_effect = side_effect
+        mock_execute.return_value = True
+        FeatureFactory(layer=self.layer)
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        response = self.client.get(shape_url)
+        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
 
     def test_shapefile_no_permission(self):
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
