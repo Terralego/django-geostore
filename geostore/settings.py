@@ -12,3 +12,6 @@ GEOSTORE_RELATION_CELERY_ASYNC = getattr(settings, 'GEOSTORE_RELATION_CELERY_ASY
 GEOSTORE_LAYER_VIEWSSET = getattr(settings, 'GEOSTORE_LAYER_VIEWSSET', 'geostore.views.LayerViewSet')
 # LayerSerializer can be override by a subclass
 GEOSTORE_LAYER_SERIALIZER = getattr(settings, 'GEOSTORE_LAYER_SERIALIZER', 'geostore.serializers.LayerSerializer')
+
+GEOSTORE_EXPORT_CELERY_ASYNC = getattr(settings, 'GEOSTORE_EXPORT_CELERY_ASYNC', False)
+

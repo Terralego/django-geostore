@@ -1,9 +1,11 @@
 import io
+import json
 import logging
 import os
 import zipfile
 
 from django.contrib.gis.geos.point import Point
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,22 @@ def make_zipfile_bytesio(base_dir):
                     logger.info("adding '%s'", path)
 
     return zip_file
+
+
+def execute_async_func(async_func, args=()):
+    """ Celery worker can be out of transaction, and raise DoesNotExist """
+    async_func.delay(*args) if not transaction.get_connection().in_atomic_block else transaction.on_commit(
+        lambda: async_func.delay(*args))
+
+
+def get_serialized_properties(layer, feature_properties):
+    properties = {k: None for k in layer.layer_properties}
+    for prop, value in feature_properties.items():
+        if isinstance(value, str):
+            properties[prop] = value
+        else:
+            properties[prop] = json.dumps(value)
+    return properties
 
 
 class ChunkIterator:
