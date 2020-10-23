@@ -11,24 +11,9 @@ class RawGeometryField(GeometryField):
         return sql, params
 
 
-class ST_AsMvtGeom(Func):
-    function = 'ST_AsMvtGeom'
-    output_field = RawGeometryField()
-
-
-class ST_Transform(Func):
-    function = 'ST_Transform'
-    output_field = RawGeometryField()
-
-
 class ST_MakeEnvelope(Func):
     function = 'ST_MakeEnvelope'
-    output_field = RawGeometryField()
-
-
-class ST_Distance(Func):
-    function = 'ST_Distance'
-    output_field = FloatField()
+    output_field = GeometryField()
 
 
 class ST_LineLocatePoint(Func):
@@ -66,28 +51,8 @@ class ST_SnapToGrid(Func):
     output_field = RawGeometryField()
 
 
-class ST_Buffer(Func):
-    function = 'ST_Buffer'
-    output_field = RawGeometryField()
-
-
 class ST_SetEffectiveArea(Func):
     function = 'ST_SetEffectiveArea'
-    output_field = RawGeometryField()
-
-
-class ST_Length(Func):
-    function = 'ST_Length'
-    output_field = FloatField()
-
-
-class ST_Area(Func):
-    function = 'ST_Area'
-    output_field = FloatField()
-
-
-class ST_MakeValid(Func):
-    function = 'ST_MakeValid'
     output_field = RawGeometryField()
 
 

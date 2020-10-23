@@ -6,6 +6,9 @@ CHANGELOG
 
 * Add relation property to handle relations directly in feature
 * Force geometries 2d
+* Add constraint empty geometries
+* Add validation of constraints on geometries
+* Improve tile generation
 
 
 0.4.3          (2020-10-09)
