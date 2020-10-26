@@ -24,7 +24,7 @@ from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -35,8 +35,9 @@ from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
 from .functions import ST_IsEmpty
 from .helpers import ChunkIterator, make_zipfile_bytesio
-from .routing.db.mixins import PgRoutingMixin
+from .routing.db.mixins import PgRoutingMixin, UpdateRoutingMixin
 from .routing.decorators import topology_update
+from .routing.signals import feature_routing
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
@@ -51,7 +52,7 @@ ACCEPTED_PROJECTIONS = [
 ]
 
 
-class Layer(LayerBasedModelMixin):
+class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
     authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers')
@@ -507,6 +508,8 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
 
 
 post_save.connect(save_feature, sender=Feature)
+post_save.connect(feature_routing, sender=Feature)
+pre_delete.connect(feature_routing, sender=Feature)
 
 
 class LayerRelation(models.Model):

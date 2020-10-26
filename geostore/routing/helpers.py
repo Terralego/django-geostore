@@ -1,12 +1,20 @@
 import json
 
 from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.geos import GEOSGeometry, MultiLineString, LineString
+from django import VERSION as DJANGO_VERSION
+if DJANGO_VERSION >= (3, 0):
+    from django.contrib.gis.db.models.functions import GeometryDistance
+from django.contrib.gis.geos import GEOSGeometry, MultiLineString, LineString, Point
 from django.core.cache import cache
 from django.db import connection
 from django.db.models import F, Value
 
+from geostore import settings as app_settings
 from ..tiles.funcs import ST_LineLocatePoint, ST_LineSubstring
+
+
+class RoutingException(Exception):
+    pass
 
 
 def cached_segment(func, expiration=3600 * 24):
@@ -27,10 +35,11 @@ class Routing(object):
 
     def __init__(self, points, layer):
         if not layer.is_linestring or layer.is_multi:
-            raise ValueError('Layer is not routable')
+            raise RoutingException('Layer is not routable')
 
         self.layer = layer
-        self.points = self._get_points_in_lines(points)
+        self.waypoints = points
+        self.points = self._get_points_in_lines(self.waypoints)
         self.routes = self._points_route()
 
     def get_route(self):
@@ -44,10 +53,42 @@ class Routing(object):
             way = MultiLineString(*[GEOSGeometry(route['geometry'])
                                     for route in self.routes if isinstance(GEOSGeometry(route['geometry']),
                                                                            LineString)])
-            return way.merged
+            # merge in linestring if possible
+            way = way.merged
+
+            start_point = GEOSGeometry(self.waypoints[0])
+            end_point = GEOSGeometry(self.waypoints[-1])
+
+            if way.geom_type == "MultiLineString":
+                first_point_on_way = Point(way[0].coords[0])
+                last_point_on_way = Point(way[-1].coords[-1])
+            elif way.geom_type == "LineString":
+                first_point_on_way = Point(way.coords[0])
+                last_point_on_way = Point(way.coords[-1])
+            else:
+                return way
+
+            # find closest point for start_point
+            if start_point.distance(first_point_on_way) <= start_point.distance(last_point_on_way):
+                first_point = first_point_on_way
+                last_point = last_point_on_way
+            else:
+                first_point = last_point_on_way
+                last_point = first_point_on_way
+
+            # add first and final segments
+            segment_1 = LineString(start_point, first_point)
+            segment_2 = LineString(end_point, last_point)
+            if way.geom_type == "MultiLineString":
+                way_linestrings = [line for line in way]
+                final_way = MultiLineString(*way_linestrings, *[segment_1, segment_2])
+            else:
+                final_way = MultiLineString(*[way, segment_1, segment_2])
+            final_way.simplify(tolerance=0.00001, preserve_topology=True)
+            return final_way.merged
 
     @classmethod
-    def create_topology(cls, layer, tolerance=0.00001, clean=False):
+    def update_topology(cls, layer, features=None, tolerance=app_settings.GEOSTORE_TOLERANCE_ROUTING, clean=False):
         cursor = connection.cursor()
         raw_query = """
                     SELECT
@@ -61,9 +102,13 @@ class Routing(object):
                             rows_where := %s,
                             clean := %s)
                     """
+        if not features:
+            rows_where = f'layer_id={layer.pk} '
+        else:
+            rows_where = f"""layer_id={layer.pk}  AND id IN {tuple(features)}"""
 
         cursor.execute(raw_query,
-                       [layer.features.model._meta.db_table, tolerance, f'layer_id={layer.pk} ', clean])
+                       [layer.features.model._meta.db_table, tolerance, rows_where, clean])
         return ('OK',) == cursor.fetchone()
 
     def _serialize_routes(self, routes):
@@ -74,7 +119,8 @@ class Routing(object):
                     "type": "Feature",
                     "geometry":
                         json.loads(GEOSGeometry(route['geometry']).geojson),
-                    "properties": route['properties'],
+                    "properties": {
+                        "id": route['id']}
                 }
                 for route in routes
             ]
@@ -93,14 +139,23 @@ class Routing(object):
         return snapped_points
 
     def _get_closest_geometry(self, point):
-        return self.layer.features.all().annotate(
+        features = self.layer.features.all()
+        if DJANGO_VERSION >= (3, 0):
+            # get 10 closest feature in layer with bbox / index operator (fast, use bbox center for distance)
+            first_ordered = features.order_by(GeometryDistance(F('geom'),
+                                                               point)).values_list('id', flat=True)[:10]
+            features = features.filter(pk__in=first_ordered)
+
+        # annotate and filter by real min. distance on these
+        features = features.annotate(
             distance=Distance(F('geom'), point)
-        ).order_by('distance').first()
+        ).order_by('distance')
+        return features.first()
 
     def _snap_point_on_feature(self, point, feature):
-        return self.layer.features.annotate(
+        return self.layer.features.filter(pk=feature.pk).annotate(
             fraction=ST_LineLocatePoint(F('geom'), Value(str(point))),
-        ).get(pk=feature.pk)
+        ).only('id', 'geom').first()
 
     def _points_route(self):
         route = []
@@ -109,12 +164,10 @@ class Routing(object):
                 next_point = self.points[index + 1]
             except IndexError:
                 break
-
             segment = self._get_segment(point, next_point)
 
             if segment:
                 route.extend(segment)
-
         return route
 
     @cached_segment
@@ -140,7 +193,7 @@ class Routing(object):
 
         return {
             'geometry': feature.splitted_geom,
-            'properties': feature.properties,
+            'id': feature.id,
         }
 
     def _get_raw_route(self, start_point, end_point):
@@ -179,7 +232,7 @@ class Routing(object):
                 pgr.node,
                 pgr.edge,
                 geostore_feature.geom AS edge_geom,
-                geostore_feature.properties,
+                geostore_feature.id,
                 (LEAD(pgr.node) OVER (ORDER BY path_seq))
                     AS next_node,
                 (LAG(geostore_feature.geom) OVER (ORDER BY path_seq))
@@ -227,12 +280,12 @@ class Routing(object):
                 ELSE
                     edge_geom  -- Let's return the full edge geometry
                 END AS final_geometry,
-                properties
+                id
             FROM pgr
         )
         SELECT
             final_geometry AS geometry,
-            properties
+            id
         FROM route
         WHERE final_geometry IS NOT NULL;
         """
@@ -253,8 +306,8 @@ class Routing(object):
             return [
                 {
                     'geometry': geometry,
-                    'properties': properties
-                } for geometry, properties in cursor.fetchall()
+                    'id': id
+                } for geometry, id in cursor.fetchall()
             ]
 
     def _fix_point_fraction(self, point):

@@ -50,7 +50,7 @@ class FillTilesCacheTestCase(TestCase):
             }
         ''')
 
-    def test_update_topology_routing_fail(self):
+    def test_cache_filled(self):
         tile = VectorTile(self.layer)
         cache_version = get_cache_version(self.layer)
 

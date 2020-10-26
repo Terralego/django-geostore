@@ -32,7 +32,7 @@ class Command(BaseCommand):
 
         try:
             layer = Layer.objects.get(pk=layer_pk)
-            if Routing.create_topology(layer, tolerance=tolerance):
+            if Routing.update_topology(layer, tolerance=tolerance):
                 if options['verbosity'] >= 1:
                     self.stdout.write('Topology successfully updated')
 

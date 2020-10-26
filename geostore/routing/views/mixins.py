@@ -1,46 +1,58 @@
-import json
+import types
 
 from django.conf import settings
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point, GEOSException
+from django.contrib.gis.geos import Point
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..helpers import Routing
+from ..helpers import Routing, RoutingException
+from ..serializers import RoutingSerializer
 
 
 class RoutingViewsSetMixin:
     if 'geostore.routing' in settings.INSTALLED_APPS:
-        @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+        @action(detail=True, methods=['post'],
+                serializer_class=RoutingSerializer,
+                permission_classes=[IsAuthenticated])
         def route(self, request, pk=None):
             layer = self.get_object()
-            callback_id = self.request.data.get('callbackid', None)
+            data = request.data
+            serializer = self.serializer_class(data=data)
+            response_status = status.HTTP_200_OK
 
-            try:
-                geometry = GEOSGeometry(str(request.data.get('geom')))
-                if not isinstance(geometry, LineString):
-                    raise ValueError
+            if serializer.is_valid():
+                geometry = serializer.validated_data['geom']
 
-            except (GEOSException, TypeError, ValueError):
-                return Response({"error": 'Provided geometry is not valid LineString'},
-                                status=status.HTTP_400_BAD_REQUEST)
+                try:
+                    points = [Point(c, srid=geometry.srid) for c in geometry.coords]
+                    routing = Routing(points, layer)
 
-            points = [Point(c, srid=geometry.srid) for c in geometry.coords]
-            routing = Routing(points, layer)
-            route = routing.get_route()
+                    # if not route:
+                    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
-            if not route:
-                return Response(status=status.HTTP_204_NO_CONTENT)
+                    way = routing.get_linestring()
 
-            way = routing.get_linestring()
-            response_data = {
-                'request': {
-                    'callbackid': callback_id,
-                    'geom': json.loads(geometry.geojson),
-                },
-                'route': route,
-                'geom': json.loads(way.geojson)
-            }
+                    # generate response data by using serializer, to keep serialization rules (precision / perfs.)
+                    response = types.SimpleNamespace()
+                    response.geom = None
+                    response.callback_id = None
+                    response.route = routing.get_route()
+                    response.way = way
+                    serializer = self.serializer_class(response, data=request.data)
+                    serializer.is_valid()
+                    data = serializer.data
+                    data['geom'] = request.data['geom']
+                    data['callback_id'] = request.data.get('callback_id', None)
 
-            return Response(response_data)
+                except RoutingException as exc:
+                    data = {"errors": [str(exc), ]}
+                    response_status = status.HTTP_400_BAD_REQUEST
+
+            else:
+                data = serializer.errors
+                response_status = status.HTTP_400_BAD_REQUEST
+
+            return Response(data,
+                            status=response_status)
