@@ -49,6 +49,7 @@ after_failure:
 script:
 - coverage run ./manage.py test
 - coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_views.test_vector_tiles.VectorTilesTestCase.test_layer_tilejson_with_custom_hostnames
+- coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_custom_classes
 
 after_success:
   - codecov
