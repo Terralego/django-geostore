@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.module_loading import import_string
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -15,15 +16,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from rest_framework.response import Response
 
+from geostore import settings as app_settings
 from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
-from ..routing.views.mixins import RoutingViewsSetMixin
-from ..serializers import (FeatureExtraGeomSerializer, FeatureSerializer,
-                           LayerSerializer)
+from ..serializers import (FeatureExtraGeomSerializer, FeatureSerializer)
 from ..serializers.geojson import FinalGeoJSONSerializer
 from ..tiles.mixins import MVTViewMixin, MultipleMVTViewMixin
 
@@ -33,10 +33,10 @@ class LayerGroupViewsSet(MultipleMVTViewMixin, viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
 
-class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin, viewsets.ModelViewSet):
+class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet):
     permission_classes = (LayerPermission, )
     queryset = Layer.objects.all()
-    serializer_class = LayerSerializer
+    serializer_class = import_string(app_settings.GEOSTORE_LAYER_SERIALIZER)
     lookup_fields = ('pk', 'name')
 
     @action(methods=['get', 'post'],

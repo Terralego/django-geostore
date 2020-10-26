@@ -15,7 +15,6 @@ Prerequisites
   INSTALLED_APPS = (
     ...
     "geostore",
-    "geostore.routing",
     ...
   )
 

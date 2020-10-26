@@ -56,7 +56,6 @@ python3 setup.py install
 ```python
 INSTALLED_APPS = (
     'geostore',
-    #'geostore.routing'  # uncomment to enable routing functionality
 )
 ```
 
