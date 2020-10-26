@@ -4,6 +4,9 @@ CHANGELOG
 0.4.4.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* geostore.routing has been extracted to django-geostore-routing
+  * add django-geostore-routing to your project dependencies
+  * add geostore_routing to you INSTALLED_APPS instead of geostore.routing
 * Add relation property to handle relations directly in feature
 * Force geometries 2d
 * Add constraint empty geometries

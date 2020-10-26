@@ -8,6 +8,7 @@ from . import views
 
 router = routers.DefaultRouter()
 
+# Layer ViewsSet can be override by settings
 layer_viewsset = import_string(app_settings.GEOSTORE_LAYER_VIEWSSET)
 
 router.register(r'layer', layer_viewsset)

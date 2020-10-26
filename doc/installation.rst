@@ -14,7 +14,7 @@ Minimum configuration :
 
 And if you want to use Routing :
 
- * PgRouting 2.5
+ * PgRouting 2.5 + django-geostore-routing
 
 Recommended configuration :
  * Python 3.8
@@ -23,16 +23,16 @@ Recommended configuration :
 
 And if you want to use Routing :
 
- * PgRouting 2.6
+ * PgRouting 2.6 + django-geostore-routing
 
 Your final django project should use django.contrib.gis.backend.postgis as default DATABASE backend
 
 
 USING docker image :
 
-Prebuilt docker image builded by makinacorpus
-
-https://hub.docker.com/r/makinacorpus/pgrouting
+https://hub.docker.com/r/postgis
+or
+https://hub.docker.com/r/pgrouting
 
 SYSTEM REQUIREMENTS
 ^^^^^^^^^^^^^^^^^^^

@@ -20,7 +20,6 @@ addons:
   apt:
     packages:
       - postgresql-10-postgis-2.5
-      - postgresql-10-pgrouting
 
 stages:
 - lint
