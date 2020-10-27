@@ -1,5 +1,6 @@
 from django.contrib.gis.db.models import (FloatField, GeometryField,
                                           IntegerField)
+from django.contrib.gis.db.models.functions import GeoFunc
 from django.db.models import Func
 
 
@@ -64,3 +65,8 @@ class ST_CollectionExtract(Func):
 class ST_SimplifyPreserveTopology(Func):
     function = 'ST_SimplifyPreserveTopology'
     output_field = RawGeometryField()
+
+
+class Area(GeoFunc):
+    geom_param_pos = (0, )
+    output_field = FloatField()

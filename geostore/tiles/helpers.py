@@ -2,13 +2,13 @@ import hashlib
 from random import uniform
 
 import mercantile
-from django.contrib.gis.db.models.functions import Transform, Length, Area
+from django.contrib.gis.db.models.functions import Transform, Length
 from django.core.cache import cache
 from django.db import connection
 from math import ceil, floor, log, pi
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import ST_MakeEnvelope, ST_SimplifyPreserveTopology
+from .funcs import ST_MakeEnvelope, ST_SimplifyPreserveTopology, Area
 from .sigtools import SIGTools
 from .. import settings as app_settings
 
