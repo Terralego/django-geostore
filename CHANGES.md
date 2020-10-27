@@ -4,6 +4,8 @@ CHANGELOG
 0.5.1.dev0      (XXXX-XX-XX)
 ---------------------------
 
+* BugFix on Polygon Vector tiles
+
 
 0.5.0          (2020-10-27)
 ---------------------------
