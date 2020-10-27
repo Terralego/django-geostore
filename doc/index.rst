@@ -1,9 +1,9 @@
 |Build Status| |Maintainability| |codecov|
 
 django-geostore
-=======================
+===============
 
-Terralego backend app
+Dynamic geographic datastore with Vector Tiles generation from PostGIS and json schema definition and validation.
 
 .. toctree::
 
@@ -11,8 +11,8 @@ Terralego backend app
    configuration
    use
    vectortiles
-   routing
    tilesgroupaccess
+   plugins
 
 .. |Build Status| image:: https://travis-ci.org/Terralego/django-geostore.svg?branch=master
    :target: https://travis-ci.org/Terralego//django-geostore

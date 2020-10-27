@@ -33,6 +33,7 @@ Then, you can generate the autheticated URL by using a QueryString like above,
 where user_groups are a list of user_groups names, and layergroup is the group of the layer:
 
 .. code-block:: python
+
     from geostore.tokens import tiles_token_generator
     querystring = QueryDict(mutable=True)
     querystring.update(

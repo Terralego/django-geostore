@@ -22,7 +22,8 @@ Add geostore to your ``INSTALLED_APPS`` :
 Settings
 ********
 
-warning::
+.. warning::
+
   Geostore will change the geojson serializer on app loading.
 
 
@@ -59,6 +60,20 @@ MIN_TILE_ZOOM
 **Default: 10**
 
 Like for ``MAX_TILE_ZOOM`` setting, if a tile of a lesser zoom than this setting is requested, backend will refuse to serve it.
+
+
+GEOSTORE_LAYER_VIEWSSET
+-----------------------
+**Default: 'geostore.views.LayerViewSet'**
+
+Python dotted path to LayerViewSet. Can be any class inherited from 'geostore.views.LayerViewSet'
+
+
+GEOSTORE_LAYER_SERIALIZER
+-------------------------
+
+Python dotted path to LayerSerializer. Can be any class inherited from 'geostore.serializers.LayerSerializer'
+
 
 URLs
 ****
