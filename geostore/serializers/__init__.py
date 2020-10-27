@@ -7,7 +7,6 @@ from rest_framework_gis.serializers import GeometryField
 
 from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
-from geostore.routing.serializers.mixins import RoutingLayerSerializer
 from geostore.validators import (validate_json_schema_data,
                                  validate_json_schema, validate_geom_type, validate_geom)
 
@@ -95,7 +94,7 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class LayerSerializer(RoutingLayerSerializer, serializers.ModelSerializer):
+class LayerSerializer(serializers.ModelSerializer):
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
     kml_url = serializers.SerializerMethodField()

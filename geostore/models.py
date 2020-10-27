@@ -15,6 +15,7 @@ from django.contrib.gis.db.models.fields import BaseSpatialField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.contrib.gis.measure import D
+
 try:
     from django.db.models import JSONField
 except ImportError:  # TODO Remove when dropping Django releases < 3.1
@@ -24,7 +25,7 @@ from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -35,9 +36,7 @@ from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
 from .functions import ST_IsEmpty
 from .helpers import ChunkIterator, make_zipfile_bytesio
-from .routing.db.mixins import PgRoutingMixin, UpdateRoutingMixin
-from .routing.decorators import topology_update
-from .routing.signals import feature_routing
+from .routing.mixins import PgRoutingMixin, UpdateRoutingMixin
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
 from .tiles.funcs import ST_HausdorffDistance
@@ -113,7 +112,6 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
             Feature.objects.filter(**filter_kwargs)\
                 .update(properties=feature_args["properties"])
 
-    @topology_update
     @zoom_update
     def from_csv_dictreader(self, reader, pk_properties, options, operations,
                             init=False, chunk_size=1000, fast=False):
@@ -141,7 +139,6 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
                 fast=fast
             )
 
-    @topology_update
     @zoom_update
     def from_geojson(self, geojson_data, id_field=None, update=False):
         """
@@ -247,7 +244,6 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
         else:
             return fiona.crs.to_string(projection)
 
-    @topology_update
     @zoom_update
     def from_shapefile(self, zipped_shapefile_file, id_field=None):
         ''' Load ShapeFile content provided into a zipped archive.
@@ -508,8 +504,6 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
 
 
 post_save.connect(save_feature, sender=Feature)
-post_save.connect(feature_routing, sender=Feature)
-pre_delete.connect(feature_routing, sender=Feature)
 
 
 class LayerRelation(models.Model):

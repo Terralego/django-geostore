@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'rest_framework_gis',
     'debug_toolbar',
     'geostore',
-    'geostore.routing',
     'test_geostore.test_app'
 ]
 

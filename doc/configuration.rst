@@ -16,7 +16,6 @@ Add geostore to your ``INSTALLED_APPS`` :
         'rest_framework',
         'rest_framework_gis',
         'geostore',
-        #'geostore.routing',  # uncomment to enable routing features. Required PgRouting installed.
         ...
     ]
 

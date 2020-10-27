@@ -5,3 +5,6 @@ TERRA_TILES_HOSTNAMES = [
     'http://b.tiles.local',
     'http://c.tiles.local',
 ]
+
+GEOSTORE_LAYER_VIEWSSET = 'test_geostore.test_app.views.ExtendedLayerViewsSet'
+GEOSTORE_LAYER_SERIALIZER = 'test_geostore.test_app.serializers.ExtendedLayerSerializer'
