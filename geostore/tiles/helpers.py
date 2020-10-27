@@ -8,7 +8,7 @@ from django.db import connection
 from math import ceil, floor, log, pi
 
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import ST_MakeEnvelope, ST_SimplifyPreserveTopology, Area
+from .funcs import MakeEnvelope, SimplifyPreserveTopology, Area
 from .sigtools import SIGTools
 from .. import settings as app_settings
 
@@ -58,7 +58,7 @@ class VectorTile(object):
             # Grid step is pixel_width_x / EXTENT_RATIO and pixel_width_y / EXTENT_RATIO
             # Simplify to average half pixel width
             layer_query = layer_query.annotate(
-                outgeom3857=ST_SimplifyPreserveTopology('outgeom3857', (pixel_width_x + pixel_width_y) / 2 / 2)
+                outgeom3857=SimplifyPreserveTopology('outgeom3857', (pixel_width_x + pixel_width_y) / 2 / 2)
             )
         return layer_query
 
@@ -115,11 +115,11 @@ class VectorTile(object):
         # Intersects on internal data projection using pixel buffer
         layer_query = self.layer.features.filter(
             geom__intersects=Transform(
-                ST_MakeEnvelope(xmin - pixel_width_x * self.pixel_buffer,
-                                ymin - pixel_width_y * self.pixel_buffer,
-                                xmax + pixel_width_x * self.pixel_buffer,
-                                ymax + pixel_width_y * self.pixel_buffer,
-                                EPSG_3857),
+                MakeEnvelope(xmin - pixel_width_x * self.pixel_buffer,
+                             ymin - pixel_width_y * self.pixel_buffer,
+                             xmax + pixel_width_x * self.pixel_buffer,
+                             ymax + pixel_width_y * self.pixel_buffer,
+                             EPSG_3857),
                 app_settings.INTERNAL_GEOMETRY_SRID))\
             .annotate(
             outgeom3857=Transform('geom', EPSG_3857),
