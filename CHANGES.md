@@ -1,16 +1,24 @@
 CHANGELOG
 =========
 
-0.4.4.dev0     (XXXX-XX-XX)
+0.5.0          (2020-10-27)
 ---------------------------
+!! WARNING - BREAKING CHANGES !!
+
+Features with empty geometry will not pass anymore Integrity Error Check
+Please, check and fix you geostore_feature table first before making migrations
+
+
+* Add constraint empty geometries
+* Add validation of constraints on geometries
+
 
 * geostore.routing has been extracted to django-geostore-routing
   * add django-geostore-routing to your project dependencies
   * add geostore_routing to you INSTALLED_APPS instead of geostore.routing
 * Add relation property to handle relations directly in feature
 * Force geometries 2d
-* Add constraint empty geometries
-* Add validation of constraints on geometries
+
 * Improve tile generation
 
 
