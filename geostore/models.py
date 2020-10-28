@@ -34,12 +34,12 @@ from fiona.crs import from_epsg
 from . import GeometryTypes, settings as app_settings
 from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
-from .functions import ST_IsEmpty
+from .functions import IsEmpty as IsEmptyFunc
 from .helpers import ChunkIterator, make_zipfile_bytesio
 from .routing.mixins import PgRoutingMixin, UpdateRoutingMixin
 from .signals import save_feature, save_layer_relation
 from .tiles.decorators import zoom_update
-from .tiles.funcs import ST_HausdorffDistance
+from .tiles.funcs import HausdorffDistance
 from .validators import (validate_geom_type, validate_json_schema,
                          validate_json_schema_data)
 
@@ -289,8 +289,8 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
             nearest_feature = (
                 self.features
                     .filter(geom__bboverlaps=geometry)  # Bounding Box Overlap
-                    .annotate(hausdorff=ST_HausdorffDistance('geom',
-                                                             geometry.ewkb))
+                    .annotate(hausdorff=HausdorffDistance('geom',
+                                                          geometry))
                     .order_by('hausdorff')
                     .first()
             )
@@ -607,5 +607,5 @@ class FeatureExtraGeom(BaseUpdatableModel):
 
 
 @BaseSpatialField.register_lookup
-class IsEmpty(ST_IsEmpty):
+class IsEmpty(IsEmptyFunc):
     lookup_name = 'isempty'
