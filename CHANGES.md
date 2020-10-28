@@ -1,10 +1,11 @@
 CHANGELOG
 =========
 
-0.5.1.dev0      (XXXX-XX-XX)
+0.5.1          (2020-10-28)
 ---------------------------
 
 * BugFix on Polygon Vector tiles
+* Improve documentation
 
 
 0.5.0          (2020-10-27)
