@@ -4,9 +4,6 @@ Installation
 Requirements
 ------------
 
-DATABASE
-^^^^^^^^
-
 Minimum configuration :
  * Python 3.6+
  * PostgreSQL 10
@@ -28,11 +25,14 @@ And if you want to use Routing :
 Your final django project should use django.contrib.gis.backend.postgis as default DATABASE backend
 
 
-USING docker image :
+USING database docker image :
 
 https://hub.docker.com/r/postgis
+
 or
+
 https://hub.docker.com/r/pgrouting
+
 
 SYSTEM REQUIREMENTS
 ^^^^^^^^^^^^^^^^^^^
