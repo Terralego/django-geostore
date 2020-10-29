@@ -5,6 +5,7 @@ from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import GEOSGeometry
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings, TestCase
 from django.urls import reverse
@@ -321,7 +322,7 @@ class LayerShapefileTestCase(TestCase):
     @mock.patch('geostore.settings.GEOSTORE_EXPORT_CELERY_ASYNC', new_callable=mock.PropertyMock)
     @mock.patch('geostore.views.execute_async_func')
     @override_settings(CELERY_ALWAYS_EAGER=True)
-    def test_async_shapefile_export(self, mock_async, mock_execute):
+    def test_async_shapefile_export_no_mail(self, mock_async, mock_execute):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async.side_effect = side_effect
@@ -331,6 +332,25 @@ class LayerShapefileTestCase(TestCase):
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
+        self.assertEqual(len(mail.outbox), 0)
+
+    @mock.patch('geostore.settings.GEOSTORE_EXPORT_CELERY_ASYNC', new_callable=mock.PropertyMock)
+    @mock.patch('geostore.views.execute_async_func')
+    @override_settings(CELERY_ALWAYS_EAGER=True)
+    def test_async_shapefile_export_with_mail(self, mock_async, mock_execute):
+        def side_effect(async_func, args):
+            async_func(*args)
+
+        mock_async.side_effect = side_effect
+        mock_execute.return_value = True
+        FeatureFactory(layer=self.layer)
+        self.user = UserFactory(email="foo@foo.foo")
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
+        self.client.force_login(self.user)
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        response = self.client.get(shape_url)
+        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_shapefile_no_permission(self):
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
