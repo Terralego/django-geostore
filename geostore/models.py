@@ -35,7 +35,7 @@ from .helpers import ChunkIterator
 from .routing.mixins import PgRoutingMixin, UpdateRoutingMixin
 
 from .signals import save_feature, save_layer_relation
-from .tasks import generate_shapefile
+from .exports.helpers import generate_shapefile
 from .tiles.decorators import zoom_update
 from .tiles.funcs import HausdorffDistance
 from .validators import (validate_geom_type, validate_json_schema,

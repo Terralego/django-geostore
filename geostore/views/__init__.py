@@ -19,9 +19,10 @@ from rest_framework.response import Response
 from geostore import settings as app_settings
 from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
+from ..exports.helpers import generate_shapefile
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..helpers import execute_async_func
-from ..tasks import generate_shapefile
+from ..tasks import generate_shapefile_async
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
@@ -53,12 +54,12 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             response = Response(status=status.HTTP_400_BAD_REQUEST)
         return response
 
-    def get_shapefile(self, layer):
+    def get_shapefile(self, request, layer):
         if app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
-            execute_async_func(generate_shapefile, (layer.id,))
+            execute_async_func(generate_shapefile_async, (layer, request.user))
             return Response(status=status.HTTP_202_ACCEPTED)
         else:
-            shape_file = generate_shapefile(layer.id)
+            shape_file = generate_shapefile(layer)
 
         if shape_file:
             response = HttpResponse(content_type='application/zip')
@@ -79,7 +80,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
         if request.method == 'POST':
             return self.post_shapefile(request, layer)
         else:
-            return self.get_shapefile(layer)
+            return self.get_shapefile(request, layer)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def intersects(self, request, *args, **kwargs):
