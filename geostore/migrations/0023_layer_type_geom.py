@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='layer',
             name='geom_type',
-            field=models.IntegerField(choices=[(geostore.GeometryTypes(0), 0), (geostore.GeometryTypes(1), 1), (geostore.GeometryTypes(3), 3), (geostore.GeometryTypes(4), 4), (geostore.GeometryTypes(5), 5), (geostore.GeometryTypes(6), 6), (geostore.GeometryTypes(7), 7)], null=True),
+            field=models.IntegerField(choices=[(geostore.models.models.GeometryTypes(0), 0), (geostore.models.models.GeometryTypes(1), 1), (geostore.models.models.GeometryTypes(3), 3), (geostore.models.models.GeometryTypes(4), 4), (geostore.models.models.GeometryTypes(5), 5), (geostore.models.models.GeometryTypes(6), 6), (geostore.models.models.GeometryTypes(7), 7)], null=True),
         ),
     ]
