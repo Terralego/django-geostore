@@ -110,7 +110,7 @@ class LayerGeojsonExportAsyncTestCase(TestCase):
 class LayerShapefileExportAsyncTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = UserFactory()
+        self.user = SuperUserFactory()
         self.client.force_login(self.user)
 
     @mock.patch('geostore.views.execute_async_func')
