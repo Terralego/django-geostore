@@ -27,6 +27,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from fiona.crs import from_epsg
 
+from . import GeometryTypes  #noqa
 from . import settings as app_settings
 from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
@@ -35,7 +36,7 @@ from .helpers import ChunkIterator
 from .routing.mixins import PgRoutingMixin, UpdateRoutingMixin
 
 from .signals import save_feature, save_layer_relation
-from .exports.helpers import generate_shapefile
+from .exports.helpers import generate_geojson, generate_shapefile
 from .tiles.decorators import zoom_update
 from .tiles.funcs import HausdorffDistance
 from .validators import (validate_geom_type, validate_json_schema,
@@ -167,11 +168,7 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
             )
 
     def to_geojson(self):
-        return json.loads(serialize('geojson',
-                                    self.features.all(),
-                                    fields=('properties',),
-                                    geometry_field='geom',
-                                    properties_field='properties'))
+        return generate_geojson(self)
 
     def to_shapefile(self):
         return generate_shapefile(self)

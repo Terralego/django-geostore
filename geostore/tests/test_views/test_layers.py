@@ -1,11 +1,13 @@
 import json
 from io import BytesIO
-from unittest import mock
+from tempfile import TemporaryDirectory
+from unittest import mock, skipIf
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.core import mail
+from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings, TestCase
 from django.urls import reverse
@@ -14,6 +16,7 @@ from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, HTTP_202_ACCEP
                                    HTTP_403_FORBIDDEN)
 from rest_framework.test import APIClient
 
+from geostore import settings as app_settings
 from geostore import GeometryTypes
 from geostore.helpers import get_serialized_properties
 from geostore.models import Feature, LayerGroup
@@ -248,6 +251,53 @@ class LayerFeatureIntersectionTest(TestCase):
         )
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+
+@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
+class LayerGeojsonTestCase(TestCase):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.user = UserFactory()
+        self.client.force_login(self.user)
+
+    @mock.patch('geostore.views.execute_async_func')
+    def test_geojson_export_no_mail(self, mock_async_func):
+        # Create at least one feature in the layer, so it's not empty
+        def side_effect(async_func, args):
+            async_func(*args)
+        mock_async_func.side_effect = side_effect
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
+        FeatureFactory(layer=self.layer)
+
+        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
+        response = self.client.get(geojson_url)
+        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
+        self.assertEqual(len(mail.outbox), 0)
+
+    @mock.patch('geostore.views.execute_async_func')
+    @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
+    def test_geojson_export_with_mail(self, mock_async_func):
+        # Create at least one feature in the layer, so it's not empty
+        def side_effect(async_func, args):
+            async_func(*args)
+
+        mock_async_func.side_effect = side_effect
+        self.user = UserFactory(email="foo@foo.foo")
+        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
+        self.client.force_login(self.user)
+        FeatureFactory(layer=self.layer)
+
+        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
+        response = self.client.get(geojson_url)
+        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
+        self.assertEqual(len(mail.outbox), 1)
+        path_export = 'exports/users/{}/{}.geojson'.format(self.user.id, self.layer.name)
+        self.assertIn(path_export, mail.outbox[0].body)
+        with default_storage.open(path_export) as fp:
+            geojson = json.loads(fp.read())
+        feature = geojson['features'][0]['geometry']
+        feature_geom = GEOSGeometry(json.dumps(feature)).ewkt
+        self.assertEqual(feature_geom, 'SRID=4326;POINT (2.4609375 45.58328975600632)')
 
 
 class LayerShapefileTestCase(TestCase):
