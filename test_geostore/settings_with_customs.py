@@ -5,3 +5,6 @@ TERRA_TILES_HOSTNAMES = [
     'http://b.tiles.local',
     'http://c.tiles.local',
 ]
+
+GEOSTORE_EXPORT_CELERY_ASYNC = True
+CELERY_ALWAYS_EAGER = True

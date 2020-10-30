@@ -5,8 +5,7 @@ from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.utils.translation import ugettext as _
 
-from geostore import settings as app_settings
-from geostore.exports.helpers import generate_shapefile
+from geostore.exports.helpers import generate_shapefile, generate_geojson
 
 
 @shared_task
@@ -35,7 +34,17 @@ def layer_relations_set_destinations(relation_id):
 def generate_shapefile_async(layer, user):
     file = generate_shapefile(layer)
     if file.getvalue() and user.email:
-        path = default_storage.save('media/exports/users/{}/{}.zip'.format(user.id, layer.name),
+        path = default_storage.save('exports/users/{}/{}.zip'.format(user.id, layer.name),
                                     ContentFile(file.getvalue()))
         message = "{0} : {1}".format(_("Get your file"), path)
+        send_mail(_('Your file is ready'), message, "coucou@coucou.coucou", [user.email], fail_silently=False)
+
+
+@shared_task
+def generate_geojson_async(layer, user):
+    json = generate_geojson(layer)
+    if json and user.email:
+        path = default_storage.save('exports/users/{}/{}.geojson'.format(user.id, layer.name),
+                                    ContentFile(json))
+        message = """{0} : {1}""".format(_("Get your file"), path)
         send_mail(_('Your file is ready'), message, "coucou@coucou.coucou", [user.email], fail_silently=False)

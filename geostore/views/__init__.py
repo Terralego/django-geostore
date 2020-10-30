@@ -21,7 +21,7 @@ from .mixins import MultipleFieldLookupMixin
 from ..exports.helpers import generate_shapefile
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..helpers import execute_async_func
-from ..tasks import generate_shapefile_async
+from ..tasks import generate_geojson_async, generate_shapefile_async
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
@@ -42,6 +42,10 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin,
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
     lookup_fields = ('pk', 'name')
+
+    def get_geojson(self, request, layer):
+        execute_async_func(generate_geojson_async, (layer, request.user))
+        return Response(status=status.HTTP_202_ACCEPTED)
 
     def post_shapefile(self, request, layer):
         try:
@@ -82,6 +86,14 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, RoutingViewsSetMixin,
             return self.post_shapefile(request, layer)
         else:
             return self.get_shapefile(request, layer)
+
+    if app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
+        @action(methods=['get'],
+                url_name='geojson', detail=True, permission_classes=[IsAuthenticated,
+                                                                     LayerImportExportPermission])
+        def geojson(self, request, *args, **kwargs):
+            layer = self.get_object()
+            return self.get_geojson(request, layer)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def intersects(self, request, *args, **kwargs):

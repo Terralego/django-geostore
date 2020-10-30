@@ -1,4 +1,4 @@
-from django.apps import apps
+from django.core.serializers import serialize
 
 import fiona
 from fiona.crs import from_epsg
@@ -10,6 +10,14 @@ from tempfile import TemporaryDirectory
 from geostore import settings as app_settings
 from geostore import GeometryTypes
 from geostore.helpers import get_serialized_properties, make_zipfile_bytesio
+
+
+def generate_geojson(layer):
+    return serialize('geojson',
+                     layer.features.all(),
+                     fields=('properties',),
+                     geometry_field='geom',
+                     properties_field='properties')
 
 
 def generate_shapefile(layer):
