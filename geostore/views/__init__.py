@@ -22,7 +22,7 @@ from .mixins import MultipleFieldLookupMixin
 from ..exports.helpers import generate_shapefile
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..helpers import execute_async_func
-from ..tasks import generate_geojson_async, generate_shapefile_async
+from ..tasks import generate_geojson_async, generate_kml_async, generate_shapefile_async
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
@@ -41,6 +41,10 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
     queryset = Layer.objects.all()
     serializer_class = import_string(app_settings.GEOSTORE_LAYER_SERIALIZER)
     lookup_fields = ('pk', 'name')
+
+    def get_kml(self, request, layer):
+        execute_async_func(generate_kml_async, (layer.id, request.user.id))
+        return Response(status=status.HTTP_202_ACCEPTED)
 
     def get_geojson(self, request, layer):
         execute_async_func(generate_geojson_async, (layer.id, request.user.id))
@@ -93,6 +97,13 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
         def geojson(self, request, *args, **kwargs):
             layer = self.get_object()
             return self.get_geojson(request, layer)
+
+        @action(methods=['get'],
+                url_name='kml', detail=True, permission_classes=[IsAuthenticated,
+                                                                 LayerImportExportPermission])
+        def kml(self, request, *args, **kwargs):
+            layer = self.get_object()
+            return self.get_kml(request, layer)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def intersects(self, request, *args, **kwargs):

@@ -1,11 +1,11 @@
 import gpxpy.gpx
 import simplekml
+from django.apps import apps
 from django.contrib.gis.geos import GeometryCollection, Point, LineString, Polygon
 from rest_framework.renderers import JSONRenderer, BaseRenderer
 from rest_framework.utils.serializer_helpers import ReturnDict
 
 from geostore import settings as app_settings
-from geostore.models import Feature
 
 
 class GeoJSONRenderer(JSONRenderer):
@@ -105,6 +105,7 @@ class GPXRenderer(BaseRenderer):
         self.gpx = gpxpy.gpx.GPX()
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
+        Feature = apps.get_model('geostore.Feature')
         feat = Feature.objects.get(identifier=data.get('identifier'))
         return self.geom_to_gpx(feat.geom, feat.identifier, "")
 

@@ -72,6 +72,15 @@ class FeatureFactory(factory.django.DjangoModelFactory):
 UserModel = get_user_model()
 
 
+class SuperUserFactory(factory.django.DjangoModelFactory):
+    username = factory.Faker('email')
+    is_active = True
+    is_superuser = True
+
+    class Meta:
+        model = UserModel
+
+
 class UserFactory(factory.django.DjangoModelFactory):
 
     class Meta:

@@ -10,6 +10,12 @@ from tempfile import TemporaryDirectory
 from geostore import settings as app_settings
 from geostore import GeometryTypes
 from geostore.helpers import get_serialized_properties, make_zipfile_bytesio
+from geostore.renderers import KMLRenderer
+
+
+def generate_kml(layer):
+    from geostore.serializers import FeatureSerializer
+    return KMLRenderer().render(FeatureSerializer(layer.features.all(), many=True).data)
 
 
 def generate_geojson(layer):

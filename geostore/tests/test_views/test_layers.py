@@ -20,7 +20,7 @@ from geostore import settings as app_settings
 from geostore import GeometryTypes
 from geostore.helpers import get_serialized_properties
 from geostore.models import Feature, LayerGroup
-from geostore.tests.factories import (FeatureFactory, LayerFactory,
+from geostore.tests.factories import (FeatureFactory, LayerFactory, SuperUserFactory,
                                       UserFactory)
 from geostore.tests.utils import get_files_tests
 
@@ -254,53 +254,6 @@ class LayerFeatureIntersectionTest(TestCase):
 
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
-@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
-class LayerGeojsonExportAsyncTestCase(TestCase):
-    def setUp(self):
-        self.layer = LayerFactory()
-        self.user = UserFactory()
-        self.client.force_login(self.user)
-
-    @mock.patch('geostore.views.execute_async_func')
-    def test_geojson_export_no_mail(self, mock_async_func):
-        # Create at least one feature in the layer, so it's not empty
-        def side_effect(async_func, args):
-            async_func(*args)
-        mock_async_func.side_effect = side_effect
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        FeatureFactory(layer=self.layer)
-
-        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
-        response = self.client.get(geojson_url)
-        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
-        self.assertEqual(len(mail.outbox), 0)
-
-    @mock.patch('geostore.views.execute_async_func')
-    def test_geojson_export_with_mail(self, mock_async_func):
-        # Create at least one feature in the layer, so it's not empty
-        def side_effect(async_func, args):
-            async_func(*args)
-
-        mock_async_func.side_effect = side_effect
-        self.user = UserFactory(email="foo@foo.foo")
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        self.client.force_login(self.user)
-        FeatureFactory(layer=self.layer)
-
-        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
-        response = self.client.get(geojson_url)
-        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
-        self.assertEqual(len(mail.outbox), 1)
-        path_export = 'exports/users/{}/{}.geojson'.format(self.user.id, self.layer.name)
-        self.assertIn(path_export, mail.outbox[0].body)
-        with default_storage.open(path_export) as fp:
-            geojson = json.loads(fp.read())
-        feature = geojson['features'][0]['geometry']
-        feature_geom = GEOSGeometry(json.dumps(feature)).ewkt
-        self.assertEqual(feature_geom, 'SRID=4326;POINT (2.4609375 45.58328975600632)')
-
-
-@override_settings(MEDIA_ROOT=TemporaryDirectory().name)
 class LayerShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
@@ -364,7 +317,6 @@ class LayerShapefileTestCase(TestCase):
 
     def test_empty_shapefile_export(self):
         # Create en empty layer to test its behavior
-        LayerFactory()
         self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
