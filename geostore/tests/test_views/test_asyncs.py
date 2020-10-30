@@ -66,7 +66,7 @@ class LayerKMLExportAsyncTestCase(TestCase):
 class LayerGeojsonExportAsyncTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = UserFactory()
+        self.user = SuperUserFactory()
         self.client.force_login(self.user)
 
     @mock.patch('geostore.views.execute_async_func')
@@ -75,7 +75,6 @@ class LayerGeojsonExportAsyncTestCase(TestCase):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async_func.side_effect = side_effect
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer)
 
         geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
@@ -90,8 +89,7 @@ class LayerGeojsonExportAsyncTestCase(TestCase):
             async_func(*args)
 
         mock_async_func.side_effect = side_effect
-        self.user = UserFactory(email="foo@foo.foo")
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
+        self.user = SuperUserFactory(email="foo@foo.foo")
         self.client.force_login(self.user)
         FeatureFactory(layer=self.layer)
 
@@ -121,7 +119,6 @@ class LayerShapefileExportAsyncTestCase(TestCase):
             async_func(*args)
         mock_async.side_effect = side_effect
         FeatureFactory(layer=self.layer)
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
@@ -134,8 +131,7 @@ class LayerShapefileExportAsyncTestCase(TestCase):
 
         mock_async.side_effect = side_effect
         FeatureFactory(layer=self.layer)
-        self.user = UserFactory(email="foo@foo.foo")
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
+        self.user = SuperUserFactory(email="foo@foo.foo")
         self.client.force_login(self.user)
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)

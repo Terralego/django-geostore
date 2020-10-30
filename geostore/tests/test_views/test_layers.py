@@ -257,12 +257,11 @@ class LayerFeatureIntersectionTest(TestCase):
 class LayerShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = UserFactory()
+        self.user = SuperUserFactory()
         self.client.force_login(self.user)
 
     def test_shapefile_export(self):
         # Create at least one feature in the layer, so it's not empty
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer)
 
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
@@ -291,8 +290,6 @@ class LayerShapefileTestCase(TestCase):
         self.assertIsInstance(serialized_properties['dict'], str)
 
     def test_shapefile_same_import_export(self):
-        self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer, properties={
             'key1': [{
                 'key3': 'hello world',
@@ -317,43 +314,9 @@ class LayerShapefileTestCase(TestCase):
 
     def test_empty_shapefile_export(self):
         # Create en empty layer to test its behavior
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
-
-    @mock.patch('geostore.settings.GEOSTORE_EXPORT_CELERY_ASYNC', new_callable=mock.PropertyMock)
-    @mock.patch('geostore.views.execute_async_func')
-    @override_settings(CELERY_ALWAYS_EAGER=True)
-    def test_async_shapefile_export_no_mail(self, mock_async, mock_execute):
-        def side_effect(async_func, args):
-            async_func(*args)
-        mock_async.side_effect = side_effect
-        mock_execute.return_value = True
-        FeatureFactory(layer=self.layer)
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
-        response = self.client.get(shape_url)
-        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
-        self.assertEqual(len(mail.outbox), 0)
-
-    @mock.patch('geostore.settings.GEOSTORE_EXPORT_CELERY_ASYNC', new_callable=mock.PropertyMock)
-    @mock.patch('geostore.views.execute_async_func')
-    @override_settings(CELERY_ALWAYS_EAGER=True)
-    def test_async_shapefile_export_with_mail(self, mock_async, mock_execute):
-        def side_effect(async_func, args):
-            async_func(*args)
-
-        mock_async.side_effect = side_effect
-        mock_execute.return_value = True
-        FeatureFactory(layer=self.layer)
-        self.user = UserFactory(email="foo@foo.foo")
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        self.client.force_login(self.user)
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
-        response = self.client.get(shape_url)
-        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
-        self.assertEqual(len(mail.outbox), 1)
 
     def test_shapefile_no_permission(self):
         shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
