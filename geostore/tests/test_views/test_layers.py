@@ -253,8 +253,9 @@ class LayerFeatureIntersectionTest(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
+@override_settings(MEDIA_ROOT=TemporaryDirectory().name)
 @skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
-class LayerGeojsonTestCase(TestCase):
+class LayerGeojsonExportAsyncTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = UserFactory()
@@ -275,7 +276,6 @@ class LayerGeojsonTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @mock.patch('geostore.views.execute_async_func')
-    @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
     def test_geojson_export_with_mail(self, mock_async_func):
         # Create at least one feature in the layer, so it's not empty
         def side_effect(async_func, args):
@@ -300,6 +300,7 @@ class LayerGeojsonTestCase(TestCase):
         self.assertEqual(feature_geom, 'SRID=4326;POINT (2.4609375 45.58328975600632)')
 
 
+@override_settings(MEDIA_ROOT=TemporaryDirectory().name)
 class LayerShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
