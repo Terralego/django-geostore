@@ -318,14 +318,6 @@ class LayerShapefileTestCase(TestCase):
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
-    def test_shapefile_no_permission(self):
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
-
-        self.assertEqual(
-            self.client.get(shape_url).status_code,
-            HTTP_403_FORBIDDEN
-        )
-
     def test_no_shapefile_import(self):
         self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
         layer = LayerFactory()

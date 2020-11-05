@@ -15,10 +15,14 @@ from geostore.renderers import KMLRenderer
 
 def generate_kml(layer):
     from geostore.serializers import FeatureSerializer
+    if not layer.features.count():
+        return
     return KMLRenderer().render(FeatureSerializer(layer.features.all(), many=True).data)
 
 
 def generate_geojson(layer):
+    if not layer.features.count():
+        return
     return serialize('geojson',
                      layer.features.all(),
                      fields=('properties',),

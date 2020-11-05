@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.template.loader import get_template
+from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 
 from geostore.exports.helpers import generate_geojson, generate_kml, generate_shapefile
@@ -32,13 +33,26 @@ def layer_relations_set_destinations(relation_id):
     return True
 
 
-def send_mail_generated_file(user, path):
+def send_mail_async(user, path=None):
     context = {"username": user.username, "file": path}
-    html = get_template('geostore/emails/exports.html')
+    if not path:
+        template_email = 'exports_no_datas'
+    else:
+        template_email = 'exports'
+    html = get_template('geostore/emails/{}.html'.format(template_email))
     html_content = html.render(context)
-    txt = get_template('geostore/emails/exports.txt')
+    txt = get_template('geostore/emails/{}.txt'.format(template_email))
     txt_content = txt.render(context)
-    send_mail(_('Your file is ready'), txt_content, None, [user.email], html_message=html_content, fail_silently=True)
+    send_mail(_('Export ready'), txt_content, None, [user.email], html_message=html_content, fail_silently=True)
+
+
+def save_generated_file(user_id, layer_name, format_file, string_file):
+    path = default_storage.save('exports/users/{}/{}_{}.{}'.format(user_id,
+                                                                   layer_name,
+                                                                   int(now().timestamp()),
+                                                                   format_file),
+                                ContentFile(string_file))
+    return path
 
 
 def get_user_layer(layer_id, user_id):
@@ -55,10 +69,11 @@ def generate_shapefile_async(layer_id, user_id):
         return
     file = generate_shapefile(layer)
 
-    if file.getvalue():
-        path = default_storage.save('exports/users/{}/{}.zip'.format(user.id, layer.name),
-                                    ContentFile(file.getvalue()))
-        send_mail_generated_file(user, path)
+    if file:
+        path = save_generated_file(user_id, layer.name, 'zip', file.getvalue())
+        send_mail_async(user, path)
+    else:
+        send_mail_async(user)
 
 
 @shared_task
@@ -69,10 +84,10 @@ def generate_geojson_async(layer_id, user_id):
     json = generate_geojson(layer)
 
     if not json:
-        return
-    path = default_storage.save('exports/users/{}/{}.geojson'.format(user_id, layer.name),
-                                ContentFile(json))
-    send_mail_generated_file(user, path)
+        send_mail_async(user)
+    else:
+        path = save_generated_file(user_id, layer.name, 'geojson', json)
+        send_mail_async(user, path)
 
 
 @shared_task
@@ -82,7 +97,7 @@ def generate_kml_async(layer_id, user_id):
         return
     kml = generate_kml(layer)
     if not kml:
-        return
-    path = default_storage.save('exports/users/{}/{}.kml'.format(user_id, layer.name),
-                                ContentFile(kml))
-    send_mail_generated_file(user, path)
+        send_mail_async(user)
+    else:
+        path = save_generated_file(user_id, layer.name, 'kml', kml)
+        send_mail_async(user, path)
