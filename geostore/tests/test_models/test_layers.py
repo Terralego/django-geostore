@@ -272,7 +272,7 @@ class LayerExportGeometryTestCase(TestCase):
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
             properties={'number': 1, 'digit': 34},
         )
-        geojson = json.loads(self.layer.to_geojson())
+        geojson = self.layer.to_geojson()
         self.assertEqual(str(geojson['features'][0]['geometry']),
                          "{'type': 'Point', 'coordinates': [2.4609375, 45.583289756006316]}")
         self.assertEqual(str(geojson['features'][1]['geometry']),

@@ -166,7 +166,7 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
             )
 
     def to_geojson(self):
-        return generate_geojson(self)
+        return json.loads(generate_geojson(self))
 
     def to_shapefile(self):
         return generate_shapefile(self)
