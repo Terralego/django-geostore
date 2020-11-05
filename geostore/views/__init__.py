@@ -19,10 +19,10 @@ from rest_framework.response import Response
 from geostore import settings as app_settings
 from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
-from ..exports.helpers import generate_kml, generate_shapefile
+from ..exports.helpers import generate_geojson, generate_kml, generate_shapefile
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..helpers import execute_async_func
-from ..tasks import generate_async, generate_geojson, generate_shapefile_async
+from ..tasks import generate_async, generate_shapefile_async
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
