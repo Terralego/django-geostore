@@ -105,9 +105,8 @@ class GPXRenderer(BaseRenderer):
         self.gpx = gpxpy.gpx.GPX()
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        Feature = apps.get_model('geostore.Feature')
-        feat = Feature.objects.get(identifier=data.get('identifier'))
-        return self.geom_to_gpx(feat.geom, feat.identifier, "")
+
+        return self.geom_to_gpx(data.get('geom'), data.get('identifier'), "")
 
     def _point_to_gpx(self, point, klass=gpxpy.gpx.GPXWaypoint):
         if isinstance(point, (tuple, list)):
