@@ -6,7 +6,7 @@ from django.core.files.storage import default_storage
 from django.core.mail import send_mail
 from django.template.loader import get_template
 from django.utils.timezone import now
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from geostore.exports.helpers import generate_shapefile
 
