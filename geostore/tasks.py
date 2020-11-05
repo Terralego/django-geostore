@@ -65,8 +65,7 @@ def get_user_layer(layer_id, user_id):
 @shared_task
 def generate_shapefile_async(layer_id, user_id):
     layer, user = get_user_layer(layer_id, user_id)
-    if not user.email:
-        return
+
     file = generate_shapefile(layer)
 
     if file:
@@ -79,8 +78,7 @@ def generate_shapefile_async(layer_id, user_id):
 @shared_task
 def generate_geojson_async(layer_id, user_id):
     layer, user = get_user_layer(layer_id, user_id)
-    if not user.email:
-        return
+
     json = generate_geojson(layer)
 
     if not json:
@@ -93,9 +91,9 @@ def generate_geojson_async(layer_id, user_id):
 @shared_task
 def generate_kml_async(layer_id, user_id):
     layer, user = get_user_layer(layer_id, user_id)
-    if not user.email:
-        return
+
     kml = generate_kml(layer)
+
     if not kml:
         send_mail_async(user)
     else:

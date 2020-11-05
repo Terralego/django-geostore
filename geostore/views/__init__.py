@@ -43,11 +43,13 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
     lookup_fields = ('pk', 'name')
 
     def get_kml(self, request, layer):
-        execute_async_func(generate_kml_async, (layer.id, request.user.id))
+        if request.user.email:
+            execute_async_func(generate_kml_async, (layer.id, request.user.id))
         return Response(status=status.HTTP_202_ACCEPTED)
 
     def get_geojson(self, request, layer):
-        execute_async_func(generate_geojson_async, (layer.id, request.user.id))
+        if request.user.email:
+            execute_async_func(generate_geojson_async, (layer.id, request.user.id))
         return Response(status=status.HTTP_202_ACCEPTED)
 
     def post_shapefile(self, request, layer):
@@ -64,7 +66,8 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 
     def get_shapefile(self, request, layer):
         if app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
-            execute_async_func(generate_shapefile_async, (layer.id, request.user.id))
+            if request.user.email:
+                execute_async_func(generate_shapefile_async, (layer.id, request.user.id))
             return Response(status=status.HTTP_202_ACCEPTED)
         else:
             shape_file = generate_shapefile(layer)
