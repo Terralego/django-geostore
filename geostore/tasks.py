@@ -8,7 +8,7 @@ from django.template.loader import get_template
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
 
-from geostore.exports.helpers import generate_geojson, generate_kml, generate_shapefile
+from geostore.exports.helpers import generate_shapefile
 
 
 @shared_task

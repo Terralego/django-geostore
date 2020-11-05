@@ -1,22 +1,18 @@
 import json
 from io import BytesIO
 from tempfile import TemporaryDirectory
-from unittest import mock, skipIf
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import GEOSGeometry
-from django.core import mail
-from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings, TestCase
 from django.urls import reverse
-from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED, HTTP_202_ACCEPTED,
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
                                    HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
                                    HTTP_403_FORBIDDEN)
 from rest_framework.test import APIClient
 
-from geostore import settings as app_settings
 from geostore import GeometryTypes
 from geostore.helpers import get_serialized_properties
 from geostore.models import Feature, LayerGroup

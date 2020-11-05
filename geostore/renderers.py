@@ -1,6 +1,5 @@
 import gpxpy.gpx
 import simplekml
-from django.apps import apps
 from django.contrib.gis.geos import GeometryCollection, Point, LineString, Polygon
 from rest_framework.renderers import JSONRenderer, BaseRenderer
 from rest_framework.utils.serializer_helpers import ReturnDict

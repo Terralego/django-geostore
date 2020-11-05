@@ -18,16 +18,14 @@ except ImportError:  # TODO Remove when dropping Django releases < 3.1
     from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos import WKBWriter
 from django.contrib.postgres.indexes import GistIndex, GinIndex
-from django.core.serializers import serialize
 from django.db import connection, transaction
 from django.db.models import Manager
 from django.db.models.signals import post_save
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-from fiona.crs import from_epsg
 
-from . import GeometryTypes  #noqa
+from . import GeometryTypes  # NOQA
 from . import settings as app_settings
 from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin

@@ -48,7 +48,7 @@ class LayerKMLExportAsyncTestCase(TestCase):
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'Your file is ready'.format(self.user.id, self.layer.name)
+        path_export = r'Your file is ready'
         self.assertNotRegex(mail.outbox[0].body, path_export)
 
     @mock.patch('geostore.views.execute_async_func')
@@ -112,7 +112,7 @@ class LayerGeojsonExportAsyncTestCase(TestCase):
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'Your file is ready'.format(self.user.id, self.layer.name)
+        path_export = r'Your file is ready'
         self.assertNotRegex(mail.outbox[0].body, path_export)
 
     @mock.patch('geostore.views.execute_async_func')
@@ -176,7 +176,7 @@ class LayerShapefileExportAsyncTestCase(TestCase):
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'Your file is ready'.format(self.user.id, self.layer.name)
+        path_export = r'Your file is ready'
         self.assertNotRegex(mail.outbox[0].body, path_export)
 
     @mock.patch('geostore.views.execute_async_func')
