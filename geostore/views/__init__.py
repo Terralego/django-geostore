@@ -19,10 +19,10 @@ from rest_framework.response import Response
 from geostore import settings as app_settings
 from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
-from ..exports.helpers import generate_shapefile
+from ..exports.helpers import generate_kml, generate_shapefile
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..helpers import execute_async_func
-from ..tasks import generate_geojson_async, generate_kml_async, generate_shapefile_async
+from ..tasks import generate_async, generate_geojson, generate_shapefile_async
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
@@ -44,12 +44,12 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 
     def get_kml(self, request, layer):
         if request.user.email:
-            execute_async_func(generate_kml_async, (layer.id, request.user.id))
+            execute_async_func(generate_async, (generate_kml, layer.id, request.user.id, 'kml'))
         return Response(status=status.HTTP_202_ACCEPTED)
 
     def get_geojson(self, request, layer):
         if request.user.email:
-            execute_async_func(generate_geojson_async, (layer.id, request.user.id))
+            execute_async_func(generate_async, (generate_geojson, layer.id, request.user.id, 'geojson'))
         return Response(status=status.HTTP_202_ACCEPTED)
 
     def post_shapefile(self, request, layer):

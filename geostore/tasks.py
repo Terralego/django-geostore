@@ -63,6 +63,19 @@ def get_user_layer(layer_id, user_id):
 
 
 @shared_task
+def generate_async(function_generate, layer_id, user_id, format):
+    layer, user = get_user_layer(layer_id, user_id)
+
+    file = function_generate(layer)
+
+    if file:
+        path = save_generated_file(user_id, layer.name, format, file)
+        send_mail_async(user, path)
+    else:
+        send_mail_async(user)
+
+
+@shared_task
 def generate_shapefile_async(layer_id, user_id):
     layer, user = get_user_layer(layer_id, user_id)
 
@@ -73,29 +86,3 @@ def generate_shapefile_async(layer_id, user_id):
         send_mail_async(user, path)
     else:
         send_mail_async(user)
-
-
-@shared_task
-def generate_geojson_async(layer_id, user_id):
-    layer, user = get_user_layer(layer_id, user_id)
-
-    json = generate_geojson(layer)
-
-    if not json:
-        send_mail_async(user)
-    else:
-        path = save_generated_file(user_id, layer.name, 'geojson', json)
-        send_mail_async(user, path)
-
-
-@shared_task
-def generate_kml_async(layer_id, user_id):
-    layer, user = get_user_layer(layer_id, user_id)
-
-    kml = generate_kml(layer)
-
-    if not kml:
-        send_mail_async(user)
-    else:
-        path = save_generated_file(user_id, layer.name, 'kml', kml)
-        send_mail_async(user, path)
