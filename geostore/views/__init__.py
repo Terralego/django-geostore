@@ -52,7 +52,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             execute_async_func(generate_async, (generate_geojson, layer.id, request.user.id, 'geojson'))
         return Response(status=status.HTTP_202_ACCEPTED)
 
-    def post_shapefile(self, request, layer):
+    def post_shapefile_sync(self, request, layer):
         try:
             shape_file = request.data['shapefile']
             with transaction.atomic():
@@ -64,14 +64,8 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             response = Response(status=status.HTTP_400_BAD_REQUEST)
         return response
 
-    def get_shapefile(self, request, layer):
-        if app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
-            if request.user.email:
-                execute_async_func(generate_shapefile_async, (layer.id, request.user.id))
-            return Response(status=status.HTTP_202_ACCEPTED)
-        else:
-            shape_file = generate_shapefile(layer)
-
+    def get_shapefile_sync(self, request, layer):
+        shape_file = generate_shapefile(layer)
         if shape_file:
             response = HttpResponse(content_type='application/zip')
             response['Content-Disposition'] = (
@@ -83,17 +77,29 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             response = Response(status=status.HTTP_204_NO_CONTENT)
         return response
 
+    def get_shapefile_async(self, request, layer):
+        if request.user.email:
+            execute_async_func(generate_shapefile_async, (layer.id, request.user.id))
+        return Response(status=status.HTTP_202_ACCEPTED)
+
     @action(methods=['get', 'post'],
-            url_name='shapefile', detail=True, permission_classes=[IsAuthenticated,
-                                                                   LayerImportExportPermission])
-    def shapefile(self, request, *args, **kwargs):
+            url_name='shapefile_sync', detail=True, permission_classes=[IsAuthenticated,
+                                                                        LayerImportExportPermission])
+    def shapefile_sync(self, request, *args, **kwargs):
         layer = self.get_object()
         if request.method == 'POST':
-            return self.post_shapefile(request, layer)
+            return self.post_shapefile_sync(request, layer)
         else:
-            return self.get_shapefile(request, layer)
+            return self.get_shapefile_sync(request, layer)
 
     if app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
+        @action(methods=['get'],
+                url_name='shapefile_async', detail=True, permission_classes=[IsAuthenticated,
+                                                                             LayerImportExportPermission])
+        def shapefile_async(self, request, *args, **kwargs):
+            layer = self.get_object()
+            return self.get_shapefile_async(request, layer)
+
         @action(methods=['get'],
                 url_name='geojson', detail=True, permission_classes=[IsAuthenticated,
                                                                      LayerImportExportPermission])

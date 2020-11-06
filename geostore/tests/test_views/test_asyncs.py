@@ -160,7 +160,7 @@ class LayerShapefileExportAsyncTestCase(TestCase):
             async_func(*args)
         mock_async.side_effect = side_effect
         FeatureFactory(layer=self.layer)
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 0)
@@ -172,7 +172,7 @@ class LayerShapefileExportAsyncTestCase(TestCase):
         mock_async.side_effect = side_effect
         self.user = SuperUserFactory(email="foo@foo.foo")
         self.client.force_login(self.user)
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
@@ -194,7 +194,7 @@ class LayerShapefileExportAsyncTestCase(TestCase):
         FeatureFactory(layer=self.layer)
         self.user = SuperUserFactory(email="foo@foo.foo")
         self.client.force_login(self.user)
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
@@ -215,4 +215,5 @@ class LayerListTestCase(TestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(response.json()[0]['async_exports'],
                          {"GeoJSON": "/api/layer/{}/geojson/".format(self.layer.pk),
-                          "KML": "/api/layer/{}/geojson/".format(self.layer.pk)})
+                          "KML": "/api/layer/{}/kml/".format(self.layer.pk),
+                          'Shape': '/api/layer/{}/shapefile_async/'.format(self.layer.pk)})

@@ -98,12 +98,16 @@ class GroupSerializer(serializers.ModelSerializer):
 class GeometryFileAsyncSerializer(serializers.Serializer):
     GeoJSON = serializers.SerializerMethodField()
     KML = serializers.SerializerMethodField()
+    Shape = serializers.SerializerMethodField()
 
     def get_GeoJSON(self, obj):
         return reverse('layer-geojson', args=[obj.pk, ])
 
     def get_KML(self, obj):
-        return reverse('layer-geojson', args=[obj.pk, ])
+        return reverse('layer-kml', args=[obj.pk, ])
+
+    def get_Shape(self, obj):
+        return reverse('layer-shapefile_async', args=[obj.pk, ])
 
 
 class LayerSerializer(serializers.ModelSerializer):
@@ -118,7 +122,7 @@ class LayerSerializer(serializers.ModelSerializer):
     async_exports = serializers.SerializerMethodField()
 
     def get_shapefile_url(self, obj):
-        return reverse('layer-shapefile', args=[obj.pk, ])
+        return reverse('layer-shapefile_sync', args=[obj.pk, ])
 
     def get_geojson_url(self, obj):
         return reverse('feature-list', kwargs={'layer': obj.pk, 'format': 'geojson'})
