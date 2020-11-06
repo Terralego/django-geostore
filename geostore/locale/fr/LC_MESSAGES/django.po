@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-06 16:33+0000\n"
+"POT-Creation-Date: 2020-11-06 16:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -144,6 +144,41 @@ msgid "Feature"
 msgstr ""
 
 msgid "Invalid geom type for routing"
+msgstr ""
+
+msgid "Export ready"
+msgstr ""
+
+#, python-format
+msgid ""
+"\n"
+"Hello <strong>%(username)s</strong>\n"
+"\n"
+"Your file is ready : %(file)s\n"
+msgstr ""
+
+#, python-format
+msgid ""
+"\n"
+"Hello %(username)s\n"
+"\n"
+"Your file is ready : %(file)s\n"
+msgstr ""
+
+#, python-format
+msgid ""
+"\n"
+"Hello <strong>%(username)s</strong>\n"
+"\n"
+"There are no datas in the layer you asked for.\n"
+msgstr ""
+
+#, python-format
+msgid ""
+"\n"
+"Hello %(username)s\n"
+"\n"
+"There are no datas in the layer you asked for.\n"
 msgstr ""
 
 #, python-brace-format
