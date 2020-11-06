@@ -1,11 +1,12 @@
 import json
 from io import BytesIO
+from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import override_settings, TestCase
 from django.urls import reverse
 from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
                                    HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
@@ -13,8 +14,9 @@ from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
 from rest_framework.test import APIClient
 
 from geostore import GeometryTypes
+from geostore.helpers import get_serialized_properties
 from geostore.models import Feature, LayerGroup
-from geostore.tests.factories import (FeatureFactory, LayerFactory,
+from geostore.tests.factories import (FeatureFactory, LayerFactory, SuperUserFactory,
                                       UserFactory)
 from geostore.tests.utils import get_files_tests
 
@@ -247,18 +249,18 @@ class LayerFeatureIntersectionTest(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
+@override_settings(MEDIA_ROOT=TemporaryDirectory().name)
 class LayerShapefileTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = UserFactory()
+        self.user = SuperUserFactory()
         self.client.force_login(self.user)
 
     def test_shapefile_export(self):
         # Create at least one feature in the layer, so it's not empty
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer)
 
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile_sync', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
@@ -278,21 +280,19 @@ class LayerShapefileTestCase(TestCase):
             }
         }
 
-        serialized_properties = layer._get_serialized_properties(test_properties)
+        serialized_properties = get_serialized_properties(layer, test_properties)
         self.assertEqual(serialized_properties['str'], test_properties['str'])
         self.assertIsInstance(serialized_properties['int'], str)
         self.assertIsInstance(serialized_properties['dict'], str)
 
     def test_shapefile_same_import_export(self):
-        self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
         FeatureFactory(layer=self.layer, properties={
             'key1': [{
                 'key3': 'hello world',
             }]
         })
 
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile_sync', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
@@ -300,7 +300,7 @@ class LayerShapefileTestCase(TestCase):
                                        response.content)
         new_layer = LayerFactory()
         response = self.client.post(
-            reverse('layer-shapefile', args=[new_layer.pk, ]),
+            reverse('layer-shapefile_sync', args=[new_layer.pk, ]),
             {'shapefile': shapefile, }
         )
 
@@ -309,27 +309,17 @@ class LayerShapefileTestCase(TestCase):
                          new_layer.features.first().properties)
 
     def test_empty_shapefile_export(self):
-        # Create en ampty layer to test its behavior
-        LayerFactory()
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
+        # Create en empty layer to test its behavior
+        shape_url = reverse('layer-shapefile_sync', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
-
-    def test_shapefile_no_permission(self):
-        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
-
-        self.assertEqual(
-            self.client.get(shape_url).status_code,
-            HTTP_403_FORBIDDEN
-        )
 
     def test_no_shapefile_import(self):
         self.user.user_permissions.add(Permission.objects.get(codename='can_import_layers'))
         layer = LayerFactory()
 
         response = self.client.post(
-            reverse('layer-shapefile', args=[layer.pk, ]), )
+            reverse('layer-shapefile_sync', args=[layer.pk, ]), )
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
@@ -344,7 +334,7 @@ class LayerShapefileTestCase(TestCase):
                                            fd.read())
 
             response = self.client.post(
-                reverse('layer-shapefile', args=[layer.pk, ]),
+                reverse('layer-shapefile_sync', args=[layer.pk, ]),
                 {'shapefile': shapefile, }
             )
 
@@ -357,7 +347,7 @@ class LayerShapefileTestCase(TestCase):
                                        b'bad bad data')
 
         response = self.client.post(
-            reverse('layer-shapefile', args=[self.layer.pk, ]),
+            reverse('layer-shapefile_sync', args=[self.layer.pk, ]),
             {'shapefile': shapefile, }
         )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)

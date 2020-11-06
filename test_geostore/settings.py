@@ -138,3 +138,5 @@ STATIC_URL = '/static/'
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
