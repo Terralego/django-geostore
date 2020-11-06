@@ -1,10 +1,11 @@
 from django.apps import AppConfig
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 
 
 class GeostoreConfig(AppConfig):
     name = 'geostore'
-    verbose_name = "Geographic Store"
+    verbose_name = _("Geographic Store")
 
     def ready(self):
         # force use specific geojson serializer

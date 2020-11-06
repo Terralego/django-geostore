@@ -49,9 +49,10 @@ ACCEPTED_PROJECTIONS = [
 
 
 class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
-    name = models.CharField(max_length=256, unique=True, default=uuid.uuid4)
-    schema = JSONField(default=dict, blank=True, validators=[validate_json_schema])
-    authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers')
+    name = models.CharField(max_length=256, unique=True, default=uuid.uuid4, verbose_name=_("Name"))
+    schema = JSONField(default=dict, blank=True, validators=[validate_json_schema], verbose_name=_("Schema"))
+    authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers',
+                                               verbose_name=_("Authorized groups"))
 
     def _initial_import_from_csv(self, chunks, options, operations):
         for chunk in chunks:
@@ -314,9 +315,13 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
 
 
 class LayerGroup(BaseUpdatableModel):
-    name = models.CharField(max_length=256, unique=True)
+    name = models.CharField(max_length=256,
+                            unique=True,
+                            verbose_name=_("Name"))
     slug = models.SlugField(unique=True)
-    layers = models.ManyToManyField(Layer, related_name='layer_groups')
+    layers = models.ManyToManyField(Layer,
+                                    related_name='layer_groups',
+                                    verbose_name=_("Layers"))
 
     def save(self, **kwargs):
         if self.pk is None:
@@ -329,12 +334,16 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
     identifier = models.CharField(max_length=255,
                                   blank=False,
                                   null=False,
-                                  default=uuid.uuid4)
-    properties = JSONField(default=dict, blank=True)
+                                  default=uuid.uuid4,
+                                  verbose_name=_("Identifier"))
+    properties = JSONField(default=dict,
+                           blank=True,
+                           verbose_name=_("Properties"))
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
                               related_name='features',
-                              db_index=False)
+                              db_index=False,
+                              verbose_name=_("Layer"))
 
     objects = Manager.from_queryset(FeatureQuerySet)()
 
@@ -484,25 +493,36 @@ post_save.connect(save_layer_relation, sender=LayerRelation)
 class FeatureRelation(models.Model):
     origin = models.ForeignKey(Feature,
                                on_delete=models.CASCADE,
-                               related_name='relations_as_origin')
+                               related_name='relations_as_origin',
+                               verbose_name=_("Origin"))
     destination = models.ForeignKey(Feature,
                                     on_delete=models.CASCADE,
-                                    related_name='relations_as_destination')
+                                    related_name='relations_as_destination',
+                                    verbose_name=_("Destination"))
     relation = models.ForeignKey(LayerRelation,
                                  on_delete=models.CASCADE,
-                                 related_name='related_features')
-    properties = JSONField(default=dict, blank=True)
+                                 related_name='related_features',
+                                 verbose_name=_("Relation"))
+    properties = JSONField(default=dict,
+                           blank=True,
+                           verbose_name=_("Properties"))
 
     class Meta:
         ordering = ['id']
 
 
 class LayerExtraGeom(LayerBasedModelMixin):
-    layer = models.ForeignKey(Layer, on_delete=models.CASCADE, related_name='extra_geometries')
-    order = models.PositiveSmallIntegerField(default=0)
+    layer = models.ForeignKey(Layer,
+                              on_delete=models.CASCADE,
+                              related_name='extra_geometries',
+                              verbose_name=_("Layer"))
+    order = models.PositiveSmallIntegerField(default=0,
+                                             verbose_name=_("Order"))
     slug = models.SlugField(editable=False)
-    title = models.CharField(max_length=250)
-    editable = models.BooleanField(default=True)
+    title = models.CharField(max_length=250,
+                             verbose_name=_("Title"))
+    editable = models.BooleanField(default=True,
+                                   verbose_name=_("Editable"))
 
     @cached_property
     def name(self):
@@ -527,11 +547,24 @@ class LayerExtraGeom(LayerBasedModelMixin):
 
 
 class FeatureExtraGeom(BaseUpdatableModel):
-    feature = models.ForeignKey(Feature, on_delete=models.CASCADE, related_name='extra_geometries')
-    layer_extra_geom = models.ForeignKey(LayerExtraGeom, on_delete=models.CASCADE, related_name='features')
-    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID, spatial_index=False)
-    properties = JSONField(default=dict, blank=True)
-    identifier = models.UUIDField(blank=True, null=True, editable=False, default=uuid.uuid4)
+    feature = models.ForeignKey(Feature,
+                                on_delete=models.CASCADE,
+                                related_name='extra_geometries',
+                                verbose_name=_("Feature"))
+    layer_extra_geom = models.ForeignKey(LayerExtraGeom,
+                                         on_delete=models.CASCADE,
+                                         related_name='features',
+                                         verbose_name=_("Feature"))
+    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID,
+                                spatial_index=False)
+    properties = JSONField(default=dict,
+                           blank=True,
+                           verbose_name=_("Properties"))
+    identifier = models.UUIDField(blank=True,
+                                  null=True,
+                                  editable=False,
+                                  default=uuid.uuid4,
+                                  verbose_name=_("Identifier"))
 
     class Meta:
         unique_together = (
