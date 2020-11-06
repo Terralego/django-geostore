@@ -4,6 +4,8 @@ CHANGELOG
 0.5.2.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Add functions to export layers in shape / geojson / kml in async mode with a celery worker. User should have email to receive link to download export.
+
 
 0.5.1          (2020-10-28)
 ---------------------------

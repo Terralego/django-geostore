@@ -71,8 +71,15 @@ Python dotted path to LayerViewSet. Can be any class inherited from 'geostore.vi
 
 GEOSTORE_LAYER_SERIALIZER
 -------------------------
+**Default: 'geostore.serializers.LayerSerializer'**
 
 Python dotted path to LayerSerializer. Can be any class inherited from 'geostore.serializers.LayerSerializer'
+
+
+GEOSTORE_EXPORT_CELERY_ASYNC
+----------------------------
+**Default: False**
+If your project use a celery worker, set to True to enable async exports. URLS will be provided in API, calling these urls will launch asynchronous exports and send email with a link for user download.
 
 
 URLs
