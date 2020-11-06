@@ -5,6 +5,7 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 from rest_framework_gis.serializers import GeometryField
 
+from geostore import settings as app_settings
 from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
                              LayerRelation, LayerGroup)
 from geostore.validators import (validate_json_schema_data,
@@ -94,6 +95,17 @@ class GroupSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class GeometryFileAsyncSerializer(serializers.Serializer):
+    GeoJSON = serializers.SerializerMethodField()
+    KML = serializers.SerializerMethodField()
+
+    def get_GeoJSON(self, obj):
+        return reverse('layer-geojson', args=[obj.pk, ])
+
+    def get_KML(self, obj):
+        return reverse('layer-geojson', args=[obj.pk, ])
+
+
 class LayerSerializer(serializers.ModelSerializer):
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
@@ -103,6 +115,7 @@ class LayerSerializer(serializers.ModelSerializer):
     tilejson = serializers.SerializerMethodField()
     layer_groups = GroupSerializer(many=True, read_only=True)
     authorized_groups = serializers.PrimaryKeyRelatedField(required=False, many=True, queryset=Group.objects.all())
+    async_exports = serializers.SerializerMethodField()
 
     def get_shapefile_url(self, obj):
         return reverse('layer-shapefile', args=[obj.pk, ])
@@ -113,6 +126,12 @@ class LayerSerializer(serializers.ModelSerializer):
     def get_kml_url(self, obj):
         return reverse('feature-list',
                        kwargs={'layer': obj.pk, 'format': 'kml', })
+
+    def get_async_exports(self, obj):
+        if not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
+            return None
+        serializer = GeometryFileAsyncSerializer(obj)
+        return serializer.data
 
     def get_layer_intersects(self, obj):
         return reverse('layer-intersects', args=[obj.name, ])

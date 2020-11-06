@@ -10,7 +10,7 @@ from django.core.files.storage import default_storage
 from django.test import override_settings, TestCase
 from django.utils.timezone import datetime
 from django.urls import reverse
-from rest_framework.status import HTTP_202_ACCEPTED
+from rest_framework.status import HTTP_200_OK, HTTP_202_ACCEPTED
 
 from geostore import settings as app_settings
 from geostore.tests.factories import FeatureFactory, LayerFactory, SuperUserFactory
@@ -200,3 +200,19 @@ class LayerShapefileExportAsyncTestCase(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         path_export = r'exports/users/{}/{}_1584320461.zip'.format(self.user.id, self.layer.name)
         self.assertRegex(mail.outbox[0].body, path_export)
+
+
+@override_settings(MEDIA_ROOT=TemporaryDirectory().name)
+@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
+class LayerListTestCase(TestCase):
+    def setUp(self):
+        self.layer = LayerFactory()
+        self.user = SuperUserFactory()
+        self.client.force_login(self.user)
+
+    def test_layer_list_async(self):
+        response = self.client.get(reverse('layer-list'))
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual(response.json()[0]['async_exports'],
+                         {"GeoJSON": "/api/layer/{}/geojson/".format(self.layer.pk),
+                          "KML": "/api/layer/{}/geojson/".format(self.layer.pk)})
