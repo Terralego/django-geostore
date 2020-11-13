@@ -1,10 +1,12 @@
-from django.contrib.gis.geos import Point
+from unittest import mock
+
+from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from django.utils.text import slugify
 
 from geostore import GeometryTypes
-from geostore.models import LayerExtraGeom, Feature
+from geostore.models import LayerExtraGeom, Feature, geom_changed
 from geostore import settings as app_settings
 from geostore.tests.factories import LayerSchemaFactory
 
@@ -55,3 +57,40 @@ class FeatureTestCase(TestCase):
         with self.assertRaises(IntegrityError):
             Feature.objects.create(layer=self.layer_schema,
                                    geom='POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))',)
+
+    def test_feature_saving_signal(self):
+        # Created
+        with mock.patch('geostore.models.save_feature') as mock_create:
+            feature = Feature.objects.create(layer=self.layer_schema,
+                                             geom='POINT(0 1)')
+            mock_create.assert_called_once_with(instance=feature, sender=Feature, signal=geom_changed)
+
+        # Geom is not changed
+        with mock.patch('geostore.models.save_feature') as mock_save_properties:
+            feature.properties = {}
+            feature.save()
+            mock_save_properties.assert_not_called()
+
+        # Geom is the same
+        with mock.patch('geostore.models.save_feature') as mock_save_same_geom:
+            feature.geom = GEOSGeometry('''{
+                      "type": "Point",
+                      "coordinates": [
+                        0,
+                        1
+                      ]
+                    }''')
+            feature.save()
+            mock_save_same_geom.assert_not_called()
+
+        # Geom changed
+        with mock.patch('geostore.models.save_feature') as mock_save_same_geom:
+            feature.geom = GEOSGeometry('''{
+                      "type": "Point",
+                      "coordinates": [
+                        2,
+                        49
+                      ]
+                    }''')
+            feature.save()
+            mock_save_same_geom.assert_called_once_with(instance=feature, sender=Feature, signal=geom_changed)

@@ -18,9 +18,11 @@ except ImportError:  # TODO Remove when dropping Django releases < 3.1
     from django.contrib.postgres.fields import JSONField
 from django.contrib.gis.geos import WKBWriter
 from django.contrib.postgres.indexes import GistIndex, GinIndex
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction
 from django.db.models import Manager
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver, Signal
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -441,7 +443,24 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
         ]
 
 
-post_save.connect(save_feature, sender=Feature)
+geom_changed = Signal(providing_args=[])
+
+
+@receiver(signal=pre_save, sender=Feature)
+def pre_save_feature(sender, instance, **kwargs):
+    try:
+        old_feature = sender.objects.get(pk=instance.pk)
+        if not old_feature.geom == instance.geom:
+            geom_changed.connect(save_feature, sender=Feature)
+        else:
+            geom_changed.disconnect(save_feature, sender=Feature)
+    except ObjectDoesNotExist:
+        geom_changed.connect(save_feature, sender=Feature)
+
+
+@receiver(signal=post_save, sender=Feature)
+def feature_post_save(sender, instance, **kwargs):
+    geom_changed.send(sender=sender, instance=instance)
 
 
 class LayerRelation(models.Model):
