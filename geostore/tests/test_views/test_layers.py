@@ -260,7 +260,7 @@ class LayerShapefileTestCase(TestCase):
         # Create at least one feature in the layer, so it's not empty
         FeatureFactory(layer=self.layer)
 
-        shape_url = reverse('layer-shapefile_sync', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
@@ -292,7 +292,7 @@ class LayerShapefileTestCase(TestCase):
             }]
         })
 
-        shape_url = reverse('layer-shapefile_sync', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
@@ -300,7 +300,7 @@ class LayerShapefileTestCase(TestCase):
                                        response.content)
         new_layer = LayerFactory()
         response = self.client.post(
-            reverse('layer-shapefile_sync', args=[new_layer.pk, ]),
+            reverse('layer-shapefile', args=[new_layer.pk, ]),
             {'shapefile': shapefile, }
         )
 
@@ -310,7 +310,7 @@ class LayerShapefileTestCase(TestCase):
 
     def test_empty_shapefile_export(self):
         # Create en empty layer to test its behavior
-        shape_url = reverse('layer-shapefile_sync', args=[self.layer.pk, ])
+        shape_url = reverse('layer-shapefile', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
@@ -319,7 +319,7 @@ class LayerShapefileTestCase(TestCase):
         layer = LayerFactory()
 
         response = self.client.post(
-            reverse('layer-shapefile_sync', args=[layer.pk, ]), )
+            reverse('layer-shapefile', args=[layer.pk, ]), )
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
@@ -334,7 +334,7 @@ class LayerShapefileTestCase(TestCase):
                                            fd.read())
 
             response = self.client.post(
-                reverse('layer-shapefile_sync', args=[layer.pk, ]),
+                reverse('layer-shapefile', args=[layer.pk, ]),
                 {'shapefile': shapefile, }
             )
 
@@ -347,7 +347,7 @@ class LayerShapefileTestCase(TestCase):
                                        b'bad bad data')
 
         response = self.client.post(
-            reverse('layer-shapefile_sync', args=[self.layer.pk, ]),
+            reverse('layer-shapefile', args=[self.layer.pk, ]),
             {'shapefile': shapefile, }
         )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
