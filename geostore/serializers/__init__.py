@@ -122,7 +122,7 @@ class LayerSerializer(serializers.ModelSerializer):
     async_exports = serializers.SerializerMethodField()
 
     def get_shapefile_url(self, obj):
-        return reverse('layer-shapefile_sync', args=[obj.pk, ])
+        return reverse('layer-shapefile', args=[obj.pk, ])
 
     def get_geojson_url(self, obj):
         return reverse('feature-list', kwargs={'layer': obj.pk, 'format': 'geojson'})

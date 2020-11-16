@@ -82,10 +82,9 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             execute_async_func(generate_shapefile_async, (layer.id, request.user.id))
         return Response(status=status.HTTP_202_ACCEPTED)
 
-    @action(methods=['get', 'post'],
-            url_name='shapefile_sync', detail=True, permission_classes=[IsAuthenticated,
-                                                                        LayerImportExportPermission])
-    def shapefile_sync(self, request, *args, **kwargs):
+    @action(methods=['get', 'post'], detail=True, permission_classes=[IsAuthenticated,
+                                                                      LayerImportExportPermission])
+    def shapefile(self, request, *args, **kwargs):
         layer = self.get_object()
         if request.method == 'POST':
             return self.post_shapefile_sync(request, layer)

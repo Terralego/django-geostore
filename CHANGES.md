@@ -5,6 +5,7 @@ CHANGELOG
 ---------------------------
 
 * Use get_username() to keep compatibility with custom User model
+* Revert shape file url generation
 
 
 0.5.2          (2020-11-06)
