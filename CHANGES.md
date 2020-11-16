@@ -4,6 +4,8 @@ CHANGELOG
 0.5.3.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Use get_username() to keep compatibility with custom User model
+
 
 0.5.2          (2020-11-06)
 ---------------------------
