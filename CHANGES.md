@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.5.3.dev0     (XXXX-XX-XX)
+0.5.3          (2020-11-16)
 ---------------------------
 
 * Use get_username() to keep compatibility with custom User model
