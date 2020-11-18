@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.module_loading import import_string
+from django.utils.translation import gettext as _
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -122,7 +123,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             geometry = GEOSGeometry(request.data.get('geom', None))
         except (GEOSException, GDALException, TypeError, ValueError):
             return HttpResponseBadRequest(
-                content='Provided geometry is not valid')
+                content=_('Provided geometry is not valid'))
 
         response = {
             'request': {
@@ -152,10 +153,10 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
                                          properties_field='properties'))
                 )
             except (ValueError, KeyError):
-                return HttpResponseBadRequest('An error occured parsing '
-                                              'GeoJSON, verify your data')
+                return HttpResponseBadRequest(_('An error occured parsing '
+                                              'GeoJSON, verify your data'))
         else:
-            return HttpResponseBadRequest('Features are missing in GeoJSON')
+            return HttpResponseBadRequest(_('Features are missing in GeoJSON'))
 
 
 class FeatureViewSet(viewsets.ModelViewSet):
