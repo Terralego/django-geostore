@@ -9,7 +9,6 @@ from django.core.files.storage import default_storage
 from django.test import override_settings
 from django.urls import reverse
 from django.utils.datetime_safe import datetime
-from django.utils.timezone import now
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -59,7 +58,8 @@ class LayerKMLExportAsyncTestCase(APITestCase):
             async_func(*args)
 
         def side_effect_now():
-            return now()
+            return datetime(2020, 3, 16, 1, 1, 1)
+
         mock_async_func.side_effect = side_effect_async
         mock_time.side_effect = side_effect_now
         FeatureFactory(layer=self.layer)

@@ -42,7 +42,8 @@ def make_zipfile_bytesio(base_dir):
 
 
 def send_mail_export(user, path=None):
-    context = {"username": user.get_username(), "file": path}
+    url = default_storage.url(path)
+    context = {"username": user.get_username(), "url": url}
     if not path:
         template_email = 'exports_no_datas'
     else:

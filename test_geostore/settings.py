@@ -136,6 +136,7 @@ DEBUG_TOOLBAR_CONFIG = {
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
 
 # set required DRF settings
 REST_FRAMEWORK = {

@@ -2,5 +2,5 @@
 {% blocktrans %}
 Hello {{ username }}
 
-Your file is ready : {{ file }}
+Your file is ready : {{ url }}
 {% endblocktrans %}

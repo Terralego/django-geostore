@@ -45,7 +45,7 @@ def generate_geojson_async(layer_id, user_id):
     layer_export = LayerExport(layer)
     file = layer_export.to_geojson()
 
-    path = save_generated_file(user_id, layer.name, 'zip', file) if file else None
+    path = save_generated_file(user_id, layer.name, 'geojson', file) if file else None
     send_mail_export(user, path)
 
 
@@ -55,5 +55,5 @@ def generate_kml_async(layer_id, user_id):
 
     layer_export = LayerExport(layer)
     file = layer_export.to_kml()
-    path = save_generated_file(user_id, layer.name, 'zip', file) if file else None
+    path = save_generated_file(user_id, layer.name, 'kml', file) if file else None
     send_mail_export(user, path)
