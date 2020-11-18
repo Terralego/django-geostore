@@ -12,6 +12,7 @@ from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
 from geostore import settings as app_settings
+from geostore.import_export.imports import LayerImport
 from geostore.models import Layer, LayerGroup, LayerExtraGeom
 from geostore.tests.factories import LayerFactory
 from geostore.tests.utils import get_files_tests
@@ -57,8 +58,8 @@ class VectorTilesTestCase(TestCase):
                                                               title='Extra geometry')
         self.mygroup = LayerGroup.objects.create(name='mygroup', slug='mygroup')
         self.mygroup.layers.add(self.layer)
-
-        self.layer.from_geojson(
+        self.layer_import = LayerImport(self.layer)
+        self.layer_import.from_geojson(
             geojson_data='''
             {
             "type": "FeatureCollection",
@@ -90,9 +91,8 @@ class VectorTilesTestCase(TestCase):
         self.layerPoint = LayerFactory(name="layerPoint", settings=settings)
         self.yourgroup = LayerGroup.objects.create(name='yourgroup', slug='yourgroup')
         self.yourgroup.layers.add(self.layerPoint)
-
-        self.layerPoint.from_geojson(
-
+        self.layer_import_point = LayerImport(self.layerPoint)
+        self.layer_import_point.from_geojson(
             geojson_data='''
             {
             "type": "FeatureCollection",
@@ -356,7 +356,8 @@ class VectorTilesSpecialTestCase(TestCase):
             ]
             }
         '''
-        self.layer.from_geojson(geojson_data=self.geojson_data)
+        self.layer_import = LayerImport(self.layer)
+        self.layer_import.from_geojson(geojson_data=self.geojson_data)
 
     def test_group_tilejson_with_properties(self):
         response = self.client.get(

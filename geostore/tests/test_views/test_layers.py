@@ -16,7 +16,7 @@ from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
 from geostore import settings as app_settings
-from geostore.helpers import get_serialized_properties
+from geostore.import_export.helpers import get_serialized_properties
 from geostore.models import Feature, LayerGroup
 from geostore.tests.factories import (FeatureFactory, LayerFactory, SuperUserFactory,
                                       UserFactory)

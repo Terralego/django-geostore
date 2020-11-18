@@ -4,9 +4,9 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import TestCase
 
+from geostore.transformations import set_geometry_from_options
 from geostore.models import Layer
 from geostore.tests.utils import get_files_tests
-from geostore.transformations import set_geometry_from_options
 
 UserModel = get_user_model()
 

@@ -6,6 +6,7 @@ from json.decoder import JSONDecodeError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from geostore.import_export.imports import LayerImport
 from geostore.management.commands.mixins import LayerCommandMixin
 from geostore.models import Layer, LayerGroup
 
@@ -107,4 +108,5 @@ class Command(LayerCommandMixin, BaseCommand):
     def import_datas(self, layer, geojson_files, identifier):
         for file_in in geojson_files:
             geojson = file_in.read()
-            layer.from_geojson(geojson, identifier)
+            layer_import = LayerImport(layer)
+            layer_import.from_geojson(geojson, identifier)

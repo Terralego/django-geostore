@@ -5,6 +5,7 @@ from django.core.management import call_command
 from django.db import connection
 from django.test import TestCase, override_settings
 
+from geostore.import_export.imports import LayerImport
 from geostore.models import LayerGroup
 from geostore.tests.factories import LayerFactory
 from geostore.tiles.helpers import VectorTile, get_cache_version
@@ -20,8 +21,8 @@ class FillTilesCacheTestCase(TestCase):
         self.layer = LayerFactory(name="layerLine")
         self.group = LayerGroup.objects.create(name='mygroup', slug='mygroup')
         self.group.layers.add(self.layer)
-
-        self.layer.from_geojson(
+        layer_import = LayerImport(self.layer)
+        layer_import.from_geojson(
             geojson_data='''
             {
             "type": "FeatureCollection",

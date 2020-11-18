@@ -1,6 +1,6 @@
 import logging
 
-from .helpers import GeometryDefiner
+from geostore.import_export.helpers import GeometryDefiner
 
 logger = logging.getLogger(__name__)
 

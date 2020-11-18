@@ -6,6 +6,8 @@ from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from geostore.import_export.exports import LayerExport
+from geostore.import_export.imports import LayerImport
 from geostore.models import Layer
 from geostore.tests.factories import (FeatureFactory, LayerFactory,
                                       LayerSchemaFactory, UserFactory)
@@ -47,6 +49,7 @@ class LayerModelTestCase(TestCase):
 class LayerFromCSVDictReaderTestCase(TestCase):
     def setUp(self):
         self.layer = Layer.objects.create(name='fake layer')
+        self.layer_import = LayerImport(self.layer)
 
     def get_csv_reader_from_dict(self, fieldnames, rows):
         self.tmp_file = tempfile.NamedTemporaryFile(mode='r+',
@@ -72,10 +75,10 @@ class LayerFromCSVDictReaderTestCase(TestCase):
         )
 
         initial = self.layer.features.all().count()
-        self.layer.from_csv_dictreader(reader=reader,
-                                       options=[],
-                                       operations=[],
-                                       pk_properties=['CODGEO'])
+        self.layer_import.from_csv_dictreader(reader=reader,
+                                              options=[],
+                                              operations=[],
+                                              pk_properties=['CODGEO'])
 
         expected = initial
         self.assertEqual(self.layer.features.all().count(), expected)
@@ -107,12 +110,11 @@ class LayerFromCSVDictReaderTestCase(TestCase):
         operations = [
             set_geometry_from_options,
         ]
-
-        self.layer.from_csv_dictreader(reader=reader,
-                                       options=options,
-                                       operations=operations,
-                                       pk_properties=['SIREN', 'NIC'],
-                                       init=True)
+        self.layer_import.from_csv_dictreader(reader=reader,
+                                              options=options,
+                                              operations=operations,
+                                              pk_properties=['SIREN', 'NIC'],
+                                              init=True)
 
         # Init mode only create new items, it does not reset database
         self.assertEqual(self.layer.features.all().count(), 6)
@@ -151,11 +153,11 @@ class LayerFromCSVDictReaderTestCase(TestCase):
         operations = [
             set_geometry_from_options,
         ]
-
-        self.layer.from_csv_dictreader(reader=reader,
-                                       options=options,
-                                       operations=operations,
-                                       pk_properties=['SIREN', 'NIC'])
+        layer_import = LayerImport(self.layer)
+        layer_import.from_csv_dictreader(reader=reader,
+                                         options=options,
+                                         operations=operations,
+                                         pk_properties=['SIREN', 'NIC'])
 
         expected = initial + 1
         self.assertEqual(self.layer.features.all().count(), expected)
@@ -202,10 +204,11 @@ class LayerFromCSVDictReaderTestCase(TestCase):
             custom_transformation,
             set_geometry_from_options,
         ]
-        self.layer.from_csv_dictreader(reader=reader,
-                                       options=options,
-                                       operations=operations,
-                                       pk_properties=['SIREN', 'NIC'])
+        layer_import = LayerImport(self.layer)
+        layer_import.from_csv_dictreader(reader=reader,
+                                         options=options,
+                                         operations=operations,
+                                         pk_properties=['SIREN', 'NIC'])
 
         feature = self.layer.features.get(properties__SIREN='437582422',
                                           properties__NIC='00097')
@@ -215,6 +218,7 @@ class LayerFromCSVDictReaderTestCase(TestCase):
 class LayerFromGeojsonTestCase(TestCase):
     def setUp(self):
         self.layer = LayerFactory()
+        self.layer_import = LayerImport(self.layer)
         self.user = UserFactory()
         self.client.force_login(self.user)
 
@@ -223,18 +227,21 @@ class LayerFromGeojsonTestCase(TestCase):
                              { "type": "name", "properties": { "name":
                              "urn:ogc:def:crs:OGC:1.3:CRS84" } },
                              "features": []}"""
-        self.layer.from_geojson(with_projection, "01-01", "01-01")
+
+        self.layer_import.from_geojson(with_projection, "01-01", "01-01")
 
     def test_import_geojson_withtout_projection(self):
         without_projection = """{"type": "FeatureCollection",
                                 "features": []}"""
-        self.layer.from_geojson(without_projection, "01-01", "01-01")
+        layer_import = LayerImport(self.layer)
+        layer_import.from_geojson(without_projection, "01-01", "01-01")
 
         with_bad_projection = """{"type": "FeatureCollection", "crs":
                                  { "type": "name", "properties": { "name":
                                  "BADPROJECTION" } }, "features": []}"""
         with self.assertRaises(GEOSException):
-            self.layer.from_geojson(with_bad_projection, "01-01", "01-01")
+            layer_import = LayerImport(self.layer)
+            layer_import.from_geojson(with_bad_projection, "01-01", "01-01")
 
 
 class LayerFromShapefileTestCase(TestCase):
@@ -248,7 +255,8 @@ class LayerFromShapefileTestCase(TestCase):
         shapefile_path = get_files_tests('shapefile-WGS84.zip')
 
         with open(shapefile_path, 'rb') as shapefile:
-            layer.from_shapefile(shapefile)
+            layer_import = LayerImport(layer)
+            layer_import.from_shapefile(shapefile)
 
         self.assertEqual(8, layer.features.all().count())
 
@@ -272,7 +280,8 @@ class LayerExportGeometryTestCase(TestCase):
             geom=GEOSGeometry(json.dumps(self.fake_geometry)),
             properties={'number': 1, 'digit': 34},
         )
-        geojson = self.layer.to_geojson()
+        layer_export = LayerExport(self.layer)
+        geojson = json.loads(layer_export.to_geojson())
         self.assertEqual(str(geojson['features'][0]['geometry']),
                          "{'type': 'Point', 'coordinates': [2.4609375, 45.583289756006316]}")
         self.assertEqual(str(geojson['features'][1]['geometry']),

@@ -198,7 +198,7 @@ msgid "Provided geometry is not valid"
 msgstr ""
 
 msgid "An error occured parsing GeoJSON, verify your data"
-msgstr ""
+msgstr "Une erreur s'est déclenchée lors de la lecture du JGeoJSON"
 
 msgid "Features are missing in GeoJSON"
-msgstr ""
+msgstr "Impossible de lire les données du GeoJSON"

@@ -6,6 +6,7 @@ from json.decoder import JSONDecodeError
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from geostore.import_export.imports import LayerImport
 from geostore.management.commands.mixins import LayerCommandMixin
 from geostore.models import Layer, LayerGroup
 
@@ -107,5 +108,6 @@ class Command(LayerCommandMixin, BaseCommand):
             transaction.savepoint_commit(sp)
 
     def import_datas(self, layer, file_path, identifier):
+        layer_import = LayerImport(layer)
         for shapefile_file in file_path:
-            layer.from_shapefile(shapefile_file, identifier)
+            layer_import.from_shapefile(shapefile_file, identifier)
