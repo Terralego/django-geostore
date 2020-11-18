@@ -117,7 +117,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             geometry = GEOSGeometry(request.data.get('geom', None))
         except (GEOSException, GDALException, TypeError, ValueError):
             return HttpResponseBadRequest(
-                content=_('Provided geometry is not valid'))
+                content=_('Geometry is not valid'))
 
         response = {
             'request': {

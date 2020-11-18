@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-18 09:11+0000\n"
+"POT-Creation-Date: 2020-11-18 17:09+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,7 +21,10 @@ msgstr ""
 msgid "Geographic Store"
 msgstr ""
 
-msgid "Import insee data from csv to db."
+msgid "Export ready"
+msgstr ""
+
+msgid "Import INSEE data from csv to db."
 msgstr ""
 
 msgid "Delete all stored INSEE data, DO NOT USE IN PROD."
@@ -146,15 +149,12 @@ msgstr ""
 msgid "Invalid geom type for routing"
 msgstr ""
 
-msgid "Export ready"
-msgstr ""
-
 #, python-format
 msgid ""
 "\n"
 "Hello <strong>%(username)s</strong>\n"
 "\n"
-"Your file is ready : %(file)s\n"
+"Your file is ready : %(url)s\n"
 msgstr ""
 
 #, python-format
@@ -162,7 +162,7 @@ msgid ""
 "\n"
 "Hello %(username)s\n"
 "\n"
-"Your file is ready : %(file)s\n"
+"Your file is ready : %(url)s\n"
 msgstr ""
 
 #, python-format
@@ -194,7 +194,7 @@ msgstr ""
 msgid "Geometry is not valid"
 msgstr ""
 
-msgid "Provided geometry is not valid"
+msgid "Your user has no mail address."
 msgstr ""
 
 msgid "An error occured parsing GeoJSON, verify your data"
