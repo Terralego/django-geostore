@@ -3,14 +3,14 @@ from tempfile import TemporaryDirectory
 from unittest import mock, skipIf
 from xml.etree import ElementTree as ET
 
-from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.core import mail
 from django.core.files.storage import default_storage
-from django.test import override_settings, TestCase
-from django.utils.timezone import datetime
+from django.test import override_settings
 from django.urls import reverse
-from rest_framework.status import HTTP_200_OK, HTTP_202_ACCEPTED
+from django.utils.timezone import now
+from rest_framework.status import HTTP_202_ACCEPTED
+from rest_framework.test import APITestCase
 
 from geostore import settings as app_settings
 from geostore.tests.factories import FeatureFactory, LayerFactory, SuperUserFactory
@@ -18,13 +18,12 @@ from geostore.tests.factories import FeatureFactory, LayerFactory, SuperUserFact
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
 @skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
-class LayerKMLExportAsyncTestCase(TestCase):
+class LayerKMLExportAsyncTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = SuperUserFactory()
-        self.client.force_login(self.user)
+        self.user = SuperUserFactory(email="foo@foo.foo")
+        self.client.force_athenticate(self.user)
 
-    @mock.patch('geostore.views.execute_async_func')
     def test_async_kml_export_no_mail(self, mock_async_func):
         # Create at least one feature in the layer, so it's not empty
         def side_effect(async_func, args):
@@ -42,8 +41,6 @@ class LayerKMLExportAsyncTestCase(TestCase):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async.side_effect = side_effect
-        self.user = SuperUserFactory(email="foo@foo.foo")
-        self.client.force_login(self.user)
         shape_url = reverse('layer-kml', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
@@ -59,13 +56,9 @@ class LayerKMLExportAsyncTestCase(TestCase):
             async_func(*args)
 
         def side_effect_now():
-            dt = datetime(2020, 3, 16, 1, 1, 1)
-            return dt
+            return now()
         mock_async_func.side_effect = side_effect_async
         mock_time.side_effect = side_effect_now
-        self.user = SuperUserFactory(email="foo@foo.foo")
-        self.user.user_permissions.add(Permission.objects.get(codename='can_export_layers'))
-        self.client.force_login(self.user)
         FeatureFactory(layer=self.layer)
 
         kml_url = reverse('layer-kml', args=[self.layer.pk, ])
@@ -82,11 +75,11 @@ class LayerKMLExportAsyncTestCase(TestCase):
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
 @skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
-class LayerGeojsonExportAsyncTestCase(TestCase):
+class LayerGeojsonExportAsyncTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = SuperUserFactory()
-        self.client.force_login(self.user)
+        self.user = SuperUserFactory(email="foo@foo.foo")
+        self.client.force_athenticate(self.user)
 
     @mock.patch('geostore.views.execute_async_func')
     def test_async_geojson_export_no_mail(self, mock_async_func):
@@ -106,8 +99,6 @@ class LayerGeojsonExportAsyncTestCase(TestCase):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async.side_effect = side_effect
-        self.user = SuperUserFactory(email="foo@foo.foo")
-        self.client.force_login(self.user)
         shape_url = reverse('layer-geojson', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
@@ -123,13 +114,10 @@ class LayerGeojsonExportAsyncTestCase(TestCase):
             async_func(*args)
 
         def side_effect_now():
-            dt = datetime(2020, 3, 16, 1, 1, 1)
-            return dt
+            return now()
 
         mock_async_func.side_effect = side_effect_async
         mock_time.side_effect = side_effect_now
-        self.user = SuperUserFactory(email="foo@foo.foo")
-        self.client.force_login(self.user)
         FeatureFactory(layer=self.layer)
 
         geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
@@ -148,11 +136,11 @@ class LayerGeojsonExportAsyncTestCase(TestCase):
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
 @skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
-class LayerShapefileExportAsyncTestCase(TestCase):
+class LayerShapefileExportAsyncTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.user = SuperUserFactory()
-        self.client.force_login(self.user)
+        self.user = SuperUserFactory(email="foo@foo.foo")
+        self.client.force_authenticate(self.user)
 
     @mock.patch('geostore.views.execute_async_func')
     def test_async_shapefile_export_no_mail(self, mock_async):
@@ -170,8 +158,6 @@ class LayerShapefileExportAsyncTestCase(TestCase):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async.side_effect = side_effect
-        self.user = SuperUserFactory(email="foo@foo.foo")
-        self.client.force_login(self.user)
         shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
@@ -186,34 +172,14 @@ class LayerShapefileExportAsyncTestCase(TestCase):
             async_func(*args)
 
         def side_effect_now():
-            dt = datetime(2020, 3, 16, 1, 1, 1)
-            return dt
+            return now()
 
         mock_async_func.side_effect = side_effect_async
         mock_time.side_effect = side_effect_now
         FeatureFactory(layer=self.layer)
-        self.user = SuperUserFactory(email="foo@foo.foo")
-        self.client.force_login(self.user)
         shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
         path_export = r'exports/users/{}/{}_1584320461.zip'.format(self.user.id, self.layer.name)
         self.assertRegex(mail.outbox[0].body, path_export)
-
-
-@override_settings(MEDIA_ROOT=TemporaryDirectory().name)
-@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
-class LayerListTestCase(TestCase):
-    def setUp(self):
-        self.layer = LayerFactory()
-        self.user = SuperUserFactory()
-        self.client.force_login(self.user)
-
-    def test_layer_list_async(self):
-        response = self.client.get(reverse('layer-list'))
-        self.assertEqual(HTTP_200_OK, response.status_code)
-        self.assertEqual(response.json()[0]['async_exports'],
-                         {"GeoJSON": "/api/layer/{}/geojson/".format(self.layer.pk),
-                          "KML": "/api/layer/{}/kml/".format(self.layer.pk),
-                          'Shape': '/api/layer/{}/shapefile_async/'.format(self.layer.pk)})

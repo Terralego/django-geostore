@@ -55,7 +55,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 
     def post_shapefile_sync(self, request, layer):
         try:
-            shape_file = request.data['shapefile']
+            shape_file = request.FILES['shapefile']
             with transaction.atomic():
                 layer.features.all().delete()
                 layer.from_shapefile(shape_file)

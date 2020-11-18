@@ -1,19 +1,21 @@
 import json
 from io import BytesIO
 from tempfile import TemporaryDirectory
+from unittest import skipIf
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import override_settings, TestCase
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
                                    HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
                                    HTTP_403_FORBIDDEN)
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
+from geostore import settings as app_settings
 from geostore.helpers import get_serialized_properties
 from geostore.models import Feature, LayerGroup
 from geostore.tests.factories import (FeatureFactory, LayerFactory, SuperUserFactory,
@@ -21,10 +23,9 @@ from geostore.tests.factories import (FeatureFactory, LayerFactory, SuperUserFac
 from geostore.tests.utils import get_files_tests
 
 
-class LayerLineIntersectionTestCase(TestCase):
+class LayerLineIntersectionTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
-        self.client = APIClient()
         self.user = UserFactory(permissions=[])
         self.client.force_authenticate(user=self.user)
 
@@ -40,13 +41,12 @@ class LayerLineIntersectionTestCase(TestCase):
         response = self.client.post(
             reverse('layer-intersects', kwargs={'pk': self.layer.pk}),
             {'geom': json.dumps(linestring)},
-            format='json',
         )
 
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerPolygonIntersectTestCase(TestCase):
+class LayerPolygonIntersectTestCase(APITestCase):
     def setUp(self):
         # from http://wiki.geojson.org/GeoJSON_draft_version_6#Polygon
         self.polygon = {
@@ -61,7 +61,6 @@ class LayerPolygonIntersectTestCase(TestCase):
                 ]
             ]
         }
-        self.client = APIClient()
         self.user = UserFactory()
         self.client.force_authenticate(user=self.user)
 
@@ -112,7 +111,7 @@ class LayerPolygonIntersectTestCase(TestCase):
         )
 
 
-class LayerFeatureIntersectionTest(TestCase):
+class LayerFeatureIntersectionTest(APITestCase):
     def setUp(self):
         self.fake_geometry = {
             "type": "Point",
@@ -177,7 +176,7 @@ class LayerFeatureIntersectionTest(TestCase):
         self.group.layers.add(self.layer)
 
         self.user = UserFactory()
-        self.client.force_login(self.user)
+        self.client.force_authenticate(self.user)
 
     def test_features_intersections(self):
         layer = LayerFactory()
@@ -250,11 +249,11 @@ class LayerFeatureIntersectionTest(TestCase):
 
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
-class LayerShapefileTestCase(TestCase):
+class LayerShapefileTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = SuperUserFactory()
-        self.client.force_login(self.user)
+        self.client.force_authenticate(self.user)
 
     def test_shapefile_export(self):
         # Create at least one feature in the layer, so it's not empty
@@ -301,7 +300,7 @@ class LayerShapefileTestCase(TestCase):
         new_layer = LayerFactory()
         response = self.client.post(
             reverse('layer-shapefile', args=[new_layer.pk, ]),
-            {'shapefile': shapefile, }
+            {'shapefile': shapefile, }, format="multipart"
         )
 
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -335,7 +334,7 @@ class LayerShapefileTestCase(TestCase):
 
             response = self.client.post(
                 reverse('layer-shapefile', args=[layer.pk, ]),
-                {'shapefile': shapefile, }
+                {'shapefile': shapefile, }, format='multipart'
             )
 
         self.assertEqual(HTTP_200_OK, response.status_code)
@@ -353,7 +352,7 @@ class LayerShapefileTestCase(TestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerDetailTest(TestCase):
+class LayerDetailTest(APITestCase):
     geometry = {
         "type": "LineString",
         "coordinates": [
@@ -368,7 +367,6 @@ class LayerDetailTest(TestCase):
     }
 
     def setUp(self):
-        self.client = APIClient()
         self.layer = LayerFactory()
         self.layer_group = LayerGroup.objects.create(name='layer group')
         self.layer_group.layers.add(self.layer)
@@ -420,10 +418,19 @@ class LayerDetailTest(TestCase):
         feature.refresh_from_db()
         self.assertDictEqual(feature.properties, updated_properties)
 
+    @skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
+    def test_async_exports_links(self):
+        response = self.client.get(reverse('layer-detail', args=[self.layer.name, ]),)
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        data = response.json()
+        self.assertEqual(data['async_exports'],
+                         {"GeoJSON": "/api/layer/{}/geojson/".format(self.layer.pk),
+                          "KML": "/api/layer/{}/kml/".format(self.layer.pk),
+                          'Shape': '/api/layer/{}/shapefile_async/'.format(self.layer.pk)})
 
-class LayerCreationTest(TestCase):
+
+class LayerCreationTest(APITestCase):
     def setUp(self):
-        self.client = APIClient()
         self.user = UserFactory(permissions=['geostore.can_manage_layers', ])
         self.client.force_authenticate(user=self.user)
 

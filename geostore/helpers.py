@@ -4,8 +4,17 @@ import logging
 import os
 import zipfile
 
+from django.apps import apps
+from django.contrib.auth import get_user_model
+
 from django.contrib.gis.geos.point import Point
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.core.mail import send_mail
 from django.db import transaction
+from django.template.loader import get_template
+from django.utils.timezone import now
+from django.utils.translation import gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -90,3 +99,33 @@ class GeometryDefiner:
                 y = float(row.get(lat_column))
                 return Point(x, y)
         return None
+
+
+def send_mail_export(user, path=None):
+    context = {"username": user.get_username(), "file": path}
+    if not path:
+        template_email = 'exports_no_datas'
+    else:
+        template_email = 'exports'
+    html = get_template('geostore/emails/{}.html'.format(template_email))
+    html_content = html.render(context)
+    txt = get_template('geostore/emails/{}.txt'.format(template_email))
+    txt_content = txt.render(context)
+    send_mail(_('Export ready'), txt_content, None, [getattr(user, user.get_email_field_name())],
+              html_message=html_content, fail_silently=True)
+
+
+def save_generated_file(user_id, layer_name, format_file, string_file):
+    path = default_storage.save('exports/users/{}/{}_{}.{}'.format(user_id,
+                                                                   layer_name,
+                                                                   int(now().timestamp()),
+                                                                   format_file),
+                                ContentFile(string_file))
+    return path
+
+
+def get_user_layer(layer_id, user_id):
+    user = get_user_model().objects.get(id=user_id)
+    Layer = apps.get_model('geostore.Layer')
+    layer = Layer.objects.get(id=layer_id)
+    return layer, user
