@@ -1,6 +1,6 @@
 from django.contrib.gis.db.models.fields import BaseSpatialField
 
-from geostore.functions import IsEmpty as IsEmptyFunc
+from geostore.db.functions import IsEmpty as IsEmptyFunc
 
 
 @BaseSpatialField.register_lookup

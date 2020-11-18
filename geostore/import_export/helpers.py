@@ -4,7 +4,6 @@ import logging
 import os
 import zipfile
 
-from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point
 from django.core.files.base import ContentFile
@@ -14,6 +13,7 @@ from django.template.loader import get_template
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 
+from geostore.models import Layer
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,6 @@ def save_generated_file(user_id, layer_name, format_file, string_file):
 
 def get_user_layer(layer_id, user_id):
     user = get_user_model().objects.get(id=user_id)
-    Layer = apps.get_model('geostore.Layer')
     layer = Layer.objects.get(id=layer_id)
     return layer, user
 

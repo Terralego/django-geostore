@@ -1,14 +1,13 @@
 from celery import shared_task
-from django.apps import apps
 
 from geostore.import_export.exports import LayerExport
 from geostore.import_export.helpers import get_user_layer, save_generated_file, send_mail_export
+from geostore.models import Feature, LayerRelation
 
 
 @shared_task
 def feature_update_relations_destinations(feature_id, relation_id=None):
     """ Update all feature layer relations as origin """
-    Feature = apps.get_model('geostore.Feature')
     feature = Feature.objects.get(pk=feature_id)
     feature.sync_relations(relation_id)
 
@@ -18,7 +17,6 @@ def feature_update_relations_destinations(feature_id, relation_id=None):
 @shared_task
 def layer_relations_set_destinations(relation_id):
     """ Update all feature layer as origin for a relation """
-    LayerRelation = apps.get_model('geostore.LayerRelation')
     relation = LayerRelation.objects.get(pk=relation_id)
 
     for feature_id in relation.origin.features.values_list('pk', flat=True):
