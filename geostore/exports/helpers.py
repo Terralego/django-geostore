@@ -1,23 +1,22 @@
-from django.core.serializers import serialize
-
-import fiona
-from fiona.crs import from_epsg
 import glob
 import json
 import os
 from tempfile import TemporaryDirectory
 
-from geostore import settings as app_settings
+import fiona
+from django.core.serializers import serialize
+from fiona.crs import from_epsg
+
 from geostore import GeometryTypes
+from geostore import settings as app_settings
 from geostore.helpers import get_serialized_properties, make_zipfile_bytesio
 from geostore.renderers import KMLRenderer
 
 
-def generate_kml(layer):
-    from geostore.serializers import FeatureSerializer
+def generate_kml(layer, serializer):
     if not layer.features.count():
         return
-    return KMLRenderer().render(FeatureSerializer(layer.features.all(), many=True).data)
+    return KMLRenderer().render(serializer(layer.features.all(), many=True).data)
 
 
 def generate_geojson(layer):

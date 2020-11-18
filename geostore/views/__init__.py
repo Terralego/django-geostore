@@ -45,7 +45,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
 
     def get_kml(self, request, layer):
         if request.user.email:
-            execute_async_func(generate_async, (generate_kml, layer.id, request.user.id, 'kml'))
+            execute_async_func(generate_async, (generate_kml, FeatureSerializer, layer.id, request.user.id, 'kml'))
         return Response(status=status.HTTP_202_ACCEPTED)
 
     def get_geojson(self, request, layer):
