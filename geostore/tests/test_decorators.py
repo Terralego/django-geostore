@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from geostore.import_export.imports import LayerImport
 from geostore.tiles.decorators import zoom_update
 from geostore.tests.factories import LayerFactory
 
@@ -12,7 +13,8 @@ class ZoomUpdateTest(TestCase):
 
         # Call the decorator manualy on nop lambda
         self.layer.beta_lambda = lambda *args, **kargs: False
-        zoom_update(self.layer.beta_lambda)(self.layer)
+        layer_import = LayerImport(self.layer)
+        zoom_update(self.layer.beta_lambda)(layer_import)
 
         self.assertEqual(
             self.layer.layer_settings('tiles', 'maxzoom') is not None,

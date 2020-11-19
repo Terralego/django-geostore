@@ -3,7 +3,7 @@ from collections import OrderedDict
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 
-from geostore.helpers import ChunkIterator, GeometryDefiner
+from geostore.import_export.helpers import ChunkIterator, GeometryDefiner
 
 
 class ChunkIteratorTest(TestCase):

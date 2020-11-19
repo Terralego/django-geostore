@@ -14,3 +14,6 @@ class GeostoreConfig(AppConfig):
             'geojson': 'geostore.serializers.geojson',
         })
         setattr(settings, 'SERIALIZATION_MODULES', modules)
+
+        import geostore.signals  # NOQA
+        import geostore.db.lookups  # NOQA

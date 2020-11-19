@@ -3,7 +3,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from django.core.management.base import BaseCommand, CommandError
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from geostore.management.commands.mixins import LayerCommandMixin
 from geostore.models import LayerGroup

@@ -20,10 +20,11 @@ from rest_framework.response import Response
 from geostore import settings as app_settings
 from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
-from ..exports.helpers import generate_geojson, generate_kml, generate_shapefile
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..helpers import execute_async_func
-from ..tasks import generate_async, generate_shapefile_async
+from ..import_export.exports import LayerExport
+from ..import_export.imports import LayerImport
+from ..tasks import generate_shapefile_async, generate_geojson_async, generate_kml_async
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
 from ..renderers import GeoJSONRenderer
@@ -43,22 +44,13 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
     serializer_class = import_string(app_settings.GEOSTORE_LAYER_SERIALIZER)
     lookup_fields = ('pk', 'name')
 
-    def get_kml(self, request, layer):
-        if request.user.email:
-            execute_async_func(generate_async, (generate_kml, layer.id, request.user.id, 'kml'))
-        return Response(status=status.HTTP_202_ACCEPTED)
-
-    def get_geojson(self, request, layer):
-        if request.user.email:
-            execute_async_func(generate_async, (generate_geojson, layer.id, request.user.id, 'geojson'))
-        return Response(status=status.HTTP_202_ACCEPTED)
-
     def post_shapefile_sync(self, request, layer):
         try:
-            shape_file = request.data['shapefile']
+            shape_file = request.FILES['shapefile']
             with transaction.atomic():
                 layer.features.all().delete()
-                layer.from_shapefile(shape_file)
+                layer_import = LayerImport(layer)
+                layer_import.from_shapefile(shape_file)
                 response = Response(status=status.HTTP_200_OK)
 
         except (ValueError, MultiValueDictKeyError):
@@ -66,7 +58,8 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
         return response
 
     def get_shapefile_sync(self, request, layer):
-        shape_file = generate_shapefile(layer)
+        layer_export = LayerExport(layer)
+        shape_file = layer_export.to_shapefile()
         if shape_file:
             response = HttpResponse(content_type='application/zip')
             response['Content-Disposition'] = (
@@ -77,11 +70,6 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
         else:
             response = Response(status=status.HTTP_204_NO_CONTENT)
         return response
-
-    def get_shapefile_async(self, request, layer):
-        if request.user.email:
-            execute_async_func(generate_shapefile_async, (layer.id, request.user.id))
-        return Response(status=status.HTTP_202_ACCEPTED)
 
     @action(methods=['get', 'post'], detail=True, permission_classes=[IsAuthenticated,
                                                                       LayerImportExportPermission])
@@ -97,22 +85,28 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
                 url_name='shapefile_async', detail=True, permission_classes=[IsAuthenticated,
                                                                              LayerImportExportPermission])
         def shapefile_async(self, request, *args, **kwargs):
-            layer = self.get_object()
-            return self.get_shapefile_async(request, layer)
+            if request.user.email:
+                layer = self.get_object()
+                execute_async_func(generate_shapefile_async, (layer.id, request.user.id))
+                return Response(status=status.HTTP_202_ACCEPTED)
+            return Response({"error": _("Your user has no mail address.")}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        @action(methods=['get'],
-                url_name='geojson', detail=True, permission_classes=[IsAuthenticated,
-                                                                     LayerImportExportPermission])
+        @action(methods=['get'], detail=True, permission_classes=[IsAuthenticated, LayerImportExportPermission])
         def geojson(self, request, *args, **kwargs):
-            layer = self.get_object()
-            return self.get_geojson(request, layer)
+            if request.user.email:
+                layer = self.get_object()
+                execute_async_func(generate_geojson_async, (layer.id, request.user.id))
+                return Response(status=status.HTTP_202_ACCEPTED)
+            return Response({"error": _("Your user has no mail address.")}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        @action(methods=['get'],
-                url_name='kml', detail=True, permission_classes=[IsAuthenticated,
-                                                                 LayerImportExportPermission])
+        @action(methods=['get'], detail=True, permission_classes=[IsAuthenticated, LayerImportExportPermission])
         def kml(self, request, *args, **kwargs):
-            layer = self.get_object()
-            return self.get_kml(request, layer)
+            if request.user.email:
+                layer = self.get_object()
+                execute_async_func(generate_kml_async, (layer.id, request.user.id))
+                return Response(status=status.HTTP_202_ACCEPTED)
+            return Response({"error": _("Your user has no mail address.")},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def intersects(self, request, *args, **kwargs):
@@ -123,7 +117,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             geometry = GEOSGeometry(request.data.get('geom', None))
         except (GEOSException, GDALException, TypeError, ValueError):
             return HttpResponseBadRequest(
-                content=_('Provided geometry is not valid'))
+                content=_('Geometry is not valid'))
 
         response = {
             'request': {

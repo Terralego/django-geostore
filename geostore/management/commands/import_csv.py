@@ -4,13 +4,14 @@ import sys
 
 from django.core.management import BaseCommand
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
+from geostore.import_export.imports import LayerImport
 from geostore.models import Layer
 
 
 class Command(BaseCommand):
-    help = _('Import insee data from csv to db.')
+    help = _('Import INSEE data from csv to db.')
 
     def add_arguments(self, parser):
         parser.add_argument('-b', '--bulk',
@@ -109,12 +110,12 @@ class Command(BaseCommand):
         if options['operations']:
             operations = [import_string(path) for path in
                           options.get('operations')]
-
+        layer_import = LayerImport(layer)
         reader = csv.DictReader(options.get('source'),
                                 delimiter=options.get('delimiter'),
                                 quotechar=options.get('quotechar'))
 
-        layer.from_csv_dictreader(
+        layer_import.from_csv_dictreader(
             reader=reader,
             options=options,
             operations=operations,
