@@ -1,1 +1,3 @@
 https://github.com/makinacorpus/makina-sphinx-theme/archive/master.zip
+sphinx>=3.0
+sphinxcontrib-httpdomain
