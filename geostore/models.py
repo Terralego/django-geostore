@@ -10,6 +10,9 @@ from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSGeometry, WKBWriter
 from django.contrib.gis.measure import D
 
+from .exports import LayerExportMixin
+from .imports import LayerImportMixin
+
 try:
     from django.db.models import JSONField
 except ImportError:  # TODO Remove when dropping Django releases < 3.1
@@ -33,7 +36,7 @@ from .validators import (validate_geom_type, validate_json_schema,
 logger = logging.getLogger(__name__)
 
 
-class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
+class Layer(LayerBasedModelMixin, LayerImportMixin, LayerExportMixin, UpdateRoutingMixin):
     name = models.CharField(max_length=256, unique=True, default=uuid.uuid4, verbose_name=_("Name"))
     schema = JSONField(default=dict, blank=True, validators=[validate_json_schema], verbose_name=_("Schema"))
     authorized_groups = models.ManyToManyField(Group, blank=True, related_name='authorized_layers',

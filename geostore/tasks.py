@@ -1,7 +1,7 @@
 from celery import shared_task
 
-from geostore.import_export.exports import LayerExport
-from geostore.import_export.helpers import get_user_layer, save_generated_file, send_mail_export
+from geostore.exports import LayerExportMixin
+from geostore.helpers import send_mail_export, save_generated_file, get_user_layer
 from geostore.models import Feature, LayerRelation
 
 
@@ -29,7 +29,7 @@ def layer_relations_set_destinations(relation_id):
 def generate_shapefile_async(layer_id, user_id):
     layer, user = get_user_layer(layer_id, user_id)
 
-    layer_export = LayerExport(layer)
+    layer_export = LayerExportMixin(layer)
     file = layer_export.to_shapefile()
 
     path = save_generated_file(user_id, layer.name, 'zip', file.getvalue()) if file else None
@@ -40,7 +40,7 @@ def generate_shapefile_async(layer_id, user_id):
 def generate_geojson_async(layer_id, user_id):
     layer, user = get_user_layer(layer_id, user_id)
 
-    layer_export = LayerExport(layer)
+    layer_export = LayerExportMixin(layer)
     file = layer_export.to_geojson()
 
     path = save_generated_file(user_id, layer.name, 'geojson', file) if file else None
@@ -51,7 +51,7 @@ def generate_geojson_async(layer_id, user_id):
 def generate_kml_async(layer_id, user_id):
     layer, user = get_user_layer(layer_id, user_id)
 
-    layer_export = LayerExport(layer)
+    layer_export = LayerExportMixin(layer)
     file = layer_export.to_kml()
     path = save_generated_file(user_id, layer.name, 'kml', file) if file else None
     send_mail_export(user, path)

@@ -45,6 +45,7 @@ setup(
         'django-token-tools',
         'djangorestframework>=3.10',
         "djangorestframework-gis>=0.15",
+        "drf-extensions",
         "gpxpy",
         "simplekml",
         'django-filter',

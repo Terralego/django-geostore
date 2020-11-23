@@ -3,6 +3,7 @@ from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.reverse import reverse
+from rest_framework_extensions.serializers import PartialUpdateSerializerMixin
 from rest_framework_gis.serializers import GeometryField
 
 from geostore import settings as app_settings
@@ -30,7 +31,7 @@ class GeometryFileSerializer(serializers.Serializer):
                        kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'gpx', })
 
 
-class FeatureSerializer(serializers.ModelSerializer):
+class FeatureSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer):
     geom = GeometryField(validators=[validate_geom])
     properties = serializers.JSONField(required=False)
     relations = serializers.SerializerMethodField()

@@ -7,9 +7,8 @@ from django.contrib.gis.geos import GEOSGeometry, GEOSException
 from django.db import transaction
 from fiona.transform import transform_geom
 
-from geostore.import_export.helpers import ChunkIterator
-
 from geostore import settings as app_settings
+from geostore.helpers import ChunkIterator
 from geostore.models import Feature
 from geostore.tiles.decorators import zoom_update
 
@@ -20,10 +19,7 @@ ACCEPTED_PROJECTIONS = [
 logger = logging.getLogger(__name__)
 
 
-class LayerImport:
-    def __init__(self, layer):
-        self.layer = layer
-
+class LayerImportMixin:
     def _fiona_shape_projection(self, shapefile):
         """ Return projection in EPSG format or raw Proj format extracted from
             shape
@@ -67,7 +63,7 @@ class LayerImport:
                 identifier = properties.get(id_field, uuid.uuid4())
 
                 Feature.objects.create(
-                    layer=self.layer,
+                    layer=self,
                     identifier=identifier,
                     properties=properties,
                     geom=GEOSGeometry(json.dumps(geometry)),
@@ -89,12 +85,12 @@ class LayerImport:
                 f'{ACCEPTED_PROJECTIONS}')
 
         if update:
-            self.layer.features.all().delete()
+            self.features.all().delete()
         for feature in geojson.get('features', []):
             properties = feature.get('properties', {})
             identifier = properties.get(id_field, uuid.uuid4())
             Feature.objects.update_or_create(
-                layer=self.layer,
+                layer=self,
                 identifier=identifier,
                 defaults={
                     'properties': properties,
@@ -109,7 +105,7 @@ class LayerImport:
                 feature_args = {
                     "geom": None,
                     "properties": row,
-                    "layer": self.layer
+                    "layer": self
                 }
 
                 for operation in operations:
@@ -141,7 +137,7 @@ class LayerImport:
         feature_args = {
             "geom": None,
             "properties": row,
-            "layer": self.layer
+            "layer": self
         }
         for operation in operations:
             operation(feature_args, options)
