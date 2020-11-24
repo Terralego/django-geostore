@@ -1,4 +1,5 @@
 import json
+import factory.random
 from io import BytesIO
 from tempfile import TemporaryDirectory
 from unittest import skipIf
@@ -461,3 +462,77 @@ class LayerCreationTest(APITestCase):
                                     data={"geom": "LINESTRING(0 0, 1 1)",
                                           "properties": {"toto": "ok"}})
         self.assertEqual(response.status_code, HTTP_201_CREATED, response.json())
+
+
+class LayerPropertyValuesTest(APITestCase):
+    def setUp(self):
+        self.user = SuperUserFactory()
+        self.client.force_authenticate(user=self.user)
+
+        factory.random.reseed_random(42)
+
+        self.layer = LayerFactory.create(add_random_features=20)
+
+    def test_property_values(self):
+        response = self.client.get(
+            reverse(
+                "layer-property-values",
+                args=[
+                    self.layer.pk,
+                ],
+            ),
+            {"property": "country"},
+        )
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        response = response.json()
+
+        self.assertEqual(
+            response, ["Alaska", "Cameroun", "Canada", "France", "Groland"]
+        )
+
+    def test_property_no_values(self):
+        response = self.client.get(
+            reverse(
+                "layer-property-values",
+                args=[
+                    self.layer.pk,
+                ],
+            ),
+            {"property": "non_existing"},
+        )
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        response = response.json()
+
+        self.assertEqual(response, [None])
+
+    def test_property_values_with_empty(self):
+
+        response = self.client.get(
+            reverse(
+                "layer-property-values",
+                args=[
+                    self.layer.pk,
+                ],
+            ),
+            {"property": "status"},
+        )
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        response = response.json()
+
+        self.assertEqual(response, [None, "", "Employed", "Unemployed"])
+
+    def test_property_values_missing_param(self):
+
+        response = self.client.get(
+            reverse(
+                "layer-property-values",
+                args=[
+                    self.layer.pk,
+                ],
+            ),
+        )
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
