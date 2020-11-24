@@ -4,7 +4,6 @@ import logging
 import os
 import zipfile
 
-from django.contrib.auth import get_user_model
 from django.contrib.gis.geos import Point
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -12,8 +11,6 @@ from django.core.mail import send_mail
 from django.template.loader import get_template
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
-
-from geostore.models import Layer
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +62,6 @@ def save_generated_file(user_id, layer_name, format_file, string_file):
     return path
 
 
-def get_user_layer(layer_id, user_id):
-    user = get_user_model().objects.get(id=user_id)
-    layer = Layer.objects.get(id=layer_id)
-    return layer, user
-
-
 class ChunkIterator:
     def __init__(self, iterator, chunksize):
         self.iterator = iterator
@@ -80,8 +71,8 @@ class ChunkIterator:
         return self
 
     def __next__(self):
+        chunk = []
         try:
-            chunk = []
             for i in range(self.chunksize):
                 chunk.append(next(self.iterator))
         finally:

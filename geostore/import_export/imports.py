@@ -10,7 +10,6 @@ from fiona.transform import transform_geom
 from geostore.import_export.helpers import ChunkIterator
 
 from geostore import settings as app_settings
-from geostore.models import Feature
 from geostore.tiles.decorators import zoom_update
 
 ACCEPTED_PROJECTIONS = [
@@ -20,10 +19,7 @@ ACCEPTED_PROJECTIONS = [
 logger = logging.getLogger(__name__)
 
 
-class LayerImport:
-    def __init__(self, layer):
-        self.layer = layer
-
+class LayerImportMixin:
     def _fiona_shape_projection(self, shapefile):
         """ Return projection in EPSG format or raw Proj format extracted from
             shape
@@ -44,6 +40,7 @@ class LayerImport:
         zipped_shapefile_file -- a file-like object on the zipped content
         id_field -- the field name used a identifier
         """
+        from geostore.models import Feature  # fix circular imports
         with fiona.BytesCollection(zipped_shapefile_file.read()) as shape:
             # Extract source projection and compute if reprojection is required
             projection = self._fiona_shape_projection(shape)
@@ -67,7 +64,7 @@ class LayerImport:
                 identifier = properties.get(id_field, uuid.uuid4())
 
                 Feature.objects.create(
-                    layer=self.layer,
+                    layer=self,
                     identifier=identifier,
                     properties=properties,
                     geom=GEOSGeometry(json.dumps(geometry)),
@@ -80,6 +77,7 @@ class LayerImport:
         Args:
             geojson_data(str): must be raw text json data
         """
+        from geostore.models import Feature  # fix circular imports
         geojson = json.loads(geojson_data)
         projection = geojson.get('crs', {}).get(
             'properties', {}).get('name', None)
@@ -89,12 +87,12 @@ class LayerImport:
                 f'{ACCEPTED_PROJECTIONS}')
 
         if update:
-            self.layer.features.all().delete()
+            self.features.all().delete()
         for feature in geojson.get('features', []):
             properties = feature.get('properties', {})
             identifier = properties.get(id_field, uuid.uuid4())
             Feature.objects.update_or_create(
-                layer=self.layer,
+                layer=self,
                 identifier=identifier,
                 defaults={
                     'properties': properties,
@@ -103,13 +101,14 @@ class LayerImport:
             )
 
     def _initial_import_from_csv(self, chunks, options, operations):
+        from geostore.models import Feature  # fix circular imports
         for chunk in chunks:
             entries = []
             for row in chunk:
                 feature_args = {
                     "geom": None,
                     "properties": row,
-                    "layer": self.layer
+                    "layer": self
                 }
 
                 for operation in operations:
@@ -138,10 +137,11 @@ class LayerImport:
                 transaction.savepoint_commit(sp)
 
     def _import_row_from_csv(self, row, pk_properties, operations, options):
+        from geostore.models import Feature  # fix circular imports
         feature_args = {
             "geom": None,
             "properties": row,
-            "layer": self.layer
+            "layer": self
         }
         for operation in operations:
             operation(feature_args, options)

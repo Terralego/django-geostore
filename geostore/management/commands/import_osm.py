@@ -8,7 +8,6 @@ import requests
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import gettext as _
 
-from geostore.import_export.imports import LayerImport
 from geostore.management.commands.mixins import LayerCommandMixin
 from geostore.models import Layer
 
@@ -84,8 +83,7 @@ class Command(LayerCommandMixin, BaseCommand):
                 }
             }
             layer = Layer.objects.create(name=layer_name, settings=settings)
-        layer_import = LayerImport(layer)
-        layer_import.from_geojson(value, identifier)
+        layer.from_geojson(value, identifier)
 
     def launch_cmd_ogr2ogr(self, content, type_features):
         tmp_osm = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
