@@ -26,8 +26,16 @@ class LayerFactory(factory.django.DjangoModelFactory):
         if not features:
             return
 
-        for feature in range(features):
+        for _ in range(features):
             FeatureFactory(layer=self)
+
+    @factory.post_generation
+    def add_random_features(self, create, random_features, **kwargs):
+        if not random_features:
+            return
+
+        for _ in range(random_features):
+            RandomFeatureFactory(layer=self)
 
 
 class LayerSchemaFactory(factory.django.DjangoModelFactory):
@@ -64,6 +72,43 @@ class FeatureFactory(factory.django.DjangoModelFactory):
         ]
       }''')
     properties = {}
+
+    class Meta:
+        model = Feature
+
+
+class RandomFeatureFactory(factory.django.DjangoModelFactory):
+    layer = factory.SubFactory(LayerFactory)
+
+    @factory.lazy_attribute
+    def geom(self):
+        coordinate = factory.Faker('latlng').generate({'locale': 'en'})
+        return GEOSGeometry(
+            '''{{
+                "type": "Point",
+                "coordinates": [
+                {},
+                {}
+                ]
+            }}'''.format(
+                *coordinate
+            )
+        )
+
+    properties = factory.Dict(
+        {
+            'age': factory.Faker('random_int', min=5, max=99),
+            'name': factory.Faker('name'),
+            'country': factory.Faker(
+                'random_element',
+                elements=['Alaska', 'Cameroun', 'France', 'Canada', 'Groland'],
+            ),
+            'status': factory.Faker(
+                'random_element',
+                elements=['Employed', 'Unemployed', '', None],
+            ),
+        }
+    )
 
     class Meta:
         model = Feature

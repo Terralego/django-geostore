@@ -152,6 +152,26 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
         else:
             return HttpResponseBadRequest(_('Features are missing in GeoJSON'))
 
+    @action(detail=True, methods=['get'])
+    def property_values(self, request, pk):
+        """
+          Returns all distinct values of specified GET "property" params from
+          database for the specified layers.
+
+          Note: if some record has no value for this property, None is contained in the
+          result list.
+        """
+
+        property_to_list = request.query_params.get('property')
+        if not property_to_list:
+            return Response({'error': _('Invalid "property" GET parameter')},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        layer = self.get_object()
+        result = layer.get_property_values(property_to_list)
+
+        return Response(result)
+
 
 class FeatureViewSet(viewsets.ModelViewSet):
     permission_classes = (FeaturePermission, )

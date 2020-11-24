@@ -119,6 +119,15 @@ class Layer(LayerBasedModelMixin, UpdateRoutingMixin):
             extent=Extent('geom_transformed')
         )
 
+    def get_property_values(self, property_to_list):
+        property_field = f'properties__{property_to_list}'
+
+        return (
+            self.features.order_by(property_field)
+            .values_list(property_field, flat='true')
+            .distinct(property_field)
+        )
+
     def __str__(self):
         return f"{self.name}"
 

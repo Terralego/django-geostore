@@ -4,6 +4,8 @@ CHANGELOG
 0.5.4.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Add endpoint to get all distinct values of any layer property
+
 
 0.5.3          (2020-11-16)
 ---------------------------
