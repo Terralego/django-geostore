@@ -16,7 +16,7 @@ Dynamic geographic datastore with Vector Tiles generation from PostGIS and json 
 * Add and manage geographic features on layers
 * Manage feature properties with JSON schema
 * Import and export data
-* Generate GeoJSON or MapBox Vector on multiple layers
+* Generate GeoJSON and MapBox Vector Tile on single or group of layers
 * Full management API available
 * Optional PGRouting capabilities with plugin django-geostore-routing
 

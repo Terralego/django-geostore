@@ -3,7 +3,7 @@ from geostore.tiles.helpers import guess_minzoom, guess_maxzoom
 
 def zoom_update(func):
     def wrapper(*args, **kargs):
-        layer = args[0].layer
+        layer = args[0]
         response = func(*args, **kargs)
 
         try:

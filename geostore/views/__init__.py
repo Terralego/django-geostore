@@ -22,8 +22,6 @@ from geostore.renderers import KMLRenderer, GPXRenderer
 from .mixins import MultipleFieldLookupMixin
 from ..filters import JSONFieldFilterBackend, JSONFieldOrderingFilter, JSONSearchField
 from ..helpers import execute_async_func
-from ..import_export.exports import LayerExport
-from ..import_export.imports import LayerImport
 from ..tasks import generate_shapefile_async, generate_geojson_async, generate_kml_async
 from ..models import Layer, LayerGroup
 from ..permissions import FeaturePermission, LayerPermission, LayerImportExportPermission
@@ -49,8 +47,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             shape_file = request.FILES['shapefile']
             with transaction.atomic():
                 layer.features.all().delete()
-                layer_import = LayerImport(layer)
-                layer_import.from_shapefile(shape_file)
+                layer.from_shapefile(shape_file)
                 response = Response(status=status.HTTP_200_OK)
 
         except (ValueError, MultiValueDictKeyError):
@@ -58,8 +55,7 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
         return response
 
     def get_shapefile_sync(self, request, layer):
-        layer_export = LayerExport(layer)
-        shape_file = layer_export.to_shapefile()
+        shape_file = layer.to_shapefile()
         if shape_file:
             response = HttpResponse(content_type='application/zip')
             response['Content-Disposition'] = (

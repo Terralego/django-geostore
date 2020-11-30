@@ -13,34 +13,31 @@ from geostore.import_export.helpers import make_zipfile_bytesio, get_serialized_
 from geostore.renderers import KMLRenderer
 
 
-class LayerExport:
-    def __init__(self, layer):
-        self.layer = layer
-
+class LayerExportMixin:
     def to_geojson(self):
-        if not self.layer.features.count():
+        if not self.features.count():
             return
         return serialize('geojson',
-                         self.layer.features.all(),
+                         self.features.all(),
                          fields=('properties',),
                          geometry_field='geom',
                          properties_field='properties')
 
     def to_shapefile(self):
-        if not self.layer.features.count():
+        if not self.features.count():
             return
         with TemporaryDirectory() as shape_folder:
             shapes = {}
             # get all accepted types if geom_type not defined, else keep selected
             type_to_check = GeometryTypes.shape_allowed_type_names() \
-                if not self.layer.geom_type else \
-                [self.layer.geom_type.name]
+                if not self.geom_type else \
+                [self.geom_type.name]
 
             # Create one shapefile by kind of geometry
             for geom_type in type_to_check:
                 schema = {
                     'geometry': geom_type,
-                    'properties': self.layer.layer_properties,
+                    'properties': self.layer_properties,
                 }
 
                 shapes[geom_type] = fiona.open(
@@ -54,10 +51,10 @@ class LayerExport:
                 )
 
             # Export features to each kind of geometry
-            for feature in self.layer.features.all():
+            for feature in self.features.all():
                 shapes[feature.geom.geom_type].write({
                     'geometry': json.loads(feature.geom.json),
-                    'properties': get_serialized_properties(self.layer, feature.properties)
+                    'properties': get_serialized_properties(self, feature.properties)
                 })
 
             # Close fiona files
@@ -75,6 +72,6 @@ class LayerExport:
 
     def to_kml(self):
         from geostore.serializers import FeatureSerializer
-        if not self.layer.features.count():
+        if not self.features.count():
             return
-        return KMLRenderer().render(FeatureSerializer(self.layer.features.all(), many=True).data)
+        return KMLRenderer().render(FeatureSerializer(self.features.all(), many=True).data)
