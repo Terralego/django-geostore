@@ -1,11 +1,10 @@
 CHANGELOG
 =========
 
-0.5.4.dev0     (XXXX-XX-XX)
+0.5.4          (2020-12-01)
 ---------------------------
 
 * Add endpoint to get all distinct values of any layer property
-
 
 0.5.3          (2020-11-16)
 ---------------------------
@@ -29,6 +28,7 @@ CHANGELOG
 
 0.5.0          (2020-10-27)
 ---------------------------
+
 !! WARNING - BREAKING CHANGES !!
 
 Features with empty geometry will not pass anymore Integrity Error Check
