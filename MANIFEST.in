@@ -1,6 +1,7 @@
 include *.md
 recursive-include geostore *.md
 recursive-include geostore *.py
+recursive-include geostore/templates/ *
 recursive-exclude test_geostore *
 recursive-exclude geostore/tests/ *
 include geostore/tests/factories.py
