@@ -5,6 +5,7 @@ CHANGELOG
 ---------------------------
 
 * Fix templates not included in setup.py sdist
+* Fix save generation export file
 
 
 0.5.4          (2020-12-01)

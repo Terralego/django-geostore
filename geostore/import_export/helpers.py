@@ -54,6 +54,7 @@ def send_mail_export(user, path=None):
 
 
 def save_generated_file(user_id, layer_name, format_file, string_file):
+    string_file = string_file.encode('utf-8') if not isinstance(string_file, bytes) else string_file
     path = default_storage.save('exports/users/{}/{}_{}.{}'.format(user_id,
                                                                    layer_name,
                                                                    int(now().timestamp()),
