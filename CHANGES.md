@@ -4,6 +4,8 @@ CHANGELOG
 0.5.5.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Fix templates not included in setup.py sdist
+
 
 0.5.4          (2020-12-01)
 ---------------------------
