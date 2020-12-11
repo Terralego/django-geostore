@@ -4,6 +4,8 @@ CHANGELOG
 0.5.6.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Fix template export mail with hyperlink
+
 
 0.5.5          (2020-12-10)
 ---------------------------
