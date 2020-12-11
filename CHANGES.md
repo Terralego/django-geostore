@@ -1,8 +1,10 @@
 CHANGELOG
 =========
 
-0.5.7.dev0     (XXXX-XX-XX)
+0.5.7          (2020-12-11)
 ---------------------------
+
+* Include translation files in pypi releases.
 
 
 0.5.6          (2020-12-11)
