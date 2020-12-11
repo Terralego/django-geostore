@@ -4,6 +4,7 @@ CHANGELOG
 0.5.6.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Fix and include translations
 * Fix template export mail with hyperlink
 
 

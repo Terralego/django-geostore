@@ -49,7 +49,6 @@ coverage.xml
 .pytest_cache/
 
 # Translations
-*.mo
 *.pot
 
 # Django stuff:
@@ -104,3 +103,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 .idea/
+/test_geostore/locale/en/LC_MESSAGES/django.mo
+/test_geostore/locale/fr/LC_MESSAGES/django.mo

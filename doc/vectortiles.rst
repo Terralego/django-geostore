@@ -17,7 +17,7 @@ Here we describe available json keys and its content, then we provide your an ex
 metadata
 --------
 
-Contains all data metadatas that can be added to tile content, it allows you to store it in a
+Contains all data metadata that can be added to tile content, it allows you to store it in a
 convenient way.
 
 attribution

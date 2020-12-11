@@ -42,14 +42,14 @@ def send_mail_export(user, path=None):
     url = default_storage.url(path)
     context = {"username": user.get_username(), "url": url}
     if not path:
-        template_email = 'exports_no_datas'
+        template_email = 'exports_no_data'
     else:
         template_email = 'exports'
     html = get_template('geostore/emails/{}.html'.format(template_email))
     html_content = html.render(context)
     txt = get_template('geostore/emails/{}.txt'.format(template_email))
     txt_content = txt.render(context)
-    send_mail(_('Export ready'), txt_content, None, [getattr(user, user.get_email_field_name())],
+    send_mail(_('Your data export is ready'), txt_content, None, [getattr(user, user.get_email_field_name())],
               html_message=html_content, fail_silently=True)
 
 

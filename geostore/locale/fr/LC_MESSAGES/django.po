@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-18 17:09+0000\n"
+"POT-Creation-Date: 2020-12-11 10:46+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,28 +19,29 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 msgid "Geographic Store"
-msgstr ""
+msgstr "Entrepot Géographique"
 
-msgid "Export ready"
-msgstr ""
+msgid "Your data export is ready"
+msgstr "Votre export de données est prêt"
 
 msgid "Import INSEE data from csv to db."
-msgstr ""
+msgstr "Importer des données INSEE depuis un fichier CSV."
 
 msgid "Delete all stored INSEE data, DO NOT USE IN PROD."
 msgstr ""
+"Efface toutes les données INSEE stockées. NE PAS UTILISER EN PRODUCTION."
 
 msgid "Number of rows per transaction"
-msgstr ""
+msgstr "Nombre de lignes par transaction."
 
 msgid "Specify CSV delimiter"
-msgstr ""
+msgstr "Spécifier un délimiter CSV"
 
 msgid "Specify CSV quotechar"
-msgstr ""
+msgstr "Specifier un caractère de séparation de texte."
 
 msgid "Specify CSV path"
-msgstr ""
+msgstr "Spécifier le chemin du fichier CSV"
 
 msgid ""
 "If present and it's not an initial import will speed up features creation. "
@@ -49,7 +50,7 @@ msgid ""
 msgstr ""
 
 msgid "Improve performance of initial import"
-msgstr ""
+msgstr "Améliore les performance d'un import initial"
 
 msgid ""
 "Define primary keys of this data. Example with companies: --key=SIREN --"
@@ -57,35 +58,39 @@ msgid ""
 msgstr ""
 
 msgid "Specify layer name"
-msgstr ""
+msgstr "Spécifier le nom de la couche"
 
 msgid "Specify transform functions"
-msgstr ""
+msgstr "Spécifier les fonctions de transformation"
 
 msgid "Name of longitude column"
-msgstr ""
+msgstr "Nom de la colonne longitude"
 
 msgid "Name of latitude column"
-msgstr ""
+msgstr "Nom de la colonne latitude"
 
 msgid "Overpass query without type (out:json)"
-msgstr ""
+msgstr "Outrepasser la requête sans type (out:json)"
 
 msgid "Specify type of layer"
-msgstr ""
+msgstr "Spécifier le type de la couche"
 
 msgid ""
-"Name of created layer containing GeoJSON datas.If not provided an uuid4 is "
+"Name of created layer containing GeoJSON data. If not provided an uuid4 is "
 "set."
 msgstr ""
+"Nom de la couche créée contenant les données GeoJSON. Si non fourni, un "
+"identifiant uuid4 sera généré."
 
 msgid ""
-"PK of the layer where to insertthe features.\n"
+"PK of the layer where to insert the features.\n"
 "A new layer is created if not present."
 msgstr ""
+"PK de la couche où insérer les objets.\n"
+"Une nouvelle couche sera créée si non précisé."
 
 msgid "Group name of the created layer"
-msgstr ""
+msgstr "Nom du groupe de la couche créée."
 
 msgid ""
 "Field in properties that will be used as identifier of the features, so "
@@ -93,69 +98,77 @@ msgid ""
 msgstr ""
 
 msgid "PK of the layer to update"
-msgstr ""
+msgstr "PK de la couche à mettre à jour"
 
 msgid "Group names of the created layer"
-msgstr ""
+msgstr "Noms de groupes de la couche créée"
 
 msgid "Guess min and max zoom from data"
-msgstr ""
+msgstr "Devine les niveau de zoom max. et min. à partir des données."
 
 msgid "Name"
-msgstr ""
+msgstr "Nom"
 
 msgid "Schema"
-msgstr ""
+msgstr "Schéma"
 
 msgid "Authorized groups"
-msgstr ""
+msgstr "Groupes autorisés"
 
 msgid "Layers"
-msgstr ""
+msgstr "Couches"
 
 msgid "Identifier"
-msgstr ""
+msgstr "Identifiant"
 
 msgid "Properties"
-msgstr ""
+msgstr "Propriétés"
 
 msgid "Layer"
-msgstr ""
+msgstr "Couche"
 
 msgid "qs exclude (ex: {\"pk__in\": [...], \"identifier__in\":[...]}"
-msgstr ""
+msgstr "qs exclude (ex: {\"pk__in\": [...], \"identifier__in\":[...]}"
 
 msgid "Origin"
-msgstr ""
+msgstr "Origine"
 
 msgid "Destination"
-msgstr ""
+msgstr "Destination"
 
 msgid "Relation"
-msgstr ""
+msgstr "Relation"
 
 msgid "Order"
-msgstr ""
+msgstr "Ordre"
 
 msgid "Title"
-msgstr ""
+msgstr "Titre"
 
 msgid "Editable"
-msgstr ""
+msgstr "Editable"
 
 msgid "Feature"
-msgstr ""
+msgstr "Objet"
 
 msgid "Invalid geom type for routing"
-msgstr ""
+msgstr "Type de géométrie invalide pour le routage"
 
 #, python-format
 msgid ""
 "\n"
 "Hello <strong>%(username)s</strong>\n"
-"\n"
-"Your file is ready : %(url)s\n"
+"<br>\n"
+"<br>\n"
+"Your file is ready : <a href=\"%(url)s\">%(url)s</a>\n"
+"<br>\n"
 msgstr ""
+"\n"
+"Bonjour <strong>%(username)s</strong>\n"
+"<br>\n"
+"<br>\n"
+"Votre fichier est prêt : <a href=\"%(url)s\">%(url)s</a>\n"
+"<br>\n"
 
 #, python-format
 msgid ""
@@ -164,41 +177,60 @@ msgid ""
 "\n"
 "Your file is ready : %(url)s\n"
 msgstr ""
+"\n"
+"Bonjour %(username)s\n"
+"\n"
+"Votre fichier est prêt : %(url)s\n"
 
 #, python-format
 msgid ""
 "\n"
 "Hello <strong>%(username)s</strong>\n"
-"\n"
-"There are no datas in the layer you asked for.\n"
+"<br>\n"
+"<br>\n"
+"There are no data in the layer you asked for.\n"
+"<br>\n"
 msgstr ""
+"\n"
+"Bonjour <strong>%(username)s</strong>\n"
+"<br>\n"
+"<br>\n"
+"Il n'y a aucune donnée présente dans la couche demandée.\n"
+"<br>\n"
 
 #, python-format
 msgid ""
 "\n"
 "Hello %(username)s\n"
 "\n"
-"There are no datas in the layer you asked for.\n"
+"There are no data in the layer you asked for.\n"
 msgstr ""
+"\n"
+"Bonjour %(username)s\n"
+"\n"
+"Il n'y a aucune donnée présente dans la couche demandée.\n"
 
 #, python-brace-format
 msgid "{unexpected_properties} not in schema properties"
-msgstr ""
+msgstr "{unexpected_properties} non présent(s) dans le schéma de propriétés"
 
 msgid "Geometry type is not the same on the layer"
-msgstr ""
+msgstr "Le type de géométrie ne correspond pas à celui de la couche"
 
 msgid "Geometry is empty"
-msgstr ""
+msgstr "La géométrie est vide"
 
 msgid "Geometry is not valid"
-msgstr ""
+msgstr "La géométrie n'est pas valide"
 
 msgid "Your user has no mail address."
-msgstr ""
+msgstr "Votre utilisateur ne possède pas d'adresse email."
 
 msgid "An error occured parsing GeoJSON, verify your data"
-msgstr ""
+msgstr "Une erreur est survenue en traitant le GeoJSON, vérifiez vos données"
 
 msgid "Features are missing in GeoJSON"
+msgstr "IL n'y a aucun objet dans le GeoJSON"
+
+msgid "Invalid \"property\" GET parameter"
 msgstr ""
