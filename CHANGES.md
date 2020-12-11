@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.5.6.dev0     (XXXX-XX-XX)
+0.5.6          (2020-12-11)
 ---------------------------
 
 * Fix and include translations
