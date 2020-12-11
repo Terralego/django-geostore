@@ -1,0 +1,6 @@
+{% load i18n %}
+{% blocktrans %}
+Hello {{ username }}
+
+There are no data in the layer you asked for.
+{% endblocktrans %}

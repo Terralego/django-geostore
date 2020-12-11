@@ -31,7 +31,7 @@ class Command(LayerCommandMixin, BaseCommand):
         exclusive_group.add_argument('-ln', '--layer-name',
                                      action="store",
                                      help=("Name of created layer "
-                                           "containing ShapeFile datas."
+                                           "containing ShapeFile data. "
                                            "If not provided an uuid4 is set."))
         parser.add_argument('-gs', '--generate-schema',
                             action='store_true',
@@ -89,7 +89,7 @@ class Command(LayerCommandMixin, BaseCommand):
                     "options"
                 )
 
-        self.import_datas(layer, file_path, identifier)
+        self.import_data(layer, file_path, identifier)
         if generate_schema and not layer_pk:
             # only in layer creation, find properties to generate schema
             layer.schema = {
@@ -106,6 +106,6 @@ class Command(LayerCommandMixin, BaseCommand):
         else:
             transaction.savepoint_commit(sp)
 
-    def import_datas(self, layer, file_path, identifier):
+    def import_data(self, layer, file_path, identifier):
         for shapefile_file in file_path:
             layer.from_shapefile(shapefile_file, identifier)

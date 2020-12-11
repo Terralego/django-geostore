@@ -27,7 +27,7 @@ class Command(LayerCommandMixin, BaseCommand):
                                           "A new layer is created if not present.")
         exclusive_group.add_argument('-ln', '--layer-name',
                                      action="store",
-                                     help="Name of created layer containing GeoJSON data . "
+                                     help="Name of created layer containing GeoJSON data. "
                                           "If not provided an uuid4 is set.")
         parser.add_argument('-gs', '--generate-schema',
                             action="store_true",
@@ -86,7 +86,7 @@ class Command(LayerCommandMixin, BaseCommand):
                                   " in the same layer with different "
                                   "options")
 
-        self.import_datas(layer, file_path, identifier)
+        self.import_data(layer, file_path, identifier)
         if generate_schema and not layer_pk:
             # only in layer creation, find properties to generate schema
             layer.schema = {
@@ -104,7 +104,7 @@ class Command(LayerCommandMixin, BaseCommand):
         else:
             transaction.savepoint_commit(sp)
 
-    def import_datas(self, layer, geojson_files, identifier):
+    def import_data(self, layer, geojson_files, identifier):
         for file_in in geojson_files:
             geojson = file_in.read()
             layer.from_geojson(geojson, identifier)

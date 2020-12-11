@@ -39,7 +39,7 @@ class LayerKMLExportAsyncTestCase(APITestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @mock.patch('geostore.views.execute_async_func')
-    def test_async_kml_export_with_mail_empty_datas(self, mock_async):
+    def test_async_kml_export_with_mail_empty_data(self, mock_async):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async.side_effect = side_effect
@@ -99,7 +99,7 @@ class LayerGeojsonExportAsyncTestCase(APITestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @mock.patch('geostore.views.execute_async_func')
-    def test_async_geojson_export_with_mail_empty_datas(self, mock_async):
+    def test_async_geojson_export_with_mail_empty_data(self, mock_async):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async.side_effect = side_effect
@@ -160,7 +160,7 @@ class LayerShapefileExportAsyncTestCase(APITestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     @mock.patch('geostore.views.execute_async_func')
-    def test_async_shapefile_export_with_mail_empty_datas(self, mock_async):
+    def test_async_shapefile_export_with_mail_empty_data(self, mock_async):
         def side_effect(async_func, args):
             async_func(*args)
         mock_async.side_effect = side_effect

@@ -42,7 +42,7 @@ def send_mail_export(user, path=None):
     url = default_storage.url(path)
     context = {"username": user.get_username(), "url": url}
     if not path:
-        template_email = 'exports_no_datas'
+        template_email = 'exports_no_data'
     else:
         template_email = 'exports'
     html = get_template('geostore/emails/{}.html'.format(template_email))
