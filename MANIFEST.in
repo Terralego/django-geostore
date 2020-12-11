@@ -1,4 +1,5 @@
 include *.md
+recursive-include geostore *.mo
 recursive-include geostore *.md
 recursive-include geostore *.py
 recursive-include geostore/templates/ *
