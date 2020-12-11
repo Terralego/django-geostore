@@ -28,13 +28,13 @@ class Command(LayerCommandMixin, BaseCommand):
         parser.add_argument('-l', '--layer',
                             action="store",
                             help=_("Name of created layer "
-                                   "containing GeoJSON datas."
+                                   "containing GeoJSON data. "
                                    "If not provided an uuid4 is set."
                                    ))
         parser.add_argument('-pk', '--layer-pk',
                             type=int,
                             action="store",
-                            help=_("PK of the layer where to insert"
+                            help=_("PK of the layer where to insert "
                                    "the features.\n"
                                    "A new layer is created if not "
                                    "present."

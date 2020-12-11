@@ -49,7 +49,7 @@ def send_mail_export(user, path=None):
     html_content = html.render(context)
     txt = get_template('geostore/emails/{}.txt'.format(template_email))
     txt_content = txt.render(context)
-    send_mail(_('Export ready'), txt_content, None, [getattr(user, user.get_email_field_name())],
+    send_mail(_('Your data export is ready'), txt_content, None, [getattr(user, user.get_email_field_name())],
               html_message=html_content, fail_silently=True)
 
 

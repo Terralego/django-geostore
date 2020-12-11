@@ -24,7 +24,7 @@ class Command(LayerCommandMixin, BaseCommand):
         exclusive_group.add_argument('-pk', '--layer-pk',
                                      type=int,
                                      action="store",
-                                     help=("PK of the layer where to insert"
+                                     help=("PK of the layer where to insert "
                                            "the features.\n"
                                            "A new layer is created if not "
                                            "present."))

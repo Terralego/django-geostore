@@ -27,7 +27,7 @@ class Command(LayerCommandMixin, BaseCommand):
                                           "A new layer is created if not present.")
         exclusive_group.add_argument('-ln', '--layer-name',
                                      action="store",
-                                     help="Name of created layer containing GeoJSON datas."
+                                     help="Name of created layer containing GeoJSON data . "
                                           "If not provided an uuid4 is set.")
         parser.add_argument('-gs', '--generate-schema',
                             action="store_true",
