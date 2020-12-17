@@ -38,16 +38,17 @@ jobs:
       matrix:
         python-version: ['3.6', '3.8']
         django-version: [2.2.*, 3.1.*]
+        experimental: [false]
         include:
           - django-version: dev
             python-version: 3.6
-            continue-on-error: true
+            experimental: true
           - django-version: 3.1.*
             python-version: 3.9
-            continue-on-error: true
+            experimental: true
           - django-version: dev
             python-version: 3.9
-            continue-on-error: true
+            experimental: true
     services:
       postgres:
         image: postgis/postgis:10-2.5
@@ -65,7 +66,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt update && sudo apt-get -yq install libproj-dev binutils gdal-bin libgdal-dev
+        sudo apt-get -yq install libproj-dev binutils gdal-bin libgdal-dev
         python -m pip install --upgrade pip setuptools wheel
         pip install .[dev] -U
         if [[ ${{ matrix.django-version }} == dev ]]; then
