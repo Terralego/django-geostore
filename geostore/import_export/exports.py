@@ -1,6 +1,4 @@
-import glob
 import json
-import os
 from tempfile import TemporaryDirectory
 
 import fiona
@@ -59,13 +57,7 @@ class LayerExportMixin:
 
             # Close fiona files
             for geom_type, shape in shapes.items():
-                shape_size = len(shape)
                 shape.close()
-
-                # Delete empty shapes
-                if not shape_size:
-                    for filename in glob.iglob(os.path.join(shape_folder, f'{geom_type}.*')):
-                        os.remove(filename)
 
             # Zip to BytesIO and return shape files
             return make_zipfile_bytesio(shape_folder)
