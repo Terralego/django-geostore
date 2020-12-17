@@ -26,6 +26,7 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     url='https://github.com/Terralego/django-geostore.git',
+    python_requires='>=3.6',
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
@@ -39,6 +40,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     install_requires=[
         'django>=2.2',

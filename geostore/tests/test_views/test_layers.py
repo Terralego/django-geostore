@@ -264,10 +264,10 @@ class LayerShapefileTestCase(APITestCase):
         response = self.client.get(shape_url)
         self.assertEqual(HTTP_200_OK, response.status_code)
 
-        zip = ZipFile(BytesIO(response.content), 'r')
+        zip_file = ZipFile(BytesIO(response.content), 'r')
         self.assertListEqual(
             sorted(['prj', 'cpg', 'shx', 'shp', 'dbf']),
-            sorted([f.split('.')[1] for f in zip.namelist()])
+            sorted(set([f.split('.')[1] for f in zip_file.namelist()]))
         )
 
     def test_properties_serializations(self):

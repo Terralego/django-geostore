@@ -15,7 +15,7 @@ class GeometryTypes(IntEnum):
 
     @classmethod
     def choices(cls):
-        return [(geom_type.value, geom_type) for geom_type in cls]
+        return [(geom_type.value, str(geom_type).split('.')[-1]) for geom_type in cls]
 
     @classmethod
     def shape_allowed_types(cls):
@@ -30,4 +30,4 @@ class GeometryTypes(IntEnum):
         """
         Name types allowed in shapefile export
         """
-        return [geom_type.name for geom_type in cls.shape_allowed_types()]
+        return [str(geom_type).split('.')[-1] for geom_type in cls.shape_allowed_types()]
