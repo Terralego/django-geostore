@@ -1,8 +1,8 @@
-#!/bin/bash
-"exec" "`dirname $0`/../venv/bin/python" "$0" "$@"  # NOQA
+#!/usr/bin/env python
 
 import os
 import sys
+
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_geostore.settings')

@@ -4,6 +4,7 @@ RUN mkdir -p /code/src
 
 RUN useradd -ms /bin/bash django
 RUN chown -R django:django /code
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 USER django
 
@@ -15,4 +16,5 @@ WORKDIR /code/src
 
 # Install dev requirements
 RUN /code/venv/bin/pip3 install --no-cache-dir -e .[dev] -U
-RUN . /code/venv/bin/activate
+
+ENTRYPOINT ["/bin/sh", "-e", "/usr/local/bin/entrypoint.sh"]
