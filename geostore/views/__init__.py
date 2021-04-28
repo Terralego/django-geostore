@@ -296,7 +296,5 @@ class FeatureViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         if self.request.GET.get('format', '') == 'geojson':
             self.kwargs['format'] = "geojson"
-            serializer = self.get_serializer(qs, many=True)
-        else:
-            serializer = self.get_serializer(qs, many=True)
+        serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
