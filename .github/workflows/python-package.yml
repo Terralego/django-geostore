@@ -69,7 +69,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install .[dev] -U
         if [[ ${{ matrix.django-version }} == dev ]]; then
-          pip install -e git+https://github.com/django/django@master#egg=django;
+          pip install -e git+https://github.com/django/django@main#egg=django;
         else
           pip install Django==${{ matrix.django-version }} -U;
         fi
