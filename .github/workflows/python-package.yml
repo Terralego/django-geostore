@@ -33,21 +33,18 @@ jobs:
 
   build:
     runs-on: ubuntu-18.04
+    #TODO: Fix when github action do not show failed for the workflow with continue-on-error
+    #continue-on-error: ${{ matrix.experimental }}
     needs: [lint]
     strategy:
       matrix:
-        python-version: ['3.6', '3.8']
-        django-version: [2.2.*, 3.1.*]
-        include:
-          - django-version: dev
-            python-version: 3.6
-            continue-on-error: true
-          - django-version: 3.1.*
-            python-version: 3.9
-            continue-on-error: true
-          - django-version: dev
-            python-version: 3.9
-            continue-on-error: true
+        python-version: ['3.6', '3.9']
+        django-version: [2.2.*, 3.2.*]
+        #experimental: [false]
+        #include:
+        #  - django-version: dev
+        #    python-version: 3.9
+        #    experimental: true
     services:
       postgres:
         image: postgis/postgis:10-2.5
@@ -69,7 +66,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install .[dev] -U
         if [[ ${{ matrix.django-version }} == dev ]]; then
-          pip install -e git+https://github.com/django/django@master#egg=django;
+          pip install -e git+https://github.com/django/django@main#egg=django;
         else
           pip install Django==${{ matrix.django-version }} -U;
         fi
