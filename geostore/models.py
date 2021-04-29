@@ -398,3 +398,9 @@ class FeatureExtraGeom(BaseUpdatableModel):
             GistIndex(name='feg_geom_gist_index', fields=['layer_extra_geom', 'geom']),
             GinIndex(name='feg_properties_gin_index', fields=['properties']),
         ]
+        constraints = [
+            # geometry should be valid
+            models.CheckConstraint(check=models.Q(geom__isvalid=True), name='geom_extra_is_valid'),
+            # geometry should not be empty
+            models.CheckConstraint(check=models.Q(geom__isempty=False), name='geom_extra_is_empty')
+        ]
