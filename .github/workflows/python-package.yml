@@ -39,13 +39,13 @@ jobs:
         python-version: ['3.6', '3.8']
         django-version: [2.2.*, 3.1.*]
         include:
-          - django-version: dev
-            python-version: 3.6
+          - django-version: 3.2.*
+            python-version: 3.8
             continue-on-error: true
           - django-version: 3.1.*
             python-version: 3.9
             continue-on-error: true
-          - django-version: dev
+          - django-version: 3.2.*
             python-version: 3.9
             continue-on-error: true
     services:
