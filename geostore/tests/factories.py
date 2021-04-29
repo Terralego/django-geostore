@@ -4,6 +4,7 @@ from faker.providers import geo
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.contrib.gis.geos import Point
 from django.contrib.gis.geos.geometry import GEOSGeometry
 
 from geostore import GeometryTypes
@@ -89,17 +90,7 @@ class RandomFeatureFactory(factory.django.DjangoModelFactory):
     @factory.lazy_attribute
     def geom(self):
         lat, lon, *other = fake.local_latlng(country_code='FR')
-        return GEOSGeometry(
-            '''{{
-                "type": "Point",
-                "coordinates": [
-                {},
-                {}
-                ]
-            }}'''.format(
-                float(lon), float(lat)
-            )
-        )
+        return Point(float(lon), float(lat), srid=4326)
 
     properties = factory.Dict(
         {
