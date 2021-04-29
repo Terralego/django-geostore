@@ -89,7 +89,7 @@ class RandomFeatureFactory(factory.django.DjangoModelFactory):
 
     @factory.lazy_attribute
     def geom(self):
-        lat, lon, *other = fake.local_latlng(country_code='FR')
+        lat, lon, *other = fake.local_latlng()
         return Point(float(lon), float(lat), srid=4326)
 
     properties = factory.Dict(
