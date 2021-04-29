@@ -4,6 +4,8 @@ CHANGELOG
 0.5.9.dev0     (XXXX-XX-XX)
 ---------------------------
 
+!! WARNING - BREAKING CHANGES !!
+
 * Add constraint extra geom empty / is_valid
 
 
