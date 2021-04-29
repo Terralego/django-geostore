@@ -10,7 +10,7 @@ from django.contrib.gis.geos.geometry import GEOSGeometry
 from geostore import GeometryTypes
 from geostore.models import Feature, Layer
 
-fake = Faker('fr_FR')
+fake = Faker()
 fake.add_provider(geo)
 
 
