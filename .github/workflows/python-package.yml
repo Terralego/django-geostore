@@ -33,21 +33,21 @@ jobs:
 
   build:
     runs-on: ubuntu-18.04
+    continue-on-error: ${{ matrix.experimental }}
     needs: [lint]
     strategy:
       matrix:
-        python-version: ['3.6', '3.8']
-        django-version: [2.2.*, 3.1.*]
+        python-version: ['3.6', '3.9']
+        django-version: [2.2.*, 3.2.*]
+        experimental: [false]
         include:
-          - django-version: 3.2.*
-            python-version: 3.8
-            continue-on-error: true
-          - django-version: 3.1.*
-            python-version: 3.9
-            continue-on-error: true
-          - django-version: 3.2.*
-            python-version: 3.9
-            continue-on-error: true
+          - django-version: 3.2a1
+              experimental: true
+              python-version: 3.9
+          #TODO: Fix when github action do not show failed for the workflow with continue-on-error
+          #- django-version: dev
+          #  python-version: 3.9
+          #  experimental: true
     services:
       postgres:
         image: postgis/postgis:10-2.5
