@@ -6,7 +6,7 @@ CHANGELOG
 
 !! WARNING - BREAKING CHANGES !!
 
-* Add constraint extra geom empty / is_valid
+* Add constraint extra geom empty / is_valid. Check that your feature extra geometries are not empty or invalid before using this version
 
 
 0.5.8          (2021-04-30)
