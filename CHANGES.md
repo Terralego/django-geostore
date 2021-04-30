@@ -4,6 +4,8 @@ CHANGELOG
 0.5.8.dev0     (XXXX-XX-XX)
 ---------------------------
 
+* Add format geojson relations
+
 
 0.5.7          (2020-12-11)
 ---------------------------

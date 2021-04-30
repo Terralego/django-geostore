@@ -289,6 +289,35 @@ class FeatureDetailTestCase(APITestCase):
         data = response.json()
         self.assertEqual(len(data), 0, data)
 
+    @patch('geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC', new_callable=PropertyMock)
+    def test_relation_geojson(self, mock_relation):
+        mock_relation.return_value = True
+        city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
+        city_cover_2 = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 4 4, 3 0, 0 0))')
+        intersect_relation = LayerRelation.objects.create(
+            relation_type='intersects',
+            origin=self.layer_trek,
+            destination=self.layer_city,
+        )
+        url = reverse('feature-relation', args=(self.layer_trek.pk,
+                                                self.trek.identifier,
+                                                intersect_relation.pk))
+        # city cover should be present after sync
+        self.trek.sync_relations(intersect_relation.pk)
+        response = self.client.get(url, data={'format': 'geojson'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(len(data['features']), 2, data)
+
+        # city cover should not be present after deletion
+        city_cover.delete()
+        city_cover_2.delete()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(len(data), 0, data)
+
     @patch('geostore.views.FeatureViewSet.pagination_class', new_callable=PropertyMock)
     def test_relation_with_pagination(self, mock_view):
         class MyPagination(PageNumberPagination):

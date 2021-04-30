@@ -291,9 +291,10 @@ class FeatureViewSet(viewsets.ModelViewSet):
         qs = self.filter_queryset(qs)
         # keep original viewset pagination
         page = self.paginate_queryset(qs)
-        if page is not None:
+        if page is not None and self.request.GET.get('format', '') != 'geojson':
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-
+        if self.request.GET.get('format', '') == 'geojson':
+            self.kwargs['format'] = "geojson"
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
