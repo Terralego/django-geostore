@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.5.9.dev0     (XXXX-XX-XX)
+0.6.0          (2021-04-30)
 ---------------------------
 
 !! WARNING - BREAKING CHANGES !!
