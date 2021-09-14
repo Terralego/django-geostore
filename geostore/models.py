@@ -223,17 +223,15 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
         for rel in layer_relations:
             logger.info(f"relation {rel}")
             qs = self.get_computed_relation_qs(rel)
+            id_list = qs.values_list("id", flat=True)
             # find relation to delete (in stored relation but not in qs result)
-            to_delete = self.relations_as_origin.filter(relation=rel).exclude(destination_id__in=qs)
-
-            logger.info(f"{to_delete.count()} element(s) to delete")
+            to_delete = self.relations_as_origin.filter(relation=rel).exclude(destination_id__in=id_list)
 
             to_delete.delete()
 
             # find relation to add (not in stored relation but in qs
-            qs = qs.exclude(pk__in=self.relations_as_origin.filter(relation=rel)
-                                                           .values_list('destination_id', flat=True))
-            logger.info(f"{len(qs)} element(s) to add")
+            qs = Feature.objects.filter(id__in=id_list).exclude(pk__in=self.relations_as_origin.filter(relation=rel)
+                                                                .values_list('destination_id', flat=True))
             # batch creation
             batch_size = 100
             objs = (FeatureRelation(origin=self, destination=feature_rel, relation=rel) for feature_rel in qs.all())

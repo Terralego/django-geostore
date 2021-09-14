@@ -4,7 +4,7 @@ CHANGELOG
 0.6.1.dev0     (XXXX-XX-XX)
 ---------------------------
 
-*
+* Improve performances relations
 
 
 0.6.0          (2021-04-30)
