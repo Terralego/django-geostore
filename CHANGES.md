@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.6.1.dev0     (XXXX-XX-XX)
+0.6.1          (2021-04-30)
 ---------------------------
 
 * Improve performances relations
