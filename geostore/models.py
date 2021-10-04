@@ -223,7 +223,8 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
         for rel in layer_relations:
             logger.info(f"relation {rel}")
             qs = self.get_computed_relation_qs(rel)
-            id_list = qs.values_list("id", flat=True)
+            # cache this query because it is evaluated multiple times, this avoids re-executing it as it is costly
+            id_list = list(qs.values_list("id", flat=True))
             # find relation to delete (in stored relation but not in qs result)
             to_delete = self.relations_as_origin.filter(relation=rel).exclude(destination_id__in=id_list)
 
