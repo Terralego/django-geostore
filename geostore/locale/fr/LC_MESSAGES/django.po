@@ -21,6 +21,9 @@ msgstr ""
 msgid "Geographic Store"
 msgstr "Entrepot Géographique"
 
+msgid "Download"
+msgstr "Télécharger"
+
 msgid "Your data export is ready"
 msgstr "Votre export de données est prêt"
 
