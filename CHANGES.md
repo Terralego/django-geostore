@@ -1,10 +1,10 @@
 CHANGELOG
 =========
 
-0.6.2.dev0     (XXXX-XX-XX)
+0.6.2          (2021-10-04)
 ---------------------------
 
-*
+* Fix email link causing scam-alerts in some email clients
 
 
 0.6.1          (2021-04-30)
