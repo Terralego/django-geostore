@@ -2,7 +2,7 @@ import json
 import factory.random
 from io import BytesIO
 from tempfile import TemporaryDirectory
-from unittest import skipIf
+from unittest import TestCase, skipIf
 from zipfile import ZipFile
 
 from django.contrib.auth.models import Permission
@@ -18,10 +18,26 @@ from rest_framework.test import APITestCase
 from geostore import GeometryTypes
 from geostore import settings as app_settings
 from geostore.import_export.helpers import get_serialized_properties
-from geostore.models import Feature, LayerGroup
+from geostore.models import Feature, Layer, LayerGroup
 from geostore.tests.factories import (FeatureFactory, LayerFactory, SuperUserFactory,
                                       UserFactory)
 from geostore.tests.utils import get_files_tests
+
+
+class LayerMixinTestCase(TestCase):
+    def test_geom_type_name_when_integer(self):
+        """ Tests that LayerBasedModelMixin.geom_type_name handles integers correctly """
+        test_value = 4
+        value = Layer(geom_type=test_value)
+        self.assertEqual(type(value.geom_type), int)
+        self.assertEqual(value.geom_type_name, GeometryTypes(test_value))
+
+    def test_geom_type_name_when_enum_value(self):
+        """ Tests that LayerBasedModelMixin.geom_type_name handles GeometryTypes values correctly """
+        test_value = GeometryTypes(4)
+        value = Layer.objects.create(geom_type=test_value)
+        self.assertEqual(type(value.geom_type), GeometryTypes)
+        self.assertEqual(value.geom_type_name, GeometryTypes(test_value))
 
 
 class LayerLineIntersectionTestCase(APITestCase):

@@ -2,7 +2,7 @@ from enum import IntEnum
 
 default_app_config = 'geostore.apps.GeostoreConfig'
 
-
+# TODO : subclass models.IntegerChoices (available since django 3.0)
 class GeometryTypes(IntEnum):
     Point = 0
     LineString = 1

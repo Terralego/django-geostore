@@ -42,6 +42,13 @@ class LayerBasedModelMixin(BaseUpdatableModel):
     geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
 
     @property
+    def geom_type_name(self):
+        if type(self.geom_type) == int:
+            return GeometryTypes(self.geom_type)
+        elif type(self.geom_type) == GeometryTypes:
+            return self.geom_type
+
+    @property
     def is_point(self):
         return self.layer_geometry in (GeometryTypes.Point,
                                        GeometryTypes.MultiPoint)
