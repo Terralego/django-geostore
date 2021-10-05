@@ -1,10 +1,10 @@
 CHANGELOG
 =========
 
-0.6.3.dev0     (XXXX-XX-XX)
+0.6.3          (2021-10-05)
 ---------------------------
 
-*
+* Improve performances relations
 
 
 0.6.2          (2021-10-04)
