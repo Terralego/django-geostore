@@ -31,7 +31,7 @@ class LayerExportMixin:
             # get all accepted types if geom_type not defined, else keep selected
             type_to_check = GeometryTypes.shape_allowed_type_names() \
                 if not self.geom_type else \
-                [self.geom_type.name]
+                [self.geom_type_name]
 
             # Create one shapefile by kind of geometry
             for geom_type in type_to_check:
