@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.6.5.dev0     (XXXX-XX-XX)
+0.6.5          (2021-10-13)
 ---------------------------
 
 * Fix missing migration
