@@ -108,7 +108,7 @@ class VectorTile(object):
         )
 
     @cached_tile
-    def get_tile(self, x, y, z):
+    def get_tile(self, x, y, z, name=None):
         xmin, ymin, xmax, ymax = self.get_tile_bbox(x, y, z)
         pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
 
@@ -179,8 +179,8 @@ class VectorTile(object):
                 FROM
                     tilegeom
             '''
-
-            cursor.execute(sql_query, args + (self.layer.name,))
+            name = name if name else self.layer.name
+            cursor.execute(sql_query, args + (name,))
             row = cursor.fetchone()
 
             return row[0], row[1]

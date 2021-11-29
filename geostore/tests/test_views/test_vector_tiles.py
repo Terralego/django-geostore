@@ -57,7 +57,7 @@ class VectorTilesTestCase(TestCase):
                                                               geom_type=GeometryTypes.LineString,
                                                               title='Extra geometry')
         self.layer_relation = LayerSchemaFactory(name='layer_relation', geom_type=GeometryTypes.Polygon)
-        self.feature_cover = FeatureFactory(layer=self.layer_relation, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
+        self.feature_cover = FeatureFactory(layer=self.layer_relation, geom='POLYGON((0 0, 0 44, 3 44, 3 0, 0 0))')
 
         self.mygroup = LayerGroup.objects.create(name='mygroup', slug='mygroup')
         self.mygroup.layers.add(self.layer)
@@ -262,6 +262,9 @@ class VectorTilesTestCase(TestCase):
                 kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
+        self.assertIn(b'layerLine', response.content)
+        self.assertIn(b'layerline-extra-geometry', response.content)
+        self.assertIn(b'layerLine-Polygon', response.content)
         query_count = len(connection.queries)
         original_content = response.content
 
