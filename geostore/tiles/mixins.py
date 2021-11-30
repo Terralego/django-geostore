@@ -88,7 +88,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
                 tiles_array.append(tile)
             for relation in layer.relations_as_origin.all():
                 relation_layer = relation.destination
-                unused, tile = self.get_tile_for_layer(relation_layer, z, x, y, f'{layer.name}-{slugify(relation.name)}')
+                unused, tile = self.get_tile_for_layer(relation_layer, z, x, y, f'relation-{layer.name}-{slugify(relation.name)}')
                 tiles_array.append(tile)
         return b''.join(tiles_array)
 
@@ -197,7 +197,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             for relation in layer.relations_as_origin.all():
                 relation_layer = relation.destination
                 data.append({
-                    'id': f'{layer.name}-{slugify(relation.name)}',
+                    'id': f'relation-{layer.name}-{slugify(relation.name)}',
                     'description': relation.name.title(),
                     'fields': {},
                     'minzoom': relation_layer.layer_settings_with_default('tiles', 'minzoom'),
