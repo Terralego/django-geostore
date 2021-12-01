@@ -68,10 +68,10 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             content_type=self.tile_content_type
         )
 
-    def get_tile_for_layer(self, layer, z, x, y, name=None):
+    def get_tile_for_layer(self, layer, z, x, y, name=None, features_pk=[]):
         tile = VectorTile(layer)
         return tile.get_tile(
-            x, y, z, name
+            x, y, z, name, features_pk
         )
 
     def get_tile(self, z, x, y):
@@ -86,10 +86,16 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             for extra_layer in layer.extra_geometries.all():
                 unused, tile = self.get_tile_for_layer(extra_layer, z, x, y)
                 tiles_array.append(tile)
+
             for relation in layer.relations_as_origin.all():
                 relation_layer = relation.destination
-                unused, tile = self.get_tile_for_layer(relation_layer, z, x, y, f'relation-{layer.name}-{slugify(relation.name)}')
+                relation_features = relation.related_features.values_list('destination', flat=True)
+                unused, tile = self.get_tile_for_layer(relation_layer,
+                                                       z, x, y,
+                                                       f'relation-{layer.name}-{slugify(relation.name)}',
+                                                       relation_features)
                 tiles_array.append(tile)
+
         return b''.join(tiles_array)
 
     def get_tile_path(self):
