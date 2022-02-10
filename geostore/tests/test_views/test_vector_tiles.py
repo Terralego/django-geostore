@@ -58,6 +58,7 @@ class VectorTilesTestCase(TestCase):
                                                               title='Extra geometry')
         self.layer_relation = LayerSchemaFactory(name='layer_relation', geom_type=GeometryTypes.Polygon)
         self.feature_cover = FeatureFactory(layer=self.layer_relation, geom='POLYGON((0 0, 0 44, 3 44, 3 0, 0 0))')
+        self.feature_not_cover = FeatureFactory(layer=self.layer_relation, geom='POLYGON((0 0, 0 43.579, 3 43.579, 3 0, 0 0))')
 
         self.mygroup = LayerGroup.objects.create(name='mygroup', slug='mygroup')
         self.mygroup.layers.add(self.layer)
@@ -174,7 +175,7 @@ class VectorTilesTestCase(TestCase):
                                                       'minzoom': 10},
                                                      {'description': 'Polygon',
                                                       'fields': {},
-                                                      'id': 'layerLine-Polygon',
+                                                      'id': 'relation-layerLine-polygon',
                                                       'maxzoom': 22,
                                                       'minzoom': 0}])
 
@@ -249,12 +250,13 @@ class VectorTilesTestCase(TestCase):
                                         feature=self.layer.features.first(),
                                         geom=GEOSGeometry("SRID=4326;LINESTRING(1.370029449462 "
                                                           "43.60364034724, 1.4 43.61)"))
-        LayerRelation.objects.create(
+        layer_relation = LayerRelation.objects.create(
             name="Polygon",
             relation_type='intersects',
             origin=self.layer,
             destination=self.layer_relation,
         )
+        self.layer.features.first().sync_relations(layer_relation.pk)
 
         response = self.client.get(
             reverse(
@@ -264,10 +266,9 @@ class VectorTilesTestCase(TestCase):
         self.assertGreater(len(response.content), 0)
         self.assertIn(b'layerLine', response.content)
         self.assertIn(b'layerline-extra-geometry', response.content)
-        self.assertIn(b'layerLine-Polygon', response.content)
+        self.assertIn(b'relation-layerline-polygon', response.content)
         query_count = len(connection.queries)
         original_content = response.content
-
         # verify data is cached
         response = self.client.get(
             reverse(
@@ -275,7 +276,7 @@ class VectorTilesTestCase(TestCase):
                 kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(
             len(connection.queries),
-            query_count - 4
+            query_count - 5
         )
         self.assertEqual(
             original_content,

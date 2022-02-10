@@ -92,7 +92,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
                 relation_features = relation.related_features.values_list('destination', flat=True)
                 unused, tile = self.get_tile_for_layer(relation_layer,
                                                        z, x, y,
-                                                       f'relation-{layer.name}-{slugify(relation.name)}',
+                                                       f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
                                                        relation_features)
                 tiles_array.append(tile)
 
@@ -240,7 +240,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             # center
             'attribution': self.get_attribution(),
             'description': self.get_description(),
-            'vector_layers': self.get_vector_layers(),
+            'vector_layers': self.get_vector_layers()
         }
 
     def get_last_update(self):
