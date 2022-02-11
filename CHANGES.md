@@ -4,6 +4,7 @@ CHANGELOG
 0.6.6.dev      (XXXX-XX-XX)
 ---------------------------
 
+* Add relations in vector tiles
 
 0.6.5          (2021-10-13)
 ---------------------------
