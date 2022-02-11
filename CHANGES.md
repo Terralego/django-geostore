@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.6.6.dev      (XXXX-XX-XX)
+0.6.6          (2022-02-11)
 ---------------------------
 
 * Add relations in vector tiles
