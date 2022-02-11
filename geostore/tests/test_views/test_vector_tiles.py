@@ -175,7 +175,7 @@ class VectorTilesTestCase(TestCase):
                                                       'minzoom': 10},
                                                      {'description': 'Polygon',
                                                       'fields': {},
-                                                      'id': 'relation-layerLine-polygon',
+                                                      'id': 'relation-layerline-polygon',
                                                       'maxzoom': 22,
                                                       'minzoom': 0}])
 
