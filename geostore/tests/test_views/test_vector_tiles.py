@@ -4,7 +4,7 @@ from urllib.parse import unquote, urljoin
 
 from django.core.management import call_command
 from django.db import connection
-from django.contrib.gis.geos.geometry import GEOSGeometry
+from django.contrib.gis.geos import LineString
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -248,8 +248,7 @@ class VectorTilesTestCase(TestCase):
         # first query that generate the cache
         FeatureExtraGeom.objects.create(layer_extra_geom=self.layer_extra_geom,
                                         feature=self.layer.features.first(),
-                                        geom=GEOSGeometry("SRID=4326;LINESTRING(1.370029449462 "
-                                                          "43.60364034724, 1.4 43.61)"))
+                                        geom=LineString((1.370029449462, 43.60364034724), (1.4, 43.61)))
         layer_relation = LayerRelation.objects.create(
             name="Polygon",
             relation_type='intersects',

@@ -5,7 +5,6 @@ from faker.providers import geo
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import Point
-from django.contrib.gis.geos.geometry import GEOSGeometry
 
 from geostore import GeometryTypes
 from geostore.models import Feature, Layer
@@ -71,13 +70,7 @@ class LayerSchemaFactory(factory.django.DjangoModelFactory):
 
 class FeatureFactory(factory.django.DjangoModelFactory):
     layer = factory.SubFactory(LayerFactory)
-    geom = GEOSGeometry('''{
-        "type": "Point",
-        "coordinates": [
-          2.4609375,
-          45.583289756006316
-        ]
-      }''')
+    geom = Point(2.4609375, 45.583289756006316)
     properties = {}
 
     class Meta:
