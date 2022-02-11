@@ -68,7 +68,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             content_type=self.tile_content_type
         )
 
-    def get_tile_for_layer(self, layer, z, x, y, name=None, features_pk=[]):
+    def get_tile_for_layer(self, layer, z, x, y, name=None, features_pk=None):
         tile = VectorTile(layer)
         return tile.get_tile(
             x, y, z, name, features_pk
@@ -203,7 +203,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             for relation in layer.relations_as_origin.all():
                 relation_layer = relation.destination
                 data.append({
-                    'id': f'relation-{layer.name}-{slugify(relation.name)}',
+                    'id': f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
                     'description': relation.name.title(),
                     'fields': {},
                     'minzoom': relation_layer.layer_settings_with_default('tiles', 'minzoom'),

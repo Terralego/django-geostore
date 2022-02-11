@@ -108,7 +108,7 @@ class VectorTile(object):
         )
 
     @cached_tile
-    def get_tile(self, x, y, z, name=None, features_pks=[]):
+    def get_tile(self, x, y, z, name=None, features_pks=None):
         xmin, ymin, xmax, ymax = self.get_tile_bbox(x, y, z)
         pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
 
