@@ -4,6 +4,7 @@ from urllib.parse import unquote, urljoin
 
 from django.core.management import call_command
 from django.db import connection
+from django.contrib.gis.geos import LineString
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
@@ -12,8 +13,8 @@ from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
 from geostore import settings as app_settings
-from geostore.models import Layer, LayerGroup, LayerExtraGeom
-from geostore.tests.factories import LayerFactory
+from geostore.models import Layer, LayerGroup, LayerExtraGeom, LayerRelation, FeatureExtraGeom
+from geostore.tests.factories import FeatureFactory, LayerFactory, LayerSchemaFactory
 from geostore.tests.utils import get_files_tests
 from geostore.tiles.helpers import VectorTile, guess_maxzoom, guess_minzoom
 
@@ -55,6 +56,10 @@ class VectorTilesTestCase(TestCase):
         self.layer_extra_geom = LayerExtraGeom.objects.create(layer=self.layer,
                                                               geom_type=GeometryTypes.LineString,
                                                               title='Extra geometry')
+        self.layer_relation = LayerSchemaFactory(name='layer_relation', geom_type=GeometryTypes.Polygon)
+        self.feature_cover = FeatureFactory(layer=self.layer_relation, geom='POLYGON((0 0, 0 44, 3 44, 3 0, 0 0))')
+        self.feature_not_cover = FeatureFactory(layer=self.layer_relation, geom='POLYGON((0 0, 0 43.579, 3 43.579, 3 0, 0 0))')
+
         self.mygroup = LayerGroup.objects.create(name='mygroup', slug='mygroup')
         self.mygroup.layers.add(self.layer)
         self.layer.from_geojson(
@@ -134,6 +139,12 @@ class VectorTilesTestCase(TestCase):
         )
 
     def test_layer_tilejson(self):
+        LayerRelation.objects.create(
+            name="Polygon",
+            relation_type='intersects',
+            origin=self.layer,
+            destination=self.layer_relation,
+        )
         response = self.client.get(
             reverse('layer-tilejson', args=[self.layer.pk]),
             # HTTP_HOST required to build the tilejson descriptor
@@ -152,6 +163,21 @@ class VectorTilesTestCase(TestCase):
                             reverse('layer-tiles-pattern',
                                     args=[self.layer.pk])))
         )
+        self.assertEqual(tilejson['vector_layers'], [{'description': 'Layerline',
+                                                      'fields': {'baba': '', 'foo': ''},
+                                                      'id': 'layerLine',
+                                                      'maxzoom': 10,
+                                                      'minzoom': 10},
+                                                     {'description': 'Extra Geometry',
+                                                      'fields': {},
+                                                      'id': 'layerline-extra-geometry',
+                                                      'maxzoom': 10,
+                                                      'minzoom': 10},
+                                                     {'description': 'Polygon',
+                                                      'fields': {},
+                                                      'id': 'relation-layerline-polygon',
+                                                      'maxzoom': 22,
+                                                      'minzoom': 0}])
 
     @skipIf(not app_settings.TERRA_TILES_HOSTNAMES, 'Test with custom tile hostnames only')
     def test_layer_tilejson_with_custom_hostnames(self):
@@ -220,15 +246,28 @@ class VectorTilesTestCase(TestCase):
 
     def test_vector_layer_tiles_view(self):
         # first query that generate the cache
+        FeatureExtraGeom.objects.create(layer_extra_geom=self.layer_extra_geom,
+                                        feature=self.layer.features.first(),
+                                        geom=LineString((1.370029449462, 43.60364034724), (1.4, 43.61)))
+        layer_relation = LayerRelation.objects.create(
+            name="Polygon",
+            relation_type='intersects',
+            origin=self.layer,
+            destination=self.layer_relation,
+        )
+        self.layer.features.first().sync_relations(layer_relation.pk)
+
         response = self.client.get(
             reverse(
                 'layer-tiles',
                 kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertGreater(len(response.content), 0)
+        self.assertIn(b'layerLine', response.content)
+        self.assertIn(b'layerline-extra-geometry', response.content)
+        self.assertIn(b'relation-layerline-polygon', response.content)
         query_count = len(connection.queries)
         original_content = response.content
-
         # verify data is cached
         response = self.client.get(
             reverse(
@@ -236,7 +275,7 @@ class VectorTilesTestCase(TestCase):
                 kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
         self.assertEqual(
             len(connection.queries),
-            query_count - 3
+            query_count - 5
         )
         self.assertEqual(
             original_content,
@@ -318,7 +357,7 @@ class VectorTilesSpecialTestCase(TestCase):
             'maxzoom': 22,
             'pixel_buffer': 4,
             'features_filter': None,  # Json
-            'properties_filter': 'Test',  # Array of string
+            'properties_filter': ['Test', ],  # Array of string
             'features_limit': 10000,
         }}
 

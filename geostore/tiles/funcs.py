@@ -1,5 +1,5 @@
 from django.contrib.gis.db.models import FloatField, GeometryField
-from django.contrib.gis.db.models.functions import GeoFunc
+from django.contrib.gis.db.models.functions import GeoFunc, GeomOutputGeoFunc
 from django.db.models import Func
 
 
@@ -13,7 +13,7 @@ class HausdorffDistance(GeoFunc):
     output_field = FloatField()
 
 
-class SimplifyPreserveTopology(GeoFunc):
+class SimplifyPreserveTopology(GeomOutputGeoFunc):
     pass
 
 

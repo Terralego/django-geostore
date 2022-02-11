@@ -6,6 +6,7 @@ from django.http import HttpResponse, QueryDict
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.encoding import escape_uri_path
+from django.utils.text import slugify
 from django.utils.html import escape
 from django.utils.timezone import now
 from rest_framework.decorators import action
@@ -67,10 +68,10 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             content_type=self.tile_content_type
         )
 
-    def get_tile_for_layer(self, layer, z, x, y):
+    def get_tile_for_layer(self, layer, z, x, y, name=None, features_pk=None):
         tile = VectorTile(layer)
         return tile.get_tile(
-            x, y, z
+            x, y, z, name, features_pk
         )
 
     def get_tile(self, z, x, y):
@@ -84,6 +85,15 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
 
             for extra_layer in layer.extra_geometries.all():
                 unused, tile = self.get_tile_for_layer(extra_layer, z, x, y)
+                tiles_array.append(tile)
+
+            for relation in layer.relations_as_origin.all():
+                relation_layer = relation.destination
+                relation_features = relation.related_features.values_list('destination', flat=True)
+                unused, tile = self.get_tile_for_layer(relation_layer,
+                                                       z, x, y,
+                                                       f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
+                                                       relation_features)
                 tiles_array.append(tile)
 
         return b''.join(tiles_array)
@@ -190,6 +200,15 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
                     'minzoom': layer.layer_settings_with_default('tiles', 'minzoom'),
                     'maxzoom': layer.layer_settings_with_default('tiles', 'maxzoom'),
                 })
+            for relation in layer.relations_as_origin.all():
+                relation_layer = relation.destination
+                data.append({
+                    'id': f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
+                    'description': relation.name.title(),
+                    'fields': {},
+                    'minzoom': relation_layer.layer_settings_with_default('tiles', 'minzoom'),
+                    'maxzoom': relation_layer.layer_settings_with_default('tiles', 'maxzoom'),
+                })
 
         return data
 
@@ -221,7 +240,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             # center
             'attribution': self.get_attribution(),
             'description': self.get_description(),
-            'vector_layers': self.get_vector_layers(),
+            'vector_layers': self.get_vector_layers()
         }
 
     def get_last_update(self):

@@ -108,7 +108,7 @@ class VectorTile(object):
         )
 
     @cached_tile
-    def get_tile(self, x, y, z):
+    def get_tile(self, x, y, z, name=None, features_pks=None):
         xmin, ymin, xmax, ymax = self.get_tile_bbox(x, y, z)
         pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
 
@@ -128,7 +128,8 @@ class VectorTile(object):
         # Filter features
         layer_query = self._filter_on_property(layer_query, self.features_filter)
         layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
-
+        if features_pks:
+            layer_query = layer_query.filter(pk__in=list(features_pks))
         # Lighten geometry
         layer_query = self._simplify(layer_query, pixel_width_x, pixel_width_y)
 
@@ -179,8 +180,8 @@ class VectorTile(object):
                 FROM
                     tilegeom
             '''
-
-            cursor.execute(sql_query, args + (self.layer.name,))
+            name = name if name else self.layer.name
+            cursor.execute(sql_query, args + (name,))
             row = cursor.fetchone()
 
             return row[0], row[1]
