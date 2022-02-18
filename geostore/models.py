@@ -6,9 +6,10 @@ from itertools import islice
 from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Extent
+from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSGeometry, WKBWriter
-from django.contrib.gis.measure import D
+from django.db.models.functions import Cast
 
 from .import_export.exports import LayerExportMixin
 from .import_export.imports import LayerImportMixin
@@ -199,10 +200,10 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
                 'geom__intersects': self.geom,
             })
         elif relation.relation_type == 'distance':
+            qs = qs.annotate(geography=Cast('geom', output_field=GeometryField(geography=True)))
             kwargs.update({
-                'geom__distance_lte': (self.geom,
-                                       D(m=relation.settings.get('distance')),
-                                       'spheroid'),
+                'geography__dwithin': (self.geom,
+                                       relation.settings.get('distance')),
             })
 
         qs = qs.filter(**kwargs) if kwargs else qs
