@@ -4,6 +4,7 @@ CHANGELOG
 0.6.7+dev      (XXXX-XX-XX)
 ---------------------------
 
+* Change distance relation calculation with dwithin
 
 0.6.6          (2022-02-11)
 ---------------------------
