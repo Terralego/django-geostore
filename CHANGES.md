@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.6.7+dev      (XXXX-XX-XX)
+0.6.7          (2022-02-21)
 ---------------------------
 
 * Change distance relation calculation with dwithin
