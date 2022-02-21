@@ -25,13 +25,14 @@ class LayerImportMixin:
             shape
         """
         proj = shapefile.crs
-        if proj and (len(proj) == 1 or (len(proj) == 2 and proj.get('no_defs') is True)):
+
+        if not proj:
+            raise GEOSException('Your shapefile does not have projection')
+
+        if len(proj) == 1 or (len(proj) == 2 and proj.get('no_defs') is True):
             return proj.get('init')
-        elif proj:
-            return fiona.crs.to_string(proj)
         else:
-            raise GEOSException(
-                f'Your shapefile does not have projection')
+            return fiona.crs.to_string(proj)
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS

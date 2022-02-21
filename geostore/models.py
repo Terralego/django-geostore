@@ -2,7 +2,7 @@ import json
 import logging
 import uuid
 from itertools import islice
-
+from django import VERSION as django_version
 from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Extent
@@ -200,7 +200,10 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
                 'geom__intersects': self.geom,
             })
         elif relation.relation_type == 'distance':
-            qs = qs.annotate(geography=Cast('geom', output_field=GeometryField(geography=True)))
+            if django_version < (3, 2):
+                qs = qs.annotate(geography=Cast('geom', output_field=GeometryField(geography=True)))
+            else:
+                qs = qs.alias(geography=Cast('geom', output_field=GeometryField(geography=True)))
             kwargs.update({
                 'geography__dwithin': (self.geom,
                                        relation.settings.get('distance')),

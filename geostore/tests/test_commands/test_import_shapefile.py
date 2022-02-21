@@ -63,7 +63,6 @@ class ImportShapefileTest(TestCase):
         self.assertEqual(layer.layer_groups.count(), 1)
         self.assertEqual(layer.layer_groups.first().name, 'default')
 
-
     def test_reprojection(self):
         output = StringIO()
         call_command(
