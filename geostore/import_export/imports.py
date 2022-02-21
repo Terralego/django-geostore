@@ -105,8 +105,7 @@ class LayerImportMixin:
             for row in chunk:
                 feature_args = {
                     "geom": None,
-                    "properties": row,
-                    "layer": self
+                    "properties": row
                 }
 
                 for operation in operations:
