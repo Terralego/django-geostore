@@ -1,5 +1,6 @@
 from io import StringIO
 
+from django.contrib.gis.geos import GEOSException
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -42,6 +43,26 @@ class ImportShapefileTest(TestCase):
         # Retrieve the layer
         layer = Layer.objects.all()
         self.assertEqual(len(layer), 0)
+
+    def test_projection_does_not_exist(self):
+        output = StringIO()
+        with self.assertRaises(GEOSException):
+            call_command(
+                'import_shapefile',
+                get_files_tests('shapefile-WGS84-no-proj.zip'),
+                verbosity=1, stdout=output)
+
+    def test_projection_custom(self):
+        output = StringIO()
+        call_command(
+            'import_shapefile',
+            get_files_tests('shapefile-no-proj.zip'),
+            verbosity=1, stdout=output)
+        # Retrieve the layer
+        layer = Layer.objects.all()[0]
+        self.assertEqual(layer.layer_groups.count(), 1)
+        self.assertEqual(layer.layer_groups.first().name, 'default')
+
 
     def test_reprojection(self):
         output = StringIO()

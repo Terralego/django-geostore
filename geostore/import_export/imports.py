@@ -27,8 +27,11 @@ class LayerImportMixin:
         proj = shapefile.crs
         if proj and (len(proj) == 1 or (len(proj) == 2 and proj.get('no_defs') is True)):
             return proj.get('init')
-        else:
+        elif proj:
             return fiona.crs.to_string(proj)
+        else:
+            raise GEOSException(
+                f'Your shapefile does not have projection')
 
     def is_projection_allowed(self, projection):
         return projection in ACCEPTED_PROJECTIONS
@@ -105,7 +108,8 @@ class LayerImportMixin:
             for row in chunk:
                 feature_args = {
                     "geom": None,
-                    "properties": row
+                    "properties": row,
+                    "layer": self,
                 }
 
                 for operation in operations:
