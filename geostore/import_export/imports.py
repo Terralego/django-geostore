@@ -40,7 +40,6 @@ class LayerImportMixin:
         zipped_shapefile_file -- a file-like object on the zipped content
         id_field -- the field name used a identifier
         """
-        from geostore.models import Feature  # fix circular imports
         with fiona.BytesCollection(zipped_shapefile_file.read()) as shape:
             # Extract source projection and compute if reprojection is required
             projection = self._fiona_shape_projection(shape)
@@ -63,7 +62,7 @@ class LayerImportMixin:
                         geometry)
                 identifier = properties.get(id_field, uuid.uuid4())
 
-                Feature.objects.create(
+                self.features.create(
                     layer=self,
                     identifier=identifier,
                     properties=properties,
@@ -77,7 +76,7 @@ class LayerImportMixin:
         Args:
             geojson_data(str): must be raw text json data
         """
-        from geostore.models import Feature  # fix circular imports
+
         geojson = json.loads(geojson_data)
         projection = geojson.get('crs', {}).get(
             'properties', {}).get('name', None)
@@ -91,7 +90,7 @@ class LayerImportMixin:
         for feature in geojson.get('features', []):
             properties = feature.get('properties', {})
             identifier = properties.get(id_field, uuid.uuid4())
-            Feature.objects.update_or_create(
+            self.features.update_or_create(
                 layer=self,
                 identifier=identifier,
                 defaults={
@@ -101,7 +100,6 @@ class LayerImportMixin:
             )
 
     def _initial_import_from_csv(self, chunks, options, operations):
-        from geostore.models import Feature  # fix circular imports
         for chunk in chunks:
             entries = []
             for row in chunk:
@@ -118,11 +116,10 @@ class LayerImportMixin:
                     logger.warning('empty geometry,'
                                    f' row skipped : {row}')
                     continue
-
                 entries.append(
-                    Feature(**feature_args)
+                    self.features.model(**feature_args)
                 )
-            Feature.objects.bulk_create(entries)
+            self.features.bulk_create(entries)
 
     def _complementary_import_from_csv(self, chunks, options, operations,
                                        pk_properties, fast=False):
@@ -137,7 +134,6 @@ class LayerImportMixin:
                 transaction.savepoint_commit(sp)
 
     def _import_row_from_csv(self, row, pk_properties, operations, options):
-        from geostore.models import Feature  # fix circular imports
         feature_args = {
             "geom": None,
             "properties": row,
@@ -150,12 +146,12 @@ class LayerImportMixin:
             for p in pk_properties}
         filter_kwargs['layer'] = feature_args.get("layer", self)
         if feature_args.get("geom"):
-            Feature.objects.update_or_create(
+            self.features.update_or_create(
                 defaults=feature_args,
                 **filter_kwargs
             )
         else:
-            Feature.objects.filter(**filter_kwargs) \
+            self.features.filter(**filter_kwargs) \
                 .update(properties=feature_args["properties"])
 
     @zoom_update
