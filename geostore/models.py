@@ -185,15 +185,7 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
     def get_bounding_box(self):
         return self.geom.extent
 
-    def get_computed_relation_qs(self, relation):
-        """ Execute relation operation to get feature queryset """
-        qs_empty = Feature.objects.none()
-
-        if relation not in self.layer.relations_as_origin.all():
-            # relation should be in layer_relation_as_origins
-            return qs_empty
-
-        qs = relation.destination.features.all()
+    def get_kwargs_relation_by_type(self, qs, relation):
         kwargs = {}
         if relation.relation_type == 'intersects':
             kwargs.update({
@@ -208,7 +200,19 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
                 'geography__dwithin': (self.geom,
                                        relation.settings.get('distance')),
             })
+        return qs, kwargs
 
+    def get_computed_relation_qs(self, relation):
+        """ Execute relation operation to get feature queryset """
+        qs_empty = Feature.objects.none()
+
+        if relation not in self.layer.relations_as_origin.all():
+            # relation should be in layer_relation_as_origins
+            return qs_empty
+
+        qs = relation.destination.features.all()
+
+        qs, kwargs = self.get_kwargs_relation_by_type(qs, relation)
         qs = qs.filter(**kwargs) if kwargs else qs
         qs = qs.exclude(**relation.exclude) if relation.exclude else qs
 
