@@ -47,7 +47,7 @@ jobs:
         #    experimental: true
     services:
       postgres:
-        image: postgis/postgis:10-2.5
+        image: postgis/postgis:10-2.5@sha256:070ff53b7ef84f2703e7db3241993c4afbd1d6d0e52b25d0e397e638e3f350b6
         env:
           POSTGRES_PASSWORD: travis_ci_test
           POSTGRES_USER: travis_ci_test

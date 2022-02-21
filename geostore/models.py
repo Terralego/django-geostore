@@ -2,13 +2,14 @@ import json
 import logging
 import uuid
 from itertools import islice
-
+from django import VERSION as django_version
 from django.contrib.auth.models import Group
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models.aggregates import Extent
+from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSGeometry, WKBWriter
-from django.contrib.gis.measure import D
+from django.db.models.functions import Cast
 
 from .import_export.exports import LayerExportMixin
 from .import_export.imports import LayerImportMixin
@@ -184,6 +185,23 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
     def get_bounding_box(self):
         return self.geom.extent
 
+    def get_kwargs_relation_by_type(self, qs, relation):
+        kwargs = {}
+        if relation.relation_type == 'intersects':
+            kwargs.update({
+                'geom__intersects': self.geom,
+            })
+        elif relation.relation_type == 'distance':
+            if django_version < (3, 2):
+                qs = qs.annotate(geography=Cast('geom', output_field=GeometryField(geography=True)))
+            else:
+                qs = qs.alias(geography=Cast('geom', output_field=GeometryField(geography=True)))
+            kwargs.update({
+                'geography__dwithin': (self.geom,
+                                       relation.settings.get('distance')),
+            })
+        return qs, kwargs
+
     def get_computed_relation_qs(self, relation):
         """ Execute relation operation to get feature queryset """
         qs_empty = Feature.objects.none()
@@ -193,18 +211,8 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
             return qs_empty
 
         qs = relation.destination.features.all()
-        kwargs = {}
-        if relation.relation_type == 'intersects':
-            kwargs.update({
-                'geom__intersects': self.geom,
-            })
-        elif relation.relation_type == 'distance':
-            kwargs.update({
-                'geom__distance_lte': (self.geom,
-                                       D(m=relation.settings.get('distance')),
-                                       'spheroid'),
-            })
 
+        qs, kwargs = self.get_kwargs_relation_by_type(qs, relation)
         qs = qs.filter(**kwargs) if kwargs else qs
         qs = qs.exclude(**relation.exclude) if relation.exclude else qs
 
