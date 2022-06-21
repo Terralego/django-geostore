@@ -1,5 +1,9 @@
+try:
+    from django.utils.http import urlunquote
+except ImportError:
+    from urllib.parse import unquote as urlunquote
+
 from django.contrib.auth.models import Group
-from django.utils.http import urlunquote
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.reverse import reverse
