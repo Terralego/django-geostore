@@ -386,9 +386,11 @@ class LayerAPITestCase(APITestCase):
         self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
 
     def test_patch_permission_ok(self):
-        self.user.user_permissions.add(
+        user = UserFactory()
+        user.user_permissions.add(
             Permission.objects.get(codename='can_manage_layers')
         )
+        self.client.force_authenticate(user)
         geom = GEOSGeometry(json.dumps(self.geometry))
         feature = FeatureFactory(layer=self.layer,
                                  geom=geom,
@@ -412,7 +414,7 @@ class LayerAPITestCase(APITestCase):
                 ]
             }, format='json')
 
-        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code, response.content)
         response = response.json()
         self.assertEqual(
             response['features'][0]['properties'],
