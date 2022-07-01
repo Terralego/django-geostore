@@ -4,6 +4,7 @@ CHANGELOG
 0.6.8+dev      (XXXX-XX-XX)
 ---------------------------
 
+* Add layer extent endpoint
 
 0.6.7          (2022-02-21)
 ---------------------------
