@@ -353,7 +353,7 @@ class LayerShapefileTestCase(APITestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerDetailTest(APITestCase):
+class LayerAPITestCase(APITestCase):
     geometry = {
         "type": "LineString",
         "coordinates": [
@@ -367,14 +367,17 @@ class LayerDetailTest(APITestCase):
         ]
     }
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.layer = LayerFactory()
+        cls.layer_group = LayerGroup.objects.create(name='layer group')
+        cls.layer_group.layers.add(cls.layer)
+        cls.user = UserFactory()
+
     def setUp(self):
-        self.layer = LayerFactory()
-        self.layer_group = LayerGroup.objects.create(name='layer group')
-        self.layer_group.layers.add(self.layer)
-        self.user = UserFactory()
         self.client.force_authenticate(self.user)
 
-    def test_no_permission(self):
+    def test_patch_no_permission(self):
         FeatureFactory(layer=self.layer, properties={'a': 'b'})
 
         response = self.client.patch(
@@ -382,10 +385,12 @@ class LayerDetailTest(APITestCase):
 
         self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
 
-    def test_update(self):
-        self.user.user_permissions.add(
+    def test_patch_permission_ok(self):
+        user = UserFactory()
+        user.user_permissions.add(
             Permission.objects.get(codename='can_manage_layers')
         )
+        self.client.force_authenticate(user)
         geom = GEOSGeometry(json.dumps(self.geometry))
         feature = FeatureFactory(layer=self.layer,
                                  geom=geom,
@@ -409,7 +414,7 @@ class LayerDetailTest(APITestCase):
                 ]
             }, format='json')
 
-        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual(HTTP_200_OK, response.status_code, response.content)
         response = response.json()
         self.assertEqual(
             response['features'][0]['properties'],
@@ -428,6 +433,25 @@ class LayerDetailTest(APITestCase):
                          {"GeoJSON": "/api/layer/{}/geojson/".format(self.layer.pk),
                           "KML": "/api/layer/{}/kml/".format(self.layer.pk),
                           'Shape': '/api/layer/{}/shapefile_async/'.format(self.layer.pk)})
+
+    def test_layer_extent_null(self):
+        response = self.client.get(reverse('layer-extent', args=[self.layer.name, ]),)
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        data = response.json()
+        self.assertEqual(data['extent'], None)
+
+    def test_layer_extent_not_null(self):
+        geom = GEOSGeometry(json.dumps(self.geometry))
+        FeatureFactory(layer=self.layer,
+                       geom=geom,
+                       properties={'a': 'b'})
+        response = self.client.get(reverse('layer-extent', args=[self.layer.name, ]), )
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        data = response.json()
+        self.assertAlmostEqual(data['extent'][0], self.geometry["coordinates"][0][0])
+        self.assertAlmostEqual(data['extent'][1], self.geometry["coordinates"][0][1])
+        self.assertAlmostEqual(data['extent'][2], self.geometry["coordinates"][1][0])
+        self.assertAlmostEqual(data['extent'][3], self.geometry["coordinates"][1][1])
 
 
 class LayerCreationTest(APITestCase):
