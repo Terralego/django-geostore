@@ -111,6 +111,7 @@ class GeometryFileAsyncSerializer(serializers.Serializer):
 
 
 class LayerSerializer(serializers.ModelSerializer):
+    extent_url = serializers.SerializerMethodField()
     shapefile_url = serializers.SerializerMethodField()
     geojson_url = serializers.SerializerMethodField()
     kml_url = serializers.SerializerMethodField()
@@ -120,6 +121,9 @@ class LayerSerializer(serializers.ModelSerializer):
     layer_groups = GroupSerializer(many=True, read_only=True)
     authorized_groups = serializers.PrimaryKeyRelatedField(required=False, many=True, queryset=Group.objects.all())
     async_exports = serializers.SerializerMethodField()
+
+    def get_extent_url(self, obj):
+        return reverse('layer-extent', args=[obj.pk, ])
 
     def get_shapefile_url(self, obj):
         return reverse('layer-shapefile', args=[obj.pk, ])

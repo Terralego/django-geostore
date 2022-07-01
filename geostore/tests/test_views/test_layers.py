@@ -353,7 +353,7 @@ class LayerShapefileTestCase(APITestCase):
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
 
 
-class LayerDetailTest(APITestCase):
+class LayerAPITestCase(APITestCase):
     geometry = {
         "type": "LineString",
         "coordinates": [
@@ -377,7 +377,7 @@ class LayerDetailTest(APITestCase):
     def setUp(self):
         self.client.force_authenticate(self.user)
 
-    def test_no_permission(self):
+    def test_patch_no_permission(self):
         FeatureFactory(layer=self.layer, properties={'a': 'b'})
 
         response = self.client.patch(
@@ -385,7 +385,7 @@ class LayerDetailTest(APITestCase):
 
         self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
 
-    def test_update(self):
+    def test_patch_permission_ok(self):
         self.user.user_permissions.add(
             Permission.objects.get(codename='can_manage_layers')
         )
@@ -432,13 +432,13 @@ class LayerDetailTest(APITestCase):
                           "KML": "/api/layer/{}/kml/".format(self.layer.pk),
                           'Shape': '/api/layer/{}/shapefile_async/'.format(self.layer.pk)})
 
-    def test_extent_null(self):
+    def test_layer_extent_null(self):
         response = self.client.get(reverse('layer-extent', args=[self.layer.name, ]),)
         self.assertEqual(HTTP_200_OK, response.status_code)
         data = response.json()
         self.assertEqual(data['extent'], None)
 
-    def test_extent_not_null(self):
+    def test_layer_extent_not_null(self):
         geom = GEOSGeometry(json.dumps(self.geometry))
         FeatureFactory(layer=self.layer,
                        geom=geom,
