@@ -117,10 +117,16 @@ class Layer(LayerBasedModelMixin, LayerImportMixin, LayerExportMixin, UpdateRout
         return prop_type
 
     def get_extent(self, srid=3857):
-        return self.features.annotate(
-            geom_transformed=Transform('geom', srid)
-        ).aggregate(
-            extent=Extent('geom_transformed')
+        geom_field = 'geom'
+        features = self.features.all()
+
+        if srid != app_settings.INTERNAL_GEOMETRY_SRID:
+            # transform if needed
+            features = features.annotate(geom_transformed=Transform('geom', srid))
+            geom_field = 'geom_transformed'
+
+        return features.aggregate(
+            extent=Extent(geom_field)
         )
 
     def get_property_values(self, property_to_list):

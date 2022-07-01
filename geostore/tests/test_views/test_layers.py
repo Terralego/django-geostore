@@ -367,11 +367,14 @@ class LayerDetailTest(APITestCase):
         ]
     }
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.layer = LayerFactory()
+        cls.layer_group = LayerGroup.objects.create(name='layer group')
+        cls.layer_group.layers.add(cls.layer)
+        cls.user = UserFactory()
+
     def setUp(self):
-        self.layer = LayerFactory()
-        self.layer_group = LayerGroup.objects.create(name='layer group')
-        self.layer_group.layers.add(self.layer)
-        self.user = UserFactory()
         self.client.force_authenticate(self.user)
 
     def test_no_permission(self):
@@ -428,6 +431,25 @@ class LayerDetailTest(APITestCase):
                          {"GeoJSON": "/api/layer/{}/geojson/".format(self.layer.pk),
                           "KML": "/api/layer/{}/kml/".format(self.layer.pk),
                           'Shape': '/api/layer/{}/shapefile_async/'.format(self.layer.pk)})
+
+    def test_extent_null(self):
+        response = self.client.get(reverse('layer-extent', args=[self.layer.name, ]),)
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        data = response.json()
+        self.assertEqual(data['extent'], None)
+
+    def test_extent_not_null(self):
+        geom = GEOSGeometry(json.dumps(self.geometry))
+        FeatureFactory(layer=self.layer,
+                       geom=geom,
+                       properties={'a': 'b'})
+        response = self.client.get(reverse('layer-extent', args=[self.layer.name, ]), )
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        data = response.json()
+        self.assertAlmostEqual(data['extent'][0], self.geometry["coordinates"][0][0])
+        self.assertAlmostEqual(data['extent'][1], self.geometry["coordinates"][0][1])
+        self.assertAlmostEqual(data['extent'][2], self.geometry["coordinates"][1][0])
+        self.assertAlmostEqual(data['extent'][3], self.geometry["coordinates"][1][1])
 
 
 class LayerCreationTest(APITestCase):
