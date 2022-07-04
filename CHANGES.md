@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.6.8+dev      (XXXX-XX-XX)
+0.6.8          (2022-07-04)
 ---------------------------
 
 * Add layer extent endpoint
