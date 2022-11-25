@@ -32,6 +32,10 @@ class LayerExportMixin:
             type_to_check = GeometryTypes.shape_allowed_type_names() \
                 if not self.geom_type else \
                 [GeometryTypes(self.geom_type).name]
+            
+            # Manually adds Polygon to MultiPolygon
+            if self.geom_type == GeometryTypes.MultiPolygon:
+                type_to_check.append(GeometryTypes(GeometryTypes.Polygon).name)
 
             # Create one shapefile by kind of geometry
             for geom_type in type_to_check:
