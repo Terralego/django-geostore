@@ -149,12 +149,12 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
             return HttpResponseBadRequest(_('Features are missing in GeoJSON'))
 
     @action(detail=True, methods=['get'])
-    def property_values(self, request, pk):
+    def property_values(self, request, *args, **kwargs):
         """
           Returns all distinct values of specified GET "property" params from
           database for the specified layers.
 
-          Note: if some record has no value for this property, None is contained in the
+          Note: if some record has no value for this property, None is contained in the
           result list.
         """
 
@@ -167,6 +167,15 @@ class LayerViewSet(MultipleFieldLookupMixin, MVTViewMixin, viewsets.ModelViewSet
         result = layer.get_property_values(property_to_list)
 
         return Response(result)
+
+    @action(detail=True, methods=['get'], renderer_classes=[JSONRenderer])
+    def extent(self, request, *args, **kwargs):
+        """ Returns the extent of the layer."""
+
+        layer = self.get_object()
+        extent = layer.get_extent(srid=4326)
+
+        return Response(extent)
 
 
 class FeatureViewSet(viewsets.ModelViewSet):
