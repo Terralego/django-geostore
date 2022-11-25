@@ -52,6 +52,7 @@ jobs:
           - django-version: '2.2.*'
             python-version: '3.9'
             postgis-image: 'postgis/postgis:10-2.5'
+
     services:
       postgres:
         image: ${{ matrix.postgis-image }}
