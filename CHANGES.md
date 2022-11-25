@@ -1,7 +1,7 @@
 CHANGELOG
 =========
 
-0.6.9+dev      (XXXX-XX-XX)
+0.6.9          (2022-11-22)
 ---------------------------
 
 * Support python 3.10 and django 4.1
