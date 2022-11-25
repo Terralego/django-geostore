@@ -11,42 +11,51 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.6']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         python -m pip install flake8
     - name: Lint with flake8
       run: |
         flake8 geostore test_geostore
 
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     #TODO: Fix when github action do not show failed for the workflow with continue-on-error
     #continue-on-error: ${{ matrix.experimental }}
     needs: [lint]
     strategy:
       matrix:
-        python-version: ['3.6', '3.9']
-        django-version: [2.2.*, 3.2.*]
+        python-version: ['3.6', '3.9', '3.10']
+        django-version: ['2.2.*', '3.2.*', '4.1.*']
+        postgis-image: ['postgis/postgis:11-2.5']
         #experimental: [false]
-        #include:
-        #  - django-version: dev
-        #    python-version: 3.9
-        #    experimental: true
+        exclude:
+          - python-version: '3.10'
+            django-version: '2.2.*'
+          - python-version: '3.6'
+            django-version: '4.1.*'
+        include:
+          - django-version: '2.2.*'
+            python-version: '3.6'
+            postgis-image: 'postgis/postgis:10-2.5'
+          - django-version: '2.2.*'
+            python-version: '3.9'
+            postgis-image: 'postgis/postgis:10-2.5'
+
     services:
       postgres:
-        image: postgis/postgis:10-2.5@sha256:070ff53b7ef84f2703e7db3241993c4afbd1d6d0e52b25d0e397e638e3f350b6
+        image: ${{ matrix.postgis-image }}
         env:
           POSTGRES_PASSWORD: travis_ci_test
           POSTGRES_USER: travis_ci_test
@@ -54,9 +63,9 @@ jobs:
         ports:
           - 5432:5432
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
