@@ -50,7 +50,7 @@ setup(
         "deepmerge",
         "requests>=2.19",
         "mercantile>=1.0",
-        "psycopg2<=2.8.6",
+        "psycopg2",
         "Fiona",
         "jsonschema",
         "celery",
