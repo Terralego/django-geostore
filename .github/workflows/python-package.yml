@@ -82,7 +82,7 @@ jobs:
           pip install Django==${{ matrix.django-version }} -U;
         fi
         if [[ ${{ matrix.django-version }} == 2.2.* ]]; then
-          pip install django-debug-toolbar==3.2.4 -U;
+          pip install django-debug-toolbar==3.2.4 psycopg2==2.8.6 -U;
         fi
 
     - name: Check missing migrations
