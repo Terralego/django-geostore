@@ -1,11 +1,16 @@
 CHANGELOG
 =========
 
+0.6.9+dev      (XXXX-XX-XX)
+---------------------------
+
+* Don't limit psycopg2 version in setup.py
+
 0.6.9          (2022-11-22)
 ---------------------------
 
 * Support python 3.10 and django 4.1
-* 
+
 
 0.6.8          (2022-07-04)
 ---------------------------

@@ -11,7 +11,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: ['3.6']
@@ -22,15 +22,17 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         python -m pip install flake8
+
     - name: Lint with flake8
       run: |
         flake8 geostore test_geostore
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     #TODO: Fix when github action do not show failed for the workflow with continue-on-error
     #continue-on-error: ${{ matrix.experimental }}
     needs: [lint]
@@ -68,6 +70,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
         sudo apt update && sudo apt-get -yq install libproj-dev binutils gdal-bin libgdal-dev
@@ -79,14 +82,20 @@ jobs:
           pip install Django==${{ matrix.django-version }} -U;
         fi
         if [[ ${{ matrix.django-version }} == 2.2.* ]]; then
-          pip install django-debug-toolbar==3.2.4 -U;
+          pip install django-debug-toolbar==3.2.4 psycopg2==2.8.6 -U;
         fi
+
+    - name: Check missing migrations
+      run: |
+       ./manage.py makemigrations --check
+
     - name: Test with coverage
       run: |
         coverage run ./manage.py test
         coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_views.test_vector_tiles.VectorTilesTestCase.test_layer_tilejson_with_custom_hostnames
         coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_custom_classes
         coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_views.test_async_exports
+
     - name: Coverage upload
       run: |
         pip install codecov
