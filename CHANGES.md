@@ -1,10 +1,11 @@
 CHANGELOG
 =========
 
-0.6.9+dev      (XXXX-XX-XX)
+0.7.0          (2022-12-09)
 ---------------------------
 
 * Don't limit psycopg2 version in setup.py
+* Add migration check in CI
 
 0.6.9          (2022-11-22)
 ---------------------------
