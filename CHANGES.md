@@ -1,10 +1,11 @@
 CHANGELOG
 =========
 
-0.7.0+dev      (XXXX-XX-XX)
+0.7.1          (2023-03-03)
 ---------------------------
 
 * Set default zoom levels to 0-23
+* Limit Fiona version < 1.9 until fix
 
 
 0.7.0          (2022-12-09)
