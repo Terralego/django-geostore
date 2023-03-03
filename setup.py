@@ -51,7 +51,7 @@ setup(
         "requests>=2.19",
         "mercantile>=1.0",
         "psycopg2",
-        "Fiona",
+        "Fiona<1.9",
         "jsonschema",
         "celery",
     ],
