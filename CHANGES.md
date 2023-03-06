@@ -4,6 +4,7 @@ CHANGELOG
 0.7.1+dev      (XXXX-XX-XX)
 ---------------------------
 
+* Allow dates and objects in feature properties by using DjangoJSONEncoder
 
 0.7.1          (2023-03-03)
 ---------------------------

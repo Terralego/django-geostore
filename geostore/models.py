@@ -9,6 +9,7 @@ from django.contrib.gis.db.models.aggregates import Extent
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSGeometry, WKBWriter
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models.functions import Cast
 
 from .import_export.exports import LayerExportMixin
@@ -174,7 +175,8 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
                                   verbose_name=_("Identifier"))
     properties = JSONField(default=dict,
                            blank=True,
-                           verbose_name=_("Properties"))
+                           verbose_name=_("Properties"),
+                           encoder=DjangoJSONEncoder)
     layer = models.ForeignKey(Layer,
                               on_delete=models.PROTECT,
                               related_name='features',
