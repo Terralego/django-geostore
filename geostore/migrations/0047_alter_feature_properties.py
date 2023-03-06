@@ -5,7 +5,7 @@ try:
 except ImportError:  # TODO Remove when dropping Django releases < 3.1
     from django.contrib.postgres.fields import JSONField
 import django.core.serializers.json
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
