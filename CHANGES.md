@@ -5,6 +5,7 @@ CHANGELOG
 ---------------------------
 
 * Support django 4.2
+* Drop django 2.2 and python3.6 support
 
 
 0.7.2          (2023-03-06)
