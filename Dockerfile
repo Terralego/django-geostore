@@ -1,4 +1,4 @@
-FROM makinacorpus/geodjango:bionic-3.6
+FROM makinacorpus/geodjango:focal-3.8
 
 RUN mkdir -p /code/src
 
@@ -8,7 +8,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 USER django
 
-RUN python3.6 -m venv /code/venv
+RUN python3.8 -m venv /code/venv
 RUN  /code/venv/bin/pip install --no-cache-dir pip setuptools wheel -U
 
 COPY . /code/src
