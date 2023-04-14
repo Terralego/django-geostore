@@ -11,10 +11,10 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.6']
+        python-version: ['3.8']
 
     steps:
     - uses: actions/checkout@v3
@@ -38,23 +38,10 @@ jobs:
     needs: [lint]
     strategy:
       matrix:
-        python-version: ['3.6', '3.9', '3.10']
-        django-version: ['2.2.*', '3.2.*', '4.2.*']
+        python-version: ['3.8', '3.11']
+        django-version: ['3.2.*', '4.2.*']
         postgis-image: ['postgis/postgis:12-2.5']
-        #experimental: [false]
-        exclude:
-          - python-version: '3.10'
-            django-version: '2.2.*'
-          - python-version: '3.6'
-            django-version: '4.2.*'
-        include:
-          - django-version: '2.2.*'
-            python-version: '3.6'
-            postgis-image: 'postgis/postgis:10-2.5'
-          - django-version: '2.2.*'
-            python-version: '3.9'
-            postgis-image: 'postgis/postgis:10-2.5'
-
+        continue-on-error: "true"
     services:
       postgres:
         image: ${{ matrix.postgis-image }}
@@ -80,9 +67,6 @@ jobs:
           pip install -e git+https://github.com/django/django@main#egg=django;
         else
           pip install Django==${{ matrix.django-version }} -U;
-        fi
-        if [[ ${{ matrix.django-version }} == 2.2.* ]]; then
-          pip install django-debug-toolbar==3.2.4 psycopg2==2.8.6 -U;
         fi
 
     - name: Check missing migrations

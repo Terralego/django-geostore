@@ -33,6 +33,8 @@ class AuthenticatedGroupsMixin:
         return []
 
     def is_authorized(self, layer):
+        if self.request.user.is_authenticated and self.request.user.is_superuser:
+            return True
         if layer.authorized_groups.exists():
             return layer.authorized_groups.filter(pk__in=self.authenticated_groups).exists()
         return True

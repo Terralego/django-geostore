@@ -5,6 +5,7 @@ CHANGELOG
 ---------------------------
 
 * Support django 4.2
+* Allow layer access with group limit to superusers
 
 
 0.7.2          (2023-03-06)
