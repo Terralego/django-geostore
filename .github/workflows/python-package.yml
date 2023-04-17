@@ -78,8 +78,9 @@ jobs:
         coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_views.test_vector_tiles.VectorTilesTestCase.test_layer_tilejson_with_custom_hostnames
         coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_custom_classes
         coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_views.test_async_exports
+        coverage xml -o coverage.xml
 
-    - name: Coverage upload
-      run: |
-        pip install codecov
-        codecov
+    - uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: true
