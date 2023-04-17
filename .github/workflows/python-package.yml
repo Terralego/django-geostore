@@ -38,7 +38,7 @@ jobs:
     needs: [lint]
     strategy:
       matrix:
-        python-version: ['3.8', '3.11']
+        python-version: ['3.8', '3.10']
         django-version: ['3.2.*', '4.2.*']
         postgis-image: ['postgis/postgis:12-2.5']
     services:
