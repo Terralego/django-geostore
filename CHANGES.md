@@ -6,6 +6,7 @@ CHANGELOG
 
 * Support django 4.2
 * Allow layer access with group limit to superusers
+* Drop django 2.2 and python 3.6 support
 
 
 0.7.2          (2023-03-06)
