@@ -39,7 +39,7 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     install_requires=[
-        'django>=2.2',
+        'django',
         'django-token-tools',
         'djangorestframework>=3.10',
         "djangorestframework-gis>=0.15",
@@ -49,7 +49,7 @@ setup(
         "requests>=2.19",
         "mercantile>=1.0",
         "psycopg2",
-        "Fiona<1.9",
+        "Fiona>=1.9",
         "jsonschema",
         "celery",
     ],

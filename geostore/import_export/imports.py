@@ -5,6 +5,7 @@ import uuid
 import fiona
 from django.contrib.gis.geos import GEOSGeometry, GEOSException
 from django.db import transaction
+from fiona.model import to_dict
 from fiona.transform import transform_geom
 
 from geostore.import_export.helpers import ChunkIterator
@@ -70,7 +71,7 @@ class LayerImportMixin:
                     layer=self,
                     identifier=identifier,
                     properties=properties,
-                    geom=GEOSGeometry(json.dumps(geometry)),
+                    geom=GEOSGeometry(json.dumps(to_dict(geometry))),
                 )
 
     @zoom_update
