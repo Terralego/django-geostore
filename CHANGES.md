@@ -1,6 +1,12 @@
 CHANGELOG
 =========
 
+0.8.0+dev      (XXXX-XX-XX)
+---------------------------
+
+* Fix tilejson cache key with hexdigest
+
+
 0.8.0          (2023-09-08)
 ---------------------------
 
