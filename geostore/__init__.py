@@ -26,4 +26,4 @@ class GeometryTypes(IntegerChoices):
         """
         Name types allowed in shapefile export
         """
-        return [str(geom_type).split('.')[-1] for geom_type in cls.shape_allowed_types()]
+        return [geom_type.label.split('.')[-1] for geom_type in cls.shape_allowed_types()]
