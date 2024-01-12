@@ -11,6 +11,7 @@ CHANGELOG
 ---------------------------
 
 * Works with fiona >= 1.9
+* Add support for django 5.0
 
 
 0.7.3          (2023-04-17)
