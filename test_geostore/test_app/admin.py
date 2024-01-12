@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.gis.admin import OSMGeoAdmin
+from django.contrib.gis.admin import GISModelAdmin
 
 from geostore.models import Layer, Feature, LayerExtraGeom, FeatureExtraGeom, LayerRelation
 
@@ -24,6 +24,6 @@ class FeatureExtraGeomInline(admin.TabularInline):
 
 
 @admin.register(Feature)
-class FeatureAdmin(OSMGeoAdmin):
+class FeatureAdmin(GISModelAdmin):
     list_filter = ('layer', )
     inlines = [FeatureExtraGeomInline]
