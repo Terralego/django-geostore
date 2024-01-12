@@ -43,7 +43,6 @@ class Migration(migrations.Migration):
         ('geostore', '0045_auto_20210429_0818'), ('geostore', '0046_auto_20211013_1334'),
         ('geostore', '0047_alter_feature_properties'),
         ('geostore', '0048_remove_feature_geostore_fe_layer_i_c3168f_gist_and_more'),
-        ('geostore', '0049_alter_layer_geom_type_alter_layerextrageom_geom_type')
     ]
 
     initial = True
@@ -61,8 +60,8 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('settings', models.JSONField(blank=True, default=dict)),
                 ('geom_type', models.IntegerField(
-                    choices=[(0, 'Point'), (1, 'Linestring'), (3, 'Polygon'), (4, 'Multipoint'), (5, 'Multilinestring'),
-                             (6, 'Multipolygon'), (7, 'Geometrycollection')], null=True)),
+                    choices=[(0, 'Point'), (1, 'LineString'), (3, 'Polygon'), (4, 'MultiPoint'), (5, 'MultiLineString'),
+                             (6, 'MultiPolygon'), (7, 'GeometryCollection')], null=True)),
                 ('routable', models.BooleanField(default=False, help_text='Used for make layer routable')),
                 ('name', models.CharField(default=uuid.uuid4, max_length=256, unique=True, verbose_name='Name')),
                 ('schema',
@@ -112,8 +111,8 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('settings', models.JSONField(blank=True, default=dict)),
                 ('geom_type', models.IntegerField(
-                    choices=[(0, 'Point'), (1, 'Linestring'), (3, 'Polygon'), (4, 'Multipoint'), (5, 'Multilinestring'),
-                             (6, 'Multipolygon'), (7, 'Geometrycollection')], null=True)),
+                    choices=[(0, 'Point'), (1, 'LineString'), (3, 'Polygon'), (4, 'MultiPoint'), (5, 'MultiLineString'),
+                             (6, 'MultiPolygon'), (7, 'GeometryCollection')], null=True)),
                 ('order', models.PositiveSmallIntegerField(default=0, verbose_name='Order')),
                 ('slug', models.SlugField(editable=False)),
                 ('title', models.CharField(max_length=250, verbose_name='Title')),
