@@ -39,7 +39,7 @@ class LayerBasedModelMixin(BaseUpdatableModel):
         }
     }
     settings = JSONField(default=dict, blank=True)
-    geom_type = models.IntegerField(choices=GeometryTypes.choices(), null=True)
+    geom_type = models.IntegerField(choices=GeometryTypes.choices, null=True)
 
     @property
     def is_point(self):

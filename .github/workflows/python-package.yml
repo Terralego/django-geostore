@@ -34,13 +34,17 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     #TODO: Fix when github action do not show failed for the workflow with continue-on-error
-    #continue-on-error: ${{ matrix.experimental }}
+    # continue-on-error: true
     needs: [lint]
     strategy:
       matrix:
-        python-version: ['3.8', '3.10']
-        django-version: ['3.2.*', '4.2.*']
+        python-version: ['3.8', '3.10', '3.12']
+        django-version: ['3.2.*', '4.2.*', '5.0.*']
         postgis-image: ['postgis/postgis:12-2.5']
+        exclude:
+          - python-version: '3.8'
+            django-version: '5.0.*'
+
     services:
       postgres:
         image: ${{ matrix.postgis-image }}
@@ -59,7 +63,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update && sudo apt-get -yq install libproj-dev binutils gdal-bin libgdal-dev
+        sudo apt-get -q update && sudo apt-get -yqq install libproj-dev binutils gdal-bin libgdal-dev
         python -m pip install --upgrade pip setuptools wheel
         pip install .[dev] -U
         if [[ ${{ matrix.django-version }} == dev ]]; then
