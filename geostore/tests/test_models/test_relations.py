@@ -52,7 +52,7 @@ class LayerRelationTestCase(TestCase):
                              [self.city_cover.pk])
         # city cover should not be present after deletion
         distance_relation.delete()
-        self.assertListEqual(list(self.trek.relations_as_origin.filter(relation=distance_relation)
+        self.assertListEqual(list(self.trek.relations_as_origin.all()
                                   .values_list('destination__pk', flat=True)),
                              [])
 
