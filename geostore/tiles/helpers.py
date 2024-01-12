@@ -1,4 +1,4 @@
-import hashlib
+from hashlib import sha224
 from random import uniform
 
 import mercantile
@@ -192,23 +192,19 @@ class VectorTile(object):
         else:
             cache_key = self.layer.pk
 
-        features_filter = ''
-        if features_filter is not None:
-            features_filter_hash = \
-                hashlib.sha224(
-                    str(features_filter).encode('utf-8')
-                ).hexdigest()
+        features_filter_hash = ''
+        if self.features_filter is not None:
+            features_filter_hash = str(self.features_filter)
+
         properties_filter_hash = ''
         if self.properties_filter is not None:
-            properties_filter_hash = \
-                hashlib.sha224(
-                    ','.join(self.properties_filter).encode('utf-8')
-                ).hexdigest()
-        return (
+            properties_filter_hash = ','.join(self.properties_filter)
+
+        return sha224(
             f'tile_cache_{cache_key}_{x}_{y}_{z}'
             f'_{self.pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
-            f'_{self.features_limit}'
-        )
+            f'_{self.features_limit}'.encode()
+        ).hexdigest()
 
 
 def guess_maxzoom(layer):
