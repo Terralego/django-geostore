@@ -1,5 +1,3 @@
-from enum import IntEnum
-
 from django.db.models import IntegerChoices
 
 default_app_config = 'geostore.apps.GeostoreConfig'
