@@ -1,10 +1,12 @@
 CHANGELOG
 =========
 
-0.8.0+dev      (XXXX-XX-XX)
+1.0.0          (2024-01-12)
 ---------------------------
 
-* Fix tilejson cache key with hexdigest
+* Add support for django 5.0
+* Add support for python 3.12
+* Improve TileJSON and Tile cache keys
 
 
 0.8.0          (2023-09-08)
