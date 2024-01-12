@@ -34,7 +34,7 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     #TODO: Fix when github action do not show failed for the workflow with continue-on-error
-    #continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ matrix.experimental }}
     needs: [lint]
     strategy:
       matrix:
@@ -63,7 +63,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt update && sudo apt-get -yq install libproj-dev binutils gdal-bin libgdal-dev
+        sudo apt-get -q update && sudo apt-get -yqq install libproj-dev binutils gdal-bin libgdal-dev
         python -m pip install --upgrade pip setuptools wheel
         pip install .[dev] -U
         if [[ ${{ matrix.django-version }} == dev ]]; then
