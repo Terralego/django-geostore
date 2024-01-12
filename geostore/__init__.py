@@ -14,16 +14,9 @@ class GeometryTypes(IntegerChoices):
     GeometryCollection = 7
 
     @classmethod
-    def shape_allowed_types(cls):
+    def shape_allowed_type_names(cls):
         """
         Types allowed in shapefile export
         """
         excluded = [cls.GeometryCollection]
         return [geom_type for geom_type in cls if geom_type not in excluded]
-
-    @classmethod
-    def shape_allowed_type_names(cls):
-        """
-        Name types allowed in shapefile export
-        """
-        return [geom_type.label.split('.')[-1] for geom_type in cls.shape_allowed_types()]
