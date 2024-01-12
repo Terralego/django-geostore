@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from tempfile import TemporaryDirectory
 from unittest import mock, skipIf
 from xml.etree import ElementTree as ET
@@ -8,7 +9,6 @@ from django.core import mail
 from django.core.files.storage import default_storage
 from django.test import override_settings
 from django.urls import reverse
-from django.utils.datetime_safe import datetime
 from rest_framework import status
 from rest_framework.test import APITestCase
 
