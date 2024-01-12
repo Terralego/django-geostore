@@ -1,5 +1,8 @@
 from django.contrib import admin
-from django.contrib.gis.admin import GISModelAdmin
+try:
+    from django.contrib.gis.admin import GISModelAdmin
+except ImportError:
+    from django.contrib.admin import OSMGeoAdmin as GISModelAdmin
 
 from geostore.models import Layer, Feature, LayerExtraGeom, FeatureExtraGeom, LayerRelation
 
