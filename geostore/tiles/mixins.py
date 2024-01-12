@@ -55,7 +55,8 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
         """ MVT layer tilejson """
         last_update = self.get_last_update()
         cache_key = md5(
-            f'tilejson-{self.get_object().name}' + '-'.join([g.name for g in self.authenticated_groups])).hexdigest()
+            f"tilejson-{self.get_object().name}{'-'.join([g.name for g in self.authenticated_groups])}".encode()
+        ).hexdigest()
         version = int(last_update.timestamp())
         tilejson_data = cache.get(cache_key, version=version)
 
