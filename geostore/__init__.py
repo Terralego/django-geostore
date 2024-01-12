@@ -1,9 +1,11 @@
 from enum import IntEnum
 
+from django.db.models import IntegerChoices
+
 default_app_config = 'geostore.apps.GeostoreConfig'
 
 
-class GeometryTypes(IntEnum):
+class GeometryTypes(IntegerChoices):
     Point = 0
     LineString = 1
     # LinearRing 2
@@ -14,15 +16,11 @@ class GeometryTypes(IntEnum):
     GeometryCollection = 7
 
     @classmethod
-    def choices(cls):
-        return [(geom_type.value, str(geom_type).split('.')[-1]) for geom_type in cls]
-
-    @classmethod
     def shape_allowed_types(cls):
         """
         Types allowed in shapefile export
         """
-        excluded = [GeometryTypes.GeometryCollection]
+        excluded = [cls.GeometryCollection]
         return [geom_type for geom_type in cls if geom_type not in excluded]
 
     @classmethod
