@@ -1,4 +1,4 @@
-from hashlib import md5
+from hashlib import sha224
 from random import uniform
 
 import mercantile
@@ -200,7 +200,7 @@ class VectorTile(object):
         if self.properties_filter is not None:
             properties_filter_hash = ','.join(self.properties_filter)
 
-        return md5(
+        return sha224(
             f'tile_cache_{cache_key}_{x}_{y}_{z}'
             f'_{self.pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
             f'_{self.features_limit}'.encode()

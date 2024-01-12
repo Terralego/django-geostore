@@ -1,4 +1,4 @@
-from hashlib import md5
+from hashlib import sha224
 from urllib.parse import unquote, urljoin
 
 from django.core.cache import cache
@@ -54,7 +54,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
     def tilejson(self, request, *args, **kwargs):
         """ MVT layer tilejson """
         last_update = self.get_last_update()
-        cache_key = md5(
+        cache_key = sha224(
             f"tilejson-{self.get_object().name}{'-'.join([g.name for g in self.authenticated_groups])}".encode()
         ).hexdigest()
         version = int(last_update.timestamp())
