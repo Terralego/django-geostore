@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
         ('geostore', '0042_layer_routable'), ('geostore', '0042_auto_20201015_1328'),
         ('geostore', '0043_merge_20201023_1209'), ('geostore', '0044_auto_20201106_1638'),
         ('geostore', '0045_auto_20210429_0818'), ('geostore', '0046_auto_20211013_1334'),
-        ('geostore', '0047_alter_feature_properties')
+        ('geostore', '0047_alter_feature_properties'), ('geostore', '0048_remove_feature_geostore_fe_layer_i_c3168f_gist_and_more')
     ]
 
     initial = True
@@ -233,8 +233,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='feature',
-            index=django.contrib.postgres.indexes.GistIndex(fields=['layer', 'geom'],
-                                                            name='geostore_fe_layer_i_c3168f_gist'),
+            index=django.contrib.postgres.indexes.GistIndex(fields=['geom'],
+                                                            name='geostore_fe_geom_cff9a1_gist'),
         ),
         migrations.AddIndex(
             model_name='feature',
@@ -258,7 +258,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='featureextrageom',
-            index=django.contrib.postgres.indexes.GistIndex(fields=['layer_extra_geom', 'geom'],
+            index=django.contrib.postgres.indexes.GistIndex(fields=['geom'],
                                                             name='feg_geom_gist_index'),
         ),
         migrations.AddIndex(

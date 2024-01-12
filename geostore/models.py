@@ -283,7 +283,7 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
             models.Index(fields=['source', 'layer', ]),
             models.Index(fields=['target', 'layer', ]),
             models.Index(fields=['source', 'target', 'layer']),
-            GistIndex(fields=['layer', 'geom']),
+            GistIndex(fields=['geom']),
             GinIndex(name='properties_gin_index', fields=['properties']),
         ]
         constraints = [
@@ -410,7 +410,7 @@ class FeatureExtraGeom(BaseUpdatableModel):
         )
         indexes = [
             models.Index(fields=['layer_extra_geom', 'identifier']),
-            GistIndex(name='feg_geom_gist_index', fields=['layer_extra_geom', 'geom']),
+            GistIndex(name='feg_geom_gist_index', fields=['geom']),
             GinIndex(name='feg_properties_gin_index', fields=['properties']),
         ]
         constraints = [
