@@ -84,7 +84,7 @@ jobs:
         coverage run -a ./manage.py test --settings=test_geostore.settings_with_customs geostore.tests.test_views.test_async_exports
         coverage xml -o coverage.xml
 
-    - uses: codecov/codecov-action@v3
+    - uses: codecov/codecov-action@v4
       with:
         files: ./coverage.xml
         fail_ci_if_error: true
