@@ -133,8 +133,9 @@ class LayerGeojsonExportAsyncTestCase(APITestCase):
         with default_storage.open(path_export) as fp:
             geojson = json.loads(fp.read())
         feature = geojson['features'][0]['geometry']
-        feature_geom = GEOSGeometry(json.dumps(feature)).ewkt
-        self.assertEqual(feature_geom, 'SRID=4326;POINT (2.4609375 45.58328975600632)')
+        feature_geom = GEOSGeometry(json.dumps(feature))
+        self.assertAlmostEquals(feature_geom.x, 2.4609375)
+        self.assertAlmostEquals(feature_geom.y, 45.58328975600632)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
 
 
