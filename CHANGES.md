@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+1.0.0+dev      (XXXX-XX-XX)
+---------------------------
+
+* Add support for django 5.1
+* Add support for python 3.13
+* Drop support for django 3.2
+* Drop support for python 3.8
+
+
 1.0.0          (2024-01-12)
 ---------------------------
 
