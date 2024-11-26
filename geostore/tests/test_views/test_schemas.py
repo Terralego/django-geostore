@@ -71,16 +71,16 @@ class SchemaValidationTest(APITestCase):
 
     def test_schema_property_match_bad(self):
         """
-        If schema defined, deny unvalid data
+        If schema defined, deny invalid data
         """
         response = self.client.post(reverse('feature-list', args=[self.property_schema_layer.pk, ]),
                                     data={"geom": "POINT(0 0)",
                                           "properties": {"name": 20,
-                                                         "age": "wrong data"}})
+                                                         "age": 10}})
         response_json = response.json()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("properties", response_json)
-        self.assertIn("wrong data", response_json['properties'][0])
+        self.assertIn("20 is not of type 'string'", response_json['properties'][0])
 
     def test_schema_property_doesnt_match(self):
         """

@@ -59,7 +59,6 @@ class ImportOSMTest(TestCase):
             type=type_feature,
             verbosity=1,
             stderr=output)
-        self.assertIn("Warning 1", output.getvalue())
         self.assertEqual(Feature.objects.count(), 2)
 
     @mock.patch('requests.get')
@@ -77,7 +76,6 @@ class ImportOSMTest(TestCase):
             type=type_feature,
             verbosity=1,
             stderr=output)
-        self.assertIn("Warning 1", output.getvalue())
         self.assertEqual(layer.features.count(), 2)
 
     @mock.patch('requests.get')

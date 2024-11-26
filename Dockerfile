@@ -1,5 +1,21 @@
-FROM makinacorpus/geodjango:bionic-3.8
+FROM python:3.9-bookworm
 
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+
+RUN apt-get update -qq && apt-get -y upgrade && apt-get install -y -qq \
+    # std libs
+    git less nano curl \
+    ca-certificates \
+    wget build-essential\
+    # python basic libs
+    gettext \
+    # geodjango
+    gdal-bin binutils libproj-dev libgdal-dev \
+    # postgresql
+    libpq-dev postgresql-client && \
+    apt-get clean all && rm -rf /var/apt/lists/* && rm -rf /var/cache/apt/*
 RUN mkdir -p /code/src
 
 RUN useradd -ms /bin/bash django
@@ -8,7 +24,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 USER django
 
-RUN python3.8 -m venv /code/venv
+RUN python3.9 -m venv /code/venv
 RUN  /code/venv/bin/pip install --no-cache-dir pip setuptools wheel -U
 
 COPY . /code/src
