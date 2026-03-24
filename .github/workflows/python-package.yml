@@ -45,7 +45,7 @@ jobs:
           - python-version: '3.9'
             django-version: '5.2.*'
         include:
-          - postgis-image: 'postgis/postgis:latest'
+          - postgis-image: 'postgis/postgis:15-3.4'
             django-version: '5.2.*'
 
     services:
