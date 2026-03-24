@@ -1,16 +1,15 @@
 from hashlib import sha224
 from random import uniform
 
-import mercantile
-from django.contrib.gis.db.models.functions import Transform, Length
+from django.contrib.gis.db.models.functions import Transform
 from django.core.cache import cache
 from django.db import connection
 from math import ceil, floor, log, pi
 
+from vectortiles.backends.postgis import VectorLayer
+
 from . import EARTH_RADIUS, EPSG_3857
-from .funcs import MakeEnvelope, SimplifyPreserveTopology, Area
 from .sigtools import SIGTools
-from .. import settings as app_settings
 
 
 def get_cache_version(layer):
@@ -32,16 +31,108 @@ def cached_tile(func):
         expiration = int(expiration_factor * (3600 * 24 * 7) * uniform(0.9, 1.1))
 
         def build_tile():
-            (a, b) = func(
+            return func(
                 self, x, y, z, *args, **kwargs)
-            return a, b.tobytes()
 
         return cache.get_or_set(cache_key, build_tile, expiration, version=version)
 
     return wrapper
 
 
+class GeoStoreVectorLayer(VectorLayer):
+    """Adapter between geostore Layer model and django-vectortiles VectorLayer"""
+
+    def __init__(self, layer, name=None, description=None, features_pk=None,
+                 cache_key=None, include_fields=True, min_zoom=None, max_zoom=None):
+        self.layer = layer
+        self._name = name or layer.name
+        self._description = description
+        self.features_pk = features_pk
+        self._cache_key = cache_key
+        self._include_fields = include_fields
+        self._min_zoom = min_zoom
+        self._max_zoom = max_zoom
+        self.pixel_buffer = layer.layer_settings_with_default('tiles', 'pixel_buffer')
+        self.tile_buffer = self.pixel_buffer * 8  # EXTENT_RATIO
+        self.features_filter = layer.layer_settings_with_default('tiles', 'features_filter')
+        self.properties_filter = layer.layer_settings_with_default('tiles', 'properties_filter')
+        self.features_limit = layer.layer_settings_with_default('tiles', 'features_limit')
+
+    def get_id(self):
+        return self._name
+
+    def get_description(self):
+        return self._description if self._description else self._name.title()
+
+    def get_min_zoom(self):
+        if self._min_zoom is not None:
+            return self._min_zoom
+        return self.layer.layer_settings_with_default('tiles', 'minzoom')
+
+    def get_max_zoom(self):
+        if self._max_zoom is not None:
+            return self._max_zoom
+        return self.layer.layer_settings_with_default('tiles', 'maxzoom')
+
+    def get_queryset(self):
+        return self.layer.features.all()
+
+    def get_vector_tile_queryset(self, z=None, x=None, y=None):
+        qs = self.get_queryset()
+        if self.features_filter is not None:
+            qs = qs.filter(properties__contains=self.features_filter)
+        if self.features_pk is not None:
+            qs = qs.filter(pk__in=list(self.features_pk))
+        return qs
+
+    def get_tile_fields(self):
+        if self.properties_filter is not None:
+            return tuple(f'properties__{f}' for f in self.properties_filter) + ('identifier',)
+        return ('properties', 'identifier')
+
+    def get_queryset_limit(self):
+        return self.features_limit
+
+    def get_layer_fields(self):
+        if not self._include_fields:
+            return {}
+        properties_filter = self.layer.layer_settings_with_default(
+            'tiles', 'properties_filter')
+        if properties_filter is not None:
+            fields = properties_filter
+        elif hasattr(self.layer, 'layer_properties'):
+            fields = self.layer.layer_properties.keys()
+        else:
+            fields = []
+        return {f: '' for f in fields}
+
+    def get_tile_cache_key(self, x, y, z):
+        if self._cache_key:
+            cache_key = self._cache_key
+        else:
+            cache_key = self.layer.pk
+
+        features_filter_hash = ''
+        if self.features_filter is not None:
+            features_filter_hash = str(self.features_filter)
+
+        properties_filter_hash = ''
+        if self.properties_filter is not None:
+            properties_filter_hash = ','.join(self.properties_filter)
+
+        return sha224(
+            f'tile_cache_{cache_key}_{x}_{y}_{z}'
+            f'_{self.pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
+            f'_{self.features_limit}'.encode()
+        ).hexdigest()
+
+    @cached_tile
+    def get_tile(self, x, y, z):
+        return super().get_tile(x, y, z)
+
+
 class VectorTile(object):
+    """Legacy wrapper kept for backward compatibility"""
     def __init__(self, layer, cache_key=None):
         self.layer, self.cache_key = layer, cache_key
         self.pixel_buffer = self.layer.layer_settings_with_default('tiles', 'pixel_buffer')
@@ -53,138 +144,12 @@ class VectorTile(object):
     EXTENT_RATIO = 8
     TILE_WIDTH_PIXEL = 512
 
-    def _simplify(self, layer_query, pixel_width_x, pixel_width_y):
-        if self.layer.is_polygon:
-            # Grid step is pixel_width_x / EXTENT_RATIO and pixel_width_y / EXTENT_RATIO
-            # Simplify to average half pixel width
-            layer_query = layer_query.annotate(
-                outgeom3857=SimplifyPreserveTopology('outgeom3857', (pixel_width_x + pixel_width_y) / 2 / 2)
-            )
-        return layer_query
-
-    def _filter_on_property(self, layer_query, features_filter):
-        if features_filter is not None:
-            layer_query = layer_query.filter(
-                properties__contains=features_filter
-            )
-        return layer_query
-
-    def _filter_on_geom_size(self, layer_query, layer_geometry, pixel_width_x, pixel_width_y):
-        if self.layer.is_linestring:
-            # Larger then a half of pixel
-            layer_query = layer_query.annotate(
-                length3857=Length('outgeom3857')
-            ).filter(
-                length3857__gt=(pixel_width_x + pixel_width_y) / 2 / 2
-            )
-        elif self.layer.is_polygon:
-            # Larger than a quarter of pixel
-            layer_query = layer_query.annotate(
-                area3857=Area('outgeom3857')
-            ).filter(
-                area3857__gt=pixel_width_x * pixel_width_y / 4
-            )
-        return layer_query
-
-    def _limit(self, layer_query, features_limit):
-        if features_limit is not None:
-            # Order by feature size before limit
-            if self.layer.is_linestring:
-                layer_query = layer_query.order_by('length3857')
-            elif self.layer.is_polygon:
-                layer_query = layer_query.order_by('area3857')
-
-            layer_query = layer_query[:features_limit]
-        return layer_query
-
-    def get_tile_bbox(self, x, y, z):
-        bounds = mercantile.bounds(x, y, z)
-        return (*mercantile.xy(bounds.west, bounds.south), *mercantile.xy(bounds.east, bounds.north))
-
-    def pixel_widths(self, xmin, ymin, xmax, ymax):
-        return (
-            (xmax - xmin) / self.TILE_WIDTH_PIXEL,
-            (ymax - ymin) / self.TILE_WIDTH_PIXEL
-        )
-
-    @cached_tile
     def get_tile(self, x, y, z, name=None, features_pks=None):
-        xmin, ymin, xmax, ymax = self.get_tile_bbox(x, y, z)
-        pixel_width_x, pixel_width_y = self.pixel_widths(xmin, ymin, xmax, ymax)
-
-        # Intersects on internal data projection using pixel buffer
-        layer_query = self.layer.features.filter(
-            geom__intersects=Transform(
-                MakeEnvelope(xmin - pixel_width_x * self.pixel_buffer,
-                             ymin - pixel_width_y * self.pixel_buffer,
-                             xmax + pixel_width_x * self.pixel_buffer,
-                             ymax + pixel_width_y * self.pixel_buffer,
-                             EPSG_3857),
-                app_settings.INTERNAL_GEOMETRY_SRID))\
-            .annotate(
-            outgeom3857=Transform('geom', EPSG_3857),
+        vector_layer = GeoStoreVectorLayer(
+            self.layer, name=name, features_pk=features_pks, cache_key=self.cache_key
         )
-
-        # Filter features
-        layer_query = self._filter_on_property(layer_query, self.features_filter)
-        layer_query = self._filter_on_geom_size(layer_query, self.layer.layer_geometry, pixel_width_x, pixel_width_y)
-        if features_pks:
-            layer_query = layer_query.filter(pk__in=list(features_pks))
-        # Lighten geometry
-        layer_query = self._simplify(layer_query, pixel_width_x, pixel_width_y)
-
-        # Seatbelt
-        layer_query = self._limit(layer_query, self.features_limit)
-
-        layer_raw_query, args = layer_query.query.sql_with_params()
-
-        if self.properties_filter:
-            filter = ', '.join([f"'{f}'" for f in self.properties_filter])
-            properties = f'''
-                (
-                    SELECT jsonb_object_agg(key, value) FROM
-                    jsonb_each(properties)
-                    WHERE key IN ({filter})
-                )
-                '''
-        elif self.properties_filter == []:
-            properties = "'{}'::jsonb"
-        else:
-            properties = "properties"
-
-        properties += " || json_build_object('_id', identifier)::jsonb"
-
-        with connection.cursor() as cursor:
-            sql_query = f'''
-                WITH
-                fullgeom AS ({layer_raw_query}),
-                tilegeom AS (
-                    SELECT
-                        ({properties}) AS properties,
-                        ST_AsMvtGeom(
-                            outgeom3857,
-                            ST_MakeEnvelope({xmin}, {ymin}, {xmax}, {ymax}, {EPSG_3857}),
-                            {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
-                            {self.pixel_buffer * self.EXTENT_RATIO},
-                            true) AS geometry
-                    FROM
-                        fullgeom)
-                SELECT
-                    count(*) AS count,
-                    ST_AsMVT(
-                        tilegeom,
-                        CAST(%s AS text),
-                        {self.TILE_WIDTH_PIXEL * self.EXTENT_RATIO},
-                        'geometry'
-                    ) AS mvt
-                FROM
-                    tilegeom
-            '''
-            name = name if name else self.layer.name
-            cursor.execute(sql_query, args + (name,))
-            row = cursor.fetchone()
-
-            return row[0], row[1]
+        tile = vector_layer.get_tile(x, y, z)
+        return tile
 
     def get_tile_cache_key(self, x, y, z):
         if self.cache_key:

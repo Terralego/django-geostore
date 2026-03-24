@@ -41,6 +41,7 @@ setup(
     install_requires=[
         'django',
         'django-token-tools',
+        'django-vectortiles>=1.0',
         'djangorestframework>=3.10',
         "djangorestframework-gis>=0.15",
         "gpxpy",
