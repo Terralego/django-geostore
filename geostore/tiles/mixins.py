@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from ..models import Feature
 from .. import settings as app_settings
 from ..tokens import tiles_token_generator
-from .helpers import VectorTile
+from .helpers import GeoStoreVectorLayer
 
 
 class AuthenticatedGroupsMixin:
@@ -73,34 +73,43 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             content_type=self.tile_content_type
         )
 
-    def get_tile_for_layer(self, layer, z, x, y, name=None, features_pk=None):
-        tile = VectorTile(layer)
-        return tile.get_tile(
-            x, y, z, name, features_pk
-        )
+    def get_vector_layers(self):
+        """Build GeoStoreVectorLayer instances for all layers, extra geometries and relations"""
+        vector_layers = []
+        for layer in self.layers:
+            if self.is_authorized(layer):
+                vector_layers.append(GeoStoreVectorLayer(layer))
+
+                for extra_geom in layer.extra_geometries.all():
+                    vector_layers.append(GeoStoreVectorLayer(
+                        extra_geom,
+                        name=f'{extra_geom.name}',
+                        description=f'{extra_geom.title}'.title(),
+                        include_fields=False,
+                        min_zoom=layer.layer_settings_with_default('tiles', 'minzoom'),
+                        max_zoom=layer.layer_settings_with_default('tiles', 'maxzoom'),
+                    ))
+
+                for relation in layer.relations_as_origin.all():
+                    relation_layer = relation.destination
+                    relation_features = relation.related_features.values_list('destination', flat=True)
+                    vector_layers.append(GeoStoreVectorLayer(
+                        relation_layer,
+                        name=f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
+                        description=relation.name.title(),
+                        features_pk=relation_features,
+                        include_fields=False,
+                    ))
+        return vector_layers
 
     def get_tile(self, z, x, y):
         tiles_array = []
-        for layer in self.layers:
-            minzoom = layer.layer_settings_with_default('tiles', 'minzoom')
-            maxzoom = layer.layer_settings_with_default('tiles', 'maxzoom')
-            if minzoom <= z <= int(maxzoom) and self.is_authorized(layer):
-                unused, tile = self.get_tile_for_layer(layer, z, x, y)
+        for vector_layer in self.get_vector_layers():
+            minzoom = vector_layer.get_min_zoom()
+            maxzoom = vector_layer.get_max_zoom()
+            if minzoom <= z <= int(maxzoom):
+                tile = vector_layer.get_tile(x, y, z)
                 tiles_array.append(tile)
-
-            for extra_layer in layer.extra_geometries.all():
-                unused, tile = self.get_tile_for_layer(extra_layer, z, x, y)
-                tiles_array.append(tile)
-
-            for relation in layer.relations_as_origin.all():
-                relation_layer = relation.destination
-                relation_features = relation.related_features.values_list('destination', flat=True)
-                unused, tile = self.get_tile_for_layer(relation_layer,
-                                                       z, x, y,
-                                                       f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
-                                                       relation_features)
-                tiles_array.append(tile)
-
         return b''.join(tiles_array)
 
     def get_tile_path(self):
@@ -176,46 +185,8 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
     def get_description(self):
         return self._join_group_settings_string(self.layers, 'metadata', 'description')
 
-    @staticmethod
-    def layer_fields(layer):
-        properties_filter = layer.layer_settings_with_default(
-            'tiles', 'properties_filter')
-        if properties_filter is not None:
-            fields = properties_filter
-        else:
-            fields = layer.layer_properties.keys()
-
-        return {f: '' for f in fields}
-
-    def get_vector_layers(self):
-        data = []
-        for layer in self.layers:
-            data.append({
-                'id': layer.name,
-                'description': layer.name.title(),
-                'fields': self.layer_fields(layer),
-                'minzoom': layer.layer_settings_with_default('tiles', 'minzoom'),
-                'maxzoom': layer.layer_settings_with_default('tiles', 'maxzoom'),
-            })
-            for extra_geom in layer.extra_geometries.all():
-                data.append({
-                    'id': f'{extra_geom.name}',
-                    'description': f'{extra_geom.title}'.title(),
-                    'fields': {},
-                    'minzoom': layer.layer_settings_with_default('tiles', 'minzoom'),
-                    'maxzoom': layer.layer_settings_with_default('tiles', 'maxzoom'),
-                })
-            for relation in layer.relations_as_origin.all():
-                relation_layer = relation.destination
-                data.append({
-                    'id': f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
-                    'description': relation.name.title(),
-                    'fields': {},
-                    'minzoom': relation_layer.layer_settings_with_default('tiles', 'minzoom'),
-                    'maxzoom': relation_layer.layer_settings_with_default('tiles', 'maxzoom'),
-                })
-
-        return data
+    def get_tilejson_vector_layers(self):
+        return [vl.get_tilejson_vector_layer() for vl in self.get_vector_layers()]
 
     def get_tile_urls(self, tile_pattern):
         if app_settings.TERRA_TILES_HOSTNAMES:
@@ -245,7 +216,7 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
             # center
             'attribution': self.get_attribution(),
             'description': self.get_description(),
-            'vector_layers': self.get_vector_layers()
+            'vector_layers': self.get_tilejson_vector_layers()
         }
 
     def get_last_update(self):
