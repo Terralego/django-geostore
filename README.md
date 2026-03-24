@@ -1,10 +1,10 @@
-[![Build Status](https://travis-ci.org/Terralego/django-geostore.svg?branch=master)](https://travis-ci.org/Terralego/django-geostore/)
+[![Build](https://github.com/Terralego/django-geostore/actions/workflows/python-package.yml/badge.svg?branch=master)](https://github.com/Terralego/django-geostore/actions/workflows/python-package.yml)
 [![codecov](https://codecov.io/gh/Terralego/django-geostore/branch/master/graph/badge.svg)](https://codecov.io/gh/Terralego/django-geostore)
 [![Maintainability](https://api.codeclimate.com/v1/badges/b6119d8175fa6f5f5949/maintainability)](https://codeclimate.com/github/Terralego/django-geostore/maintainability)
 [![Documentation Status](https://readthedocs.org/projects/django-geostore/badge/?version=latest)](https://django-geostore.readthedocs.io/en/latest/?badge=latest)
 
-![Python Version](https://img.shields.io/badge/python-%3E%3D%203.6-blue.svg)
-![Django Version](https://img.shields.io/badge/django-%3E%3D%202.2-blue.svg)
+![Python Version](https://img.shields.io/badge/python-%3E%3D%203.9-blue.svg)
+![Django Version](https://img.shields.io/badge/django-%3E%3D%204.2-blue.svg)
 
 # django-geostore
 
