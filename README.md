@@ -22,20 +22,11 @@ Dynamic geographic datastore with Vector Tiles generation from PostGIS and json 
 
 ## Requirements
 
-### General
-
-* Python 3.6+
-* Postgresql 10+
-* PostGIS 2.4+
-
-Optionnal to use PgRouting functionnalities :
-  * PgRouting 2.5+ and django-geostore-routing
-
 ### Libraries
 
 these are debian packages required
 
-- libpq-dev   (psycopg2)
+- libpq-dev   (psycopg)
 - gettext     (translations)
 - binutils    (django.contrib.gis)
 - libproj-dev (django.contrib.gis)
