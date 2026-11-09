@@ -3,8 +3,8 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/b6119d8175fa6f5f5949/maintainability)](https://codeclimate.com/github/Terralego/django-geostore/maintainability)
 [![Documentation Status](https://readthedocs.org/projects/django-geostore/badge/?version=latest)](https://django-geostore.readthedocs.io/en/latest/?badge=latest)
 
-![Python Version](https://img.shields.io/badge/python-%3E%3D%203.9-blue.svg)
-![Django Version](https://img.shields.io/badge/django-%3E%3D%204.2-blue.svg)
+![Python Version](https://img.shields.io/badge/python-%3E%3D%203.11-blue.svg)
+![Django Version](https://img.shields.io/badge/django-%3E%3D%205.2-blue.svg)
 
 # django-geostore
 
