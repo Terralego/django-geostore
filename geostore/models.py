@@ -415,7 +415,7 @@ class FeatureExtraGeom(BaseUpdatableModel):
         ]
         constraints = [
             # geometry should be valid
-            models.CheckConstraint(check=models.Q(geom__isvalid=True), name='geom_extra_is_valid'),
+            models.CheckConstraint(condition=models.Q(geom__isvalid=True), name='geom_extra_is_valid'),
             # geometry should not be empty
-            models.CheckConstraint(check=models.Q(geom__isempty=False), name='geom_extra_is_empty')
+            models.CheckConstraint(condition=models.Q(geom__isempty=False), name='geom_extra_is_empty')
         ]
