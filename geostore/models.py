@@ -15,10 +15,7 @@ from django.db.models.functions import Cast
 from .import_export.exports import LayerExportMixin
 from .import_export.imports import LayerImportMixin
 
-try:
-    from django.db.models import JSONField
-except ImportError:  # TODO Remove when dropping Django releases < 3.1
-    from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
 from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.db import connection, transaction
 from django.db.models import Manager

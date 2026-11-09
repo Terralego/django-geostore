@@ -3,10 +3,8 @@
 import uuid
 
 import django.contrib.gis.db.models.fields
-try:
-    from django.db.models import JSONField
-except ImportError:  # TODO Remove when dropping Django releases < 3.1
-    from django.contrib.postgres.fields import JSONField
+from django.db.models import JSONField
+
 import django.db.models.deletion
 from django.db import migrations, models
 
