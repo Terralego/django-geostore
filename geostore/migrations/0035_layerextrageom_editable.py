@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0034_auto_20191209_0902'),
+        ("geostore", "0034_auto_20191209_0902"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='layerextrageom',
-            name='editable',
+            model_name="layerextrageom",
+            name="editable",
             field=models.BooleanField(default=True),
         ),
     ]

@@ -6,15 +6,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0016_auto_20181120_1059'),
+        ("geostore", "0016_auto_20181120_1059"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='layer',
-            name='settings',
+            model_name="layer",
+            name="settings",
             field=JSONField(blank=True, default=dict),
         ),
     ]

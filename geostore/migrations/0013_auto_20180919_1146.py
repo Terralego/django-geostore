@@ -6,25 +6,26 @@ from django.db import migrations, models
 
 
 def update_name(apps, schema_editor):
-    Layer = apps.get_model('geostore', 'Layer')
+    Layer = apps.get_model("geostore", "Layer")
     for layer in Layer.objects.filter(name=""):
         layer.name = uuid.uuid4()
-        layer.save(update_fields=['name', ])
+        layer.save(
+            update_fields=[
+                "name",
+            ]
+        )
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0011_auto_20180711_0831'),
+        ("geostore", "0011_auto_20180711_0831"),
     ]
 
     operations = [
-        migrations.RunPython(
-            update_name, reverse_code=migrations.RunPython.noop
-        ),
+        migrations.RunPython(update_name, reverse_code=migrations.RunPython.noop),
         migrations.AlterField(
-            model_name='layer',
-            name='name',
+            model_name="layer",
+            name="name",
             field=models.CharField(default=uuid.uuid4, max_length=256, unique=True),
         ),
     ]

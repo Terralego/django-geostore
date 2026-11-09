@@ -4,11 +4,9 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0018_auto_20190326_1049'),
-        ('geostore', '0018_auto_20190228_1655'),
+        ("geostore", "0018_auto_20190326_1049"),
+        ("geostore", "0018_auto_20190228_1655"),
     ]
 
-    operations = [
-    ]
+    operations = []

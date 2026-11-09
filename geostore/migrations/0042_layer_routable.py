@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0041_auto_20200625_1515'),
+        ("geostore", "0041_auto_20200625_1515"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='layer',
-            name='routable',
-            field=models.BooleanField(default=False, help_text='Used for make layer routable'),
+            model_name="layer",
+            name="routable",
+            field=models.BooleanField(
+                default=False, help_text="Used for make layer routable"
+            ),
         ),
     ]

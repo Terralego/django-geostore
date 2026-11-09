@@ -1,4 +1,4 @@
-from unittest.mock import patch, PropertyMock
+from unittest.mock import PropertyMock, patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -8,7 +8,12 @@ from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
 from geostore.models import LayerRelation
-from geostore.tests.factories import (FeatureFactory, LayerFactory, LayerSchemaFactory, UserFactory)
+from geostore.tests.factories import (
+    FeatureFactory,
+    LayerFactory,
+    LayerSchemaFactory,
+    UserFactory,
+)
 
 
 class FeaturesListViewTest(TestCase):
@@ -16,52 +21,31 @@ class FeaturesListViewTest(TestCase):
     intersect_geometry = {
         "type": "LineString",
         "coordinates": [
-            [
-                1.3839340209960938,
-                43.602521593464054
-            ],
-            [
-                1.4869308471679688,
-                43.60376465190968
-            ]
-        ]
+            [1.3839340209960938, 43.602521593464054],
+            [1.4869308471679688, 43.60376465190968],
+        ],
     }
     intersect_ref_geometry = {
         "type": "LineString",
         "coordinates": [
-            [
-                1.440925598144531,
-                43.64750394449096
-            ],
-            [
-                1.440582275390625,
-                43.574421623084234
-            ]
-        ]
+            [1.440925598144531, 43.64750394449096],
+            [1.440582275390625, 43.574421623084234],
+        ],
     }
     fake_linestring = {
         "type": "LineString",
         "coordinates": [
-            [
-                1.3839340209960938,
-                43.602521593464054
-            ],
-        ]
+            [1.3839340209960938, 43.602521593464054],
+        ],
     }
     fake_polygon = {
         "type": "Polygon",
         "coordinates": [
             [
-                [
-                    1.3839340209960938,
-                    43.602521593464054
-                ],
-                [
-                    1.440582275390625,
-                    43.574421623084234
-                ]
+                [1.3839340209960938, 43.602521593464054],
+                [1.440582275390625, 43.574421623084234],
             ]
-        ]
+        ],
     }
 
     def setUp(self):
@@ -72,21 +56,21 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 1, 'text': 'bar'},
+            properties={"number": 1, "text": "bar"},
         )
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 1, 'text': 'foo'},
+            properties={"number": 1, "text": "foo"},
         )
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 2, 'text': 'foo'},
+            properties={"number": 2, "text": "foo"},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer': layer.pk}),
-            {'properties__number': 1, 'properties__text': 'foo'},
+            reverse("feature-list", kwargs={"layer": layer.pk}),
+            {"properties__number": 1, "properties__text": "foo"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
@@ -97,16 +81,16 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 1},
+            properties={"number": 1},
         )
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 2},
+            properties={"number": 2},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer': layer.pk}),
-            {'properties__wrongfield': 'wrong value'},
+            reverse("feature-list", kwargs={"layer": layer.pk}),
+            {"properties__wrongfield": "wrong value"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -118,21 +102,21 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 2, 'digit': 42},
+            properties={"number": 2, "digit": 42},
         )
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 1, 'digit': 42},
+            properties={"number": 1, "digit": 42},
         )
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'number': 1, 'digit': 34},
+            properties={"number": 1, "digit": 34},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer': layer.pk}),
-            {'properties__number': 1, 'properties__digit': 42},
+            reverse("feature-list", kwargs={"layer": layer.pk}),
+            {"properties__number": 1, "properties__digit": 42},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
@@ -143,24 +127,21 @@ class FeaturesListViewTest(TestCase):
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+            properties={"text": "foobar", "sentence": "foobar is here"},
         )
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'text': 'foo', 'sentence': 'foobar is missing'},
+            properties={"text": "foo", "sentence": "foobar is missing"},
         )
         FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+            properties={"text": "foobar", "sentence": "foobar is here"},
         )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer': layer.pk}),
-            {
-                'properties__text': 'foobar',
-                'properties__sentence': 'foobar is here'
-            }
+            reverse("feature-list", kwargs={"layer": layer.pk}),
+            {"properties__text": "foobar", "properties__sentence": "foobar is here"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         json_response = response.json()
@@ -171,14 +152,16 @@ class FeaturesListViewTest(TestCase):
         feature = FeatureFactory(
             layer=layer,
             geom=self.fake_geometry,
-            properties={'text': 'foobar', 'sentence': 'foobar is here'},
+            properties={"text": "foobar", "sentence": "foobar is here"},
         )
 
         response = self.client.get(
             reverse(
-                'feature-detail',
-                kwargs={'layer': str(layer.name),
-                        'identifier': str(feature.identifier)}
+                "feature-detail",
+                kwargs={
+                    "layer": str(layer.name),
+                    "identifier": str(feature.identifier),
+                },
             ),
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -188,18 +171,20 @@ class FeaturesListViewTest(TestCase):
             50,
             layer=self.layer,
             geom=self.fake_geometry,
-            properties={
-                'test': 'name',
-                'name': 'test'
-            })
+            properties={"test": "name", "name": "test"},
+        )
         response = self.client.get(
-            reverse('feature-list', kwargs={'layer': self.layer.pk, 'format': 'geojson'})
+            reverse(
+                "feature-list", kwargs={"layer": self.layer.pk, "format": "geojson"}
+            )
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertListEqual(sorted(list(('features', 'type'))), sorted(list(data.keys())))
-        self.assertEqual(data['type'], "FeatureCollection")
-        self.assertEqual(len(data['features']), self.layer.features.count())
+        self.assertListEqual(
+            sorted(list(("features", "type"))), sorted(list(data.keys()))
+        )
+        self.assertEqual(data["type"], "FeatureCollection")
+        self.assertEqual(len(data["features"]), self.layer.features.count())
 
 
 @override_settings(GEOSTORE_RELATION_CELERY_ASYNC=True)
@@ -207,15 +192,21 @@ class FeatureDetailTestCase(APITestCase):
     def setUp(self) -> None:
         self.layer_trek = LayerSchemaFactory(geom_type=GeometryTypes.LineString)
         self.layer_city = LayerSchemaFactory(geom_type=GeometryTypes.Polygon)
-        self.trek = FeatureFactory(layer=self.layer_trek, geom='LINESTRING(0 0, 1 1, 2 2, 3 3)')
-        self.city_uncover = FeatureFactory(layer=self.layer_city,
-                                           geom='POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))',
-                                           properties={
-                                               "name": "Cahors",
-                                               "age": 50000
-                                           })
-        self.detail_url = reverse('feature-detail', args=(self.layer_city.pk,
-                                                          self.city_uncover.identifier,))
+        self.trek = FeatureFactory(
+            layer=self.layer_trek, geom="LINESTRING(0 0, 1 1, 2 2, 3 3)"
+        )
+        self.city_uncover = FeatureFactory(
+            layer=self.layer_city,
+            geom="POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))",
+            properties={"name": "Cahors", "age": 50000},
+        )
+        self.detail_url = reverse(
+            "feature-detail",
+            args=(
+                self.layer_city.pk,
+                self.city_uncover.identifier,
+            ),
+        )
         self.super_user = UserFactory(is_superuser=True)
         self.client.force_authenticate(self.super_user)
 
@@ -224,11 +215,14 @@ class FeatureDetailTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_feature_patch_keep_properties(self):
-        response = self.client.patch(self.detail_url, data={"properties": {"name": "Divona"}})
+        response = self.client.patch(
+            self.detail_url, data={"properties": {"name": "Divona"}}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertListEqual(sorted(list(data['properties'].keys())),
-                             sorted(['name', 'age']))
+        self.assertListEqual(
+            sorted(list(data["properties"].keys())), sorted(["name", "age"])
+        )
 
     @patch('geostore.views.FeatureViewSet.get_object')
     def test_feature_patch_prefetched_cache(self, mock_get_object):
@@ -239,53 +233,84 @@ class FeatureDetailTestCase(APITestCase):
         self.assertEqual(self.city_uncover._prefetched_objects_cache, {})
 
     def test_feature_put_replace_properties(self):
-        response = self.client.put(self.detail_url, data={'geom': 'POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))',
-                                                          "properties": {"name": "Divona"}})
+        response = self.client.put(
+            self.detail_url,
+            data={
+                "geom": "POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))",
+                "properties": {"name": "Divona"},
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertListEqual(sorted(list(data['properties'].keys())),
-                             sorted(['name', ]), data)
+        self.assertListEqual(
+            sorted(list(data["properties"].keys())),
+            sorted(
+                [
+                    "name",
+                ]
+            ),
+            data,
+        )
 
     def test_feature_put_point_empty_wkt(self):
-        response = self.client.put(self.detail_url, data={'geom': 'POINT EMPTY',
-                                                          "properties": {"name": "Divona"}})
+        response = self.client.put(
+            self.detail_url,
+            data={"geom": "POINT EMPTY", "properties": {"name": "Divona"}},
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = response.json()
-        self.assertEqual(data['geom'],
-                         ['Geometry is empty'])
+        self.assertEqual(data["geom"], ["Geometry is empty"])
 
     def test_feature_put_point_empty_geojson(self):
-        response = self.client.put(self.detail_url, data={'geom': '{"type": "Point", "coordinates": []}',
-                                                          "properties": {"name": "Divona"}})
+        response = self.client.put(
+            self.detail_url,
+            data={
+                "geom": '{"type": "Point", "coordinates": []}',
+                "properties": {"name": "Divona"},
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = response.json()
-        self.assertEqual(data['geom'],
-                         ['Unable to convert to python object: Invalid geometry pointer '
-                          'returned from "OGR_G_CreateGeometryFromJson".'])
+        self.assertEqual(
+            data["geom"],
+            [
+                "Unable to convert to python object: Invalid geometry pointer "
+                'returned from "OGR_G_CreateGeometryFromJson".'
+            ],
+        )
 
     def test_feature_put_polygon_not_valid(self):
-        response = self.client.put(self.detail_url, data={'geom': 'POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))',
-                                                          "properties": {"name": "Divona"}})
+        response = self.client.put(
+            self.detail_url,
+            data={
+                "geom": "POLYGON((0 0, 1 1, 1 2, 1 1, 0 0))",
+                "properties": {"name": "Divona"},
+            },
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         data = response.json()
-        self.assertEqual(data['geom'],
-                         ['Geometry is not valid'])
+        self.assertEqual(data["geom"], ["Geometry is not valid"])
 
-    @patch('geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC', new_callable=PropertyMock)
+    @patch(
+        "geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC", new_callable=PropertyMock
+    )
     def test_relation(self, mock_relation):
         mock_relation.return_value = True
-        city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
+        city_cover = FeatureFactory(
+            layer=self.layer_city, geom="POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))"
+        )
         intersect_relation = LayerRelation.objects.create(
-            relation_type='intersects',
+            relation_type="intersects",
             origin=self.layer_trek,
             destination=self.layer_city,
         )
-        url = reverse('feature-relation', args=(self.layer_trek.pk,
-                                                self.trek.identifier,
-                                                intersect_relation.pk))
+        url = reverse(
+            "feature-relation",
+            args=(self.layer_trek.pk, self.trek.identifier, intersect_relation.pk),
+        )
         # city cover should be present after sync
         self.trek.sync_relations(intersect_relation.pk)
-        response = self.client.get(url, data={'page_size': 1})
+        response = self.client.get(url, data={"page_size": 1})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
         self.assertEqual(len(data), 1, data)
@@ -297,26 +322,33 @@ class FeatureDetailTestCase(APITestCase):
         data = response.json()
         self.assertEqual(len(data), 0, data)
 
-    @patch('geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC', new_callable=PropertyMock)
+    @patch(
+        "geostore.settings.GEOSTORE_RELATION_CELERY_ASYNC", new_callable=PropertyMock
+    )
     def test_relation_geojson(self, mock_relation):
         mock_relation.return_value = True
-        city_cover = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
-        city_cover_2 = FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 4 4, 3 0, 0 0))')
+        city_cover = FeatureFactory(
+            layer=self.layer_city, geom="POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))"
+        )
+        city_cover_2 = FeatureFactory(
+            layer=self.layer_city, geom="POLYGON((0 0, 0 3, 4 4, 3 0, 0 0))"
+        )
         intersect_relation = LayerRelation.objects.create(
-            relation_type='intersects',
+            relation_type="intersects",
             origin=self.layer_trek,
             destination=self.layer_city,
         )
-        url = reverse('feature-relation', args=(self.layer_trek.pk,
-                                                self.trek.identifier,
-                                                intersect_relation.pk))
+        url = reverse(
+            "feature-relation",
+            args=(self.layer_trek.pk, self.trek.identifier, intersect_relation.pk),
+        )
         # city cover should be present after sync
         self.trek.sync_relations(intersect_relation.pk)
-        response = self.client.get(url, data={'format': 'geojson'})
+        response = self.client.get(url, data={"format": "geojson"})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertEqual(len(data['features']), 2, data)
+        self.assertEqual(len(data["features"]), 2, data)
 
         # city cover should not be present after deletion
         city_cover.delete()
@@ -326,25 +358,27 @@ class FeatureDetailTestCase(APITestCase):
         data = response.json()
         self.assertEqual(len(data), 0, data)
 
-    @patch('geostore.views.FeatureViewSet.pagination_class', new_callable=PropertyMock)
+    @patch("geostore.views.FeatureViewSet.pagination_class", new_callable=PropertyMock)
     def test_relation_with_pagination(self, mock_view):
         class MyPagination(PageNumberPagination):
             page_size = 1
-            page_size_query_param = 'page_size'
+            page_size_query_param = "page_size"
+
         mock_view.return_value = MyPagination
-        FeatureFactory(layer=self.layer_city, geom='POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))')
+        FeatureFactory(layer=self.layer_city, geom="POLYGON((0 0, 0 3, 3 3, 3 0, 0 0))")
         intersect_relation = LayerRelation.objects.create(
-            relation_type='intersects',
+            relation_type="intersects",
             origin=self.layer_trek,
             destination=self.layer_city,
         )
-        url = reverse('feature-relation', args=(self.layer_trek.pk,
-                                                self.trek.identifier,
-                                                intersect_relation.pk))
+        url = reverse(
+            "feature-relation",
+            args=(self.layer_trek.pk, self.trek.identifier, intersect_relation.pk),
+        )
         # city cover should be present after sync
         self.trek.sync_relations(intersect_relation.pk)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.json()
-        self.assertEqual(len(data['results']), 1, data)
+        self.assertEqual(len(data["results"]), 1, data)
         self.assertTrue(mock_view.called)

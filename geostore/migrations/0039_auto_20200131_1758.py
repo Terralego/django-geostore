@@ -5,14 +5,15 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0038_auto_20200128_1442'),
+        ("geostore", "0038_auto_20200128_1442"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='feature',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['properties'], name='geostore_fe_propert_46222e_gin'),
+            model_name="feature",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["properties"], name="geostore_fe_propert_46222e_gin"
+            ),
         ),
     ]

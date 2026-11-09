@@ -3,23 +3,37 @@
 from django.db.models import JSONField
 
 from django.db import migrations
+
 import geostore.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0019_merge_20190329_1056'),
+        ("geostore", "0019_merge_20190329_1056"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='layer',
-            options={'ordering': ['id'], 'permissions': (('can_update_features_properties', 'Is able update geometries properties'), ('can_export_layers', 'Is able to export layers'), ('can_import_layers', 'Is able to import layers'))},
+            name="layer",
+            options={
+                "ordering": ["id"],
+                "permissions": (
+                    (
+                        "can_update_features_properties",
+                        "Is able update geometries properties",
+                    ),
+                    ("can_export_layers", "Is able to export layers"),
+                    ("can_import_layers", "Is able to import layers"),
+                ),
+            },
         ),
         migrations.AlterField(
-            model_name='layer',
-            name='schema',
-            field=JSONField(blank=True, default=dict, validators=[geostore.validators.validate_json_schema]),
+            model_name="layer",
+            name="schema",
+            field=JSONField(
+                blank=True,
+                default=dict,
+                validators=[geostore.validators.validate_json_schema],
+            ),
         ),
     ]

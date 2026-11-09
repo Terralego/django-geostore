@@ -4,26 +4,33 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0015_auto_20181005_1302'),
+        ("geostore", "0015_auto_20181005_1302"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='feature',
-            options={'ordering': ['id']},
+            name="feature",
+            options={"ordering": ["id"]},
         ),
         migrations.AlterModelOptions(
-            name='featurerelation',
-            options={'ordering': ['id']},
+            name="featurerelation",
+            options={"ordering": ["id"]},
         ),
         migrations.AlterModelOptions(
-            name='layer',
-            options={'ordering': ['id'], 'permissions': (('can_update_features_properties', 'Is able update geometries properties'),)},
+            name="layer",
+            options={
+                "ordering": ["id"],
+                "permissions": (
+                    (
+                        "can_update_features_properties",
+                        "Is able update geometries properties",
+                    ),
+                ),
+            },
         ),
         migrations.AlterModelOptions(
-            name='layerrelation',
-            options={'ordering': ['id']},
+            name="layerrelation",
+            options={"ordering": ["id"]},
         ),
     ]

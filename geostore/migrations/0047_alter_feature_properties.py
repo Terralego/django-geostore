@@ -7,15 +7,19 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0046_auto_20211013_1334'),
+        ("geostore", "0046_auto_20211013_1334"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='feature',
-            name='properties',
-            field=JSONField(blank=True, default=dict, encoder=django.core.serializers.json.DjangoJSONEncoder, verbose_name='Properties'),
+            model_name="feature",
+            name="properties",
+            field=JSONField(
+                blank=True,
+                default=dict,
+                encoder=django.core.serializers.json.DjangoJSONEncoder,
+                verbose_name="Properties",
+            ),
         ),
     ]

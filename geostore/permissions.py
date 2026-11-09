@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
 class LayerPermission(BasePermission):
@@ -6,13 +6,13 @@ class LayerPermission(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         else:
-            return request.user.has_perm('geostore.can_manage_layers')
+            return request.user.has_perm("geostore.can_manage_layers")
 
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
             return True
 
-        has_perm = request.user.has_perm('geostore.can_manage_layers')
+        has_perm = request.user.has_perm("geostore.can_manage_layers")
 
         if obj.authorized_groups.exists():
             # Checking permissions if the layer has group authorizations
@@ -20,7 +20,7 @@ class LayerPermission(BasePermission):
                 return False
 
             return request.user.groups.filter(
-                pk__in=list(obj.authorized_groups.values_list('pk', flat=True))
+                pk__in=list(obj.authorized_groups.values_list("pk", flat=True))
             ).exists()
 
         else:
@@ -31,10 +31,10 @@ class LayerPermission(BasePermission):
 class LayerImportExportPermission(BasePermission):
     def has_permission(self, request, view):
         if request.method not in SAFE_METHODS:
-            return request.user.has_perm('geostore.can_import_layers')
+            return request.user.has_perm("geostore.can_import_layers")
 
         else:
-            return request.user.has_perm('geostore.can_export_layers')
+            return request.user.has_perm("geostore.can_export_layers")
 
 
 class FeaturePermission(LayerPermission):

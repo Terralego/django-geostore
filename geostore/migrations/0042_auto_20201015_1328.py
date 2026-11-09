@@ -4,14 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0041_auto_20200625_1515'),
+        ("geostore", "0041_auto_20200625_1515"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='feature',
-            constraint=models.CheckConstraint(condition=models.Q(geom__isempty=False), name='geom_is_empty'),
+            model_name="feature",
+            constraint=models.CheckConstraint(
+                condition=models.Q(geom__isempty=False), name="geom_is_empty"
+            ),
         ),
     ]

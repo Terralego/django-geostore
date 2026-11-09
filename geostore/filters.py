@@ -4,7 +4,6 @@ from django.db.models import JSONField
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend, OrderingFilter, SearchFilter
-from functools import reduce
 
 
 class JSONFieldFilterBackend(BaseFilterBackend):
@@ -12,9 +11,7 @@ class JSONFieldFilterBackend(BaseFilterBackend):
         query = Q()
         for param_name, param_value in request.query_params.items():
             try:
-                field = (queryset.model
-                                 ._meta
-                                 .get_field(param_name.split('__')[0]))
+                field = queryset.model._meta.get_field(param_name.split("__")[0])
             except FieldDoesNotExist:
                 pass
             else:
@@ -36,7 +33,7 @@ class JSONFieldOrderingFilter(OrderingFilter):
             # allow ordering by property name ONLY if schema specified.
             # This prevents big queries on all layer's feature to find them
             for prop in layer.layer_properties:
-                fields.append((f'properties__{prop}', layer.get_property_title(prop)))
+                fields.append((f"properties__{prop}", layer.get_property_title(prop)))
         return fields
 
 
@@ -48,7 +45,7 @@ class JSONSearchField(SearchFilter):
             # allow search by property name ONLY if schema specified.
             # This prevents big queries on all layer's feature to find them
             for prop in layer.layer_properties:
-                fields.append(f'properties__{prop}')
+                fields.append(f"properties__{prop}")
         return fields
 
     def filter_queryset(self, request, queryset, view):
@@ -57,7 +54,7 @@ class JSONSearchField(SearchFilter):
         if search_terms:
             filters = list()
             for field in search_fields:
-                filters.append(Q(**{f'{field}__icontains': search_terms[0]}))
+                filters.append(Q(**{f"{field}__icontains": search_terms[0]}))
 
             return queryset.filter(reduce(operator.or_, filters))
         else:

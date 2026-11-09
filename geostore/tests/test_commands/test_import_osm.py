@@ -13,103 +13,85 @@ from geostore.tests.utils import get_files_tests
 
 class ImportOSMTest(TestCase):
     def get_good_data(self):
-        overpass_path = get_files_tests('overpass.osm')
-        with open(overpass_path, 'rb') as overpass_file:
+        overpass_path = get_files_tests("overpass.osm")
+        with open(overpass_path, "rb") as overpass_file:
             overpass_data = overpass_file.read()
         return overpass_data
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_bad_query(self, mocked_get):
-        type_feature = 'points'
+        type_feature = "points"
         mocked_get.return_value.status_code = 400
         mocked_get.return_value.content = b"test"
 
         query = "bad query"
         with self.assertRaises(CommandError):
-            call_command(
-                'import_osm',
-                query,
-                type=type_feature,
-                verbosity=0)
+            call_command("import_osm", query, type=type_feature, verbosity=0)
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_overpass_down(self, mocked_get):
-        type_feature = 'points'
+        type_feature = "points"
         mocked_get.return_value.status_code = 404
         mocked_get.return_value.content = b""
 
         query = "good query"
         with self.assertRaises(CommandError):
-            call_command(
-                'import_osm',
-                query,
-                type=type_feature,
-                verbosity=0)
+            call_command("import_osm", query, type=type_feature, verbosity=0)
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_good_query(self, mocked_get):
-        type_feature = 'points'
+        type_feature = "points"
         mocked_get.return_value.status_code = 200
         mocked_get.return_value.content = self.get_good_data()
-        query = 'good query'
+        query = "good query"
         output = StringIO()
-        call_command(
-            'import_osm',
-            query,
-            type=type_feature,
-            verbosity=1,
-            stderr=output)
+        call_command("import_osm", query, type=type_feature, verbosity=1, stderr=output)
         self.assertEqual(Feature.objects.count(), 2)
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_good_query_on_existing_layer(self, mocked_get):
         layer = LayerFactory()
-        type_feature = 'points'
+        type_feature = "points"
         mocked_get.return_value.status_code = 200
         mocked_get.return_value.content = self.get_good_data()
-        query = 'good query'
+        query = "good query"
         output = StringIO()
         call_command(
-            'import_osm',
+            "import_osm",
             query,
             layer_pk=layer.pk,
             type=type_feature,
             verbosity=1,
-            stderr=output)
+            stderr=output,
+        )
         self.assertEqual(layer.features.count(), 2)
 
-    @mock.patch('requests.get')
-    @mock.patch('geostore.management.commands.import_osm.Command.launch_cmd_ogr2ogr')
+    @mock.patch("requests.get")
+    @mock.patch("geostore.management.commands.import_osm.Command.launch_cmd_ogr2ogr")
     def test_ogr2ogr_fail(self, mock_ogr2ogr_stdout, mocked_get):
         def command_ogr2ogr_fail(content, type_features):
-            return '', 'Error'
+            return "", "Error"
+
         mock_ogr2ogr_stdout.side_effect = command_ogr2ogr_fail
-        type_feature = 'points'
+        type_feature = "points"
         mocked_get.return_value.status_code = 200
         mocked_get.return_value.content = self.get_good_data()
-        query = 'good query'
+        query = "good query"
         with self.assertRaises(CommandError) as error:
-            call_command(
-                'import_osm',
-                query,
-                type=type_feature,
-                verbosity=0)
+            call_command("import_osm", query, type=type_feature, verbosity=0)
         self.assertEqual("Ogr2ogr failed to create the geojson", str(error.exception))
 
-    @mock.patch('requests.get')
-    @mock.patch('subprocess.run')
+    @mock.patch("requests.get")
+    @mock.patch("subprocess.run")
     def test_ogr2ogr_fail_calledprocess(self, mock_ogr2ogr_raise, mocked_get):
         def command_ogr2ogr_fail(args, stdout, stderr, encoding):
             raise subprocess.CalledProcessError(1, 2)
+
         mock_ogr2ogr_raise.side_effect = command_ogr2ogr_fail
-        type_feature = 'points'
+        type_feature = "points"
         mocked_get.return_value.status_code = 200
         mocked_get.return_value.content = self.get_good_data()
-        query = 'good query'
+        query = "good query"
         with self.assertRaises(CommandError) as error:
-            call_command(
-                'import_osm',
-                query,
-                type=type_feature,
-                verbosity=0)
+            call_command("import_osm", query, type=type_feature, verbosity=0)
         self.assertEqual("Command ogr2ogr failed", str(error.exception))

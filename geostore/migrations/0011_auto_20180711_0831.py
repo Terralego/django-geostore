@@ -4,20 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0001_initial'),
+        ("geostore", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='feature',
-            name='source',
-            field=models.IntegerField(help_text='Internal field used by pgRouting', null=True),
+            model_name="feature",
+            name="source",
+            field=models.IntegerField(
+                help_text="Internal field used by pgRouting", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='feature',
-            name='target',
-            field=models.IntegerField(help_text='Internal field used by pgRouting', null=True),
+            model_name="feature",
+            name="target",
+            field=models.IntegerField(
+                help_text="Internal field used by pgRouting", null=True
+            ),
         ),
     ]

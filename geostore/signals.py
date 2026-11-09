@@ -4,7 +4,10 @@ from django.dispatch import receiver
 from geostore import settings as app_settings
 from geostore.helpers import execute_async_func
 from geostore.models import Feature, LayerRelation
-from geostore.tasks import feature_update_relations_destinations, layer_relations_set_destinations
+from geostore.tasks import (
+    feature_update_relations_destinations,
+    layer_relations_set_destinations,
+)
 
 
 @receiver(post_save, sender=Feature)

@@ -6,39 +6,51 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0036_auto_20200116_0926'),
+        ("geostore", "0036_auto_20200116_0926"),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_identif_f6c552_idx',
+            model_name="feature",
+            name="geostore_fe_identif_f6c552_idx",
         ),
         migrations.AlterField(
-            model_name='featureextrageom',
-            name='geom',
-            field=django.contrib.gis.db.models.fields.GeometryField(spatial_index=False, srid=4326),
+            model_name="featureextrageom",
+            name="geom",
+            field=django.contrib.gis.db.models.fields.GeometryField(
+                spatial_index=False, srid=4326
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer', 'identifier'], name='geostore_fe_layer_i_141c81_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer", "identifier"], name="geostore_fe_layer_i_141c81_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['properties'], name='properties_gin_index'),
+            model_name="feature",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["properties"], name="properties_gin_index"
+            ),
         ),
         migrations.AddIndex(
-            model_name='featureextrageom',
-            index=models.Index(fields=['layer_extra_geom', 'identifier'], name='geostore_fe_layer_e_aa3cea_idx'),
+            model_name="featureextrageom",
+            index=models.Index(
+                fields=["layer_extra_geom", "identifier"],
+                name="geostore_fe_layer_e_aa3cea_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='featureextrageom',
-            index=django.contrib.postgres.indexes.GistIndex(fields=['layer_extra_geom', 'geom'], name='feg_geom_gist_index'),
+            model_name="featureextrageom",
+            index=django.contrib.postgres.indexes.GistIndex(
+                fields=["layer_extra_geom", "geom"], name="feg_geom_gist_index"
+            ),
         ),
         migrations.AddIndex(
-            model_name='featureextrageom',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['properties'], name='feg_properties_gin_index'),
+            model_name="featureextrageom",
+            index=django.contrib.postgres.indexes.GinIndex(
+                fields=["properties"], name="feg_properties_gin_index"
+            ),
         ),
     ]

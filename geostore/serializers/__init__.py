@@ -1,15 +1,26 @@
+from urllib.parse import unquote
+
 from django.contrib.auth.models import Group
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 from rest_framework_gis.serializers import GeometryField
-from urllib.parse import unquote
 
 from geostore import settings as app_settings
-from geostore.models import (Feature, FeatureExtraGeom, FeatureRelation, Layer,
-                             LayerRelation, LayerGroup)
-from geostore.validators import (validate_json_schema_data,
-                                 validate_json_schema, validate_geom_type, validate_geom)
+from geostore.models import (
+    Feature,
+    FeatureExtraGeom,
+    FeatureRelation,
+    Layer,
+    LayerGroup,
+    LayerRelation,
+)
+from geostore.validators import (
+    validate_geom,
+    validate_geom_type,
+    validate_json_schema,
+    validate_json_schema_data,
+)
 
 
 class GeometryFileSerializer(serializers.Serializer):
@@ -18,16 +29,34 @@ class GeometryFileSerializer(serializers.Serializer):
     GPX = serializers.SerializerMethodField()
 
     def get_GeoJSON(self, obj):
-        return reverse('feature-detail',
-                       kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'geojson', })
+        return reverse(
+            "feature-detail",
+            kwargs={
+                "layer": obj.layer_id,
+                "identifier": obj.identifier,
+                "format": "geojson",
+            },
+        )
 
     def get_KML(self, obj):
-        return reverse('feature-detail',
-                       kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'kml', })
+        return reverse(
+            "feature-detail",
+            kwargs={
+                "layer": obj.layer_id,
+                "identifier": obj.identifier,
+                "format": "kml",
+            },
+        )
 
     def get_GPX(self, obj):
-        return reverse('feature-detail',
-                       kwargs={'layer': obj.layer_id, 'identifier': obj.identifier, 'format': 'gpx', })
+        return reverse(
+            "feature-detail",
+            kwargs={
+                "layer": obj.layer_id,
+                "identifier": obj.identifier,
+                "format": "gpx",
+            },
+        )
 
 
 class FeatureSerializer(serializers.ModelSerializer):
@@ -42,8 +71,9 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     def get_relations(self, obj):
         return {
-            relation.name: reverse('feature-relation',
-                                   args=(obj.layer_id, obj.identifier, relation.pk))
+            relation.name: reverse(
+                "feature-relation", args=(obj.layer_id, obj.identifier, relation.pk)
+            )
             for relation in obj.layer.relations_as_origin.all()
         }
 
@@ -54,8 +84,8 @@ class FeatureSerializer(serializers.ModelSerializer):
     def get_layer(self):
         if self.instance:
             self.layer = self.instance.layer
-        if not self.layer and self.context.get('layer_pk'):
-            self.layer = Layer.objects.get(pk=self.context.get('layer_pk'))
+        if not self.layer and self.context.get("layer_pk"):
+            self.layer = Layer.objects.get(pk=self.context.get("layer_pk"))
         return self.layer
 
     def validate_geom(self, data):
@@ -76,8 +106,16 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feature
-        fields = ('id', 'identifier', 'layer', 'geom', 'properties', 'relations', 'geometry_files')
-        read_only_fields = ('id', 'layer')
+        fields = (
+            "id",
+            "identifier",
+            "layer",
+            "geom",
+            "properties",
+            "relations",
+            "geometry_files",
+        )
+        read_only_fields = ("id", "layer")
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -85,14 +123,14 @@ class GroupSerializer(serializers.ModelSerializer):
     group_tiles = serializers.SerializerMethodField()
 
     def get_tilejson(self, obj):
-        return unquote(reverse('group-tilejson', args=[obj.slug]))
+        return unquote(reverse("group-tilejson", args=[obj.slug]))
 
     def get_group_tiles(self, obj):
-        return unquote(reverse('group-tiles-pattern', args=[obj.slug]))
+        return unquote(reverse("group-tiles-pattern", args=[obj.slug]))
 
     class Meta:
         model = LayerGroup
-        fields = '__all__'
+        fields = "__all__"
 
 
 class GeometryFileAsyncSerializer(serializers.Serializer):
@@ -101,13 +139,28 @@ class GeometryFileAsyncSerializer(serializers.Serializer):
     Shape = serializers.SerializerMethodField()
 
     def get_GeoJSON(self, obj):
-        return reverse('layer-geojson', args=[obj.pk, ])
+        return reverse(
+            "layer-geojson",
+            args=[
+                obj.pk,
+            ],
+        )
 
     def get_KML(self, obj):
-        return reverse('layer-kml', args=[obj.pk, ])
+        return reverse(
+            "layer-kml",
+            args=[
+                obj.pk,
+            ],
+        )
 
     def get_Shape(self, obj):
-        return reverse('layer-shapefile_async', args=[obj.pk, ])
+        return reverse(
+            "layer-shapefile_async",
+            args=[
+                obj.pk,
+            ],
+        )
 
 
 class LayerSerializer(serializers.ModelSerializer):
@@ -119,21 +172,38 @@ class LayerSerializer(serializers.ModelSerializer):
     layer_intersects = serializers.SerializerMethodField()
     tilejson = serializers.SerializerMethodField()
     layer_groups = GroupSerializer(many=True, read_only=True)
-    authorized_groups = serializers.PrimaryKeyRelatedField(required=False, many=True, queryset=Group.objects.all())
+    authorized_groups = serializers.PrimaryKeyRelatedField(
+        required=False, many=True, queryset=Group.objects.all()
+    )
     async_exports = serializers.SerializerMethodField()
 
     def get_extent_url(self, obj):
-        return reverse('layer-extent', args=[obj.pk, ])
+        return reverse(
+            "layer-extent",
+            args=[
+                obj.pk,
+            ],
+        )
 
     def get_shapefile_url(self, obj):
-        return reverse('layer-shapefile', args=[obj.pk, ])
+        return reverse(
+            "layer-shapefile",
+            args=[
+                obj.pk,
+            ],
+        )
 
     def get_geojson_url(self, obj):
-        return reverse('feature-list', kwargs={'layer': obj.pk, 'format': 'geojson'})
+        return reverse("feature-list", kwargs={"layer": obj.pk, "format": "geojson"})
 
     def get_kml_url(self, obj):
-        return reverse('feature-list',
-                       kwargs={'layer': obj.pk, 'format': 'kml', })
+        return reverse(
+            "feature-list",
+            kwargs={
+                "layer": obj.pk,
+                "format": "kml",
+            },
+        )
 
     def get_async_exports(self, obj):
         if not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC:
@@ -142,29 +212,34 @@ class LayerSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def get_layer_intersects(self, obj):
-        return reverse('layer-intersects', args=[obj.name, ])
+        return reverse(
+            "layer-intersects",
+            args=[
+                obj.name,
+            ],
+        )
 
     def get_tilejson(self, obj):
-        return unquote(reverse('layer-tilejson', args=[obj.pk]))
+        return unquote(reverse("layer-tilejson", args=[obj.pk]))
 
     class Meta:
         model = Layer
-        fields = '__all__'
+        fields = "__all__"
 
 
 class LayerRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = LayerRelation
-        fields = ('id', 'origin', 'destination', 'schema')
+        fields = ("id", "origin", "destination", "schema")
 
 
 class FeatureRelationSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeatureRelation
-        fields = ('id', 'origin', 'destination')
+        fields = ("id", "origin", "destination")
 
 
 class FeatureExtraGeomSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeatureExtraGeom
-        fields = ('id', 'geom')
+        fields = ("id", "geom")
