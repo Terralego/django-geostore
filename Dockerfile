@@ -1,4 +1,4 @@
-FROM python:3.9-bookworm
+FROM python:3.11-trixie
 
 ENV PYTHONUNBUFFERED=1
 ENV DEBIAN_FRONTEND=noninteractive
@@ -24,7 +24,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 USER django
 
-RUN python3.9 -m venv /code/venv
+RUN python3.11 -m venv /code/venv
 RUN  /code/venv/bin/pip install --no-cache-dir pip setuptools wheel -U
 
 COPY . /code/src
