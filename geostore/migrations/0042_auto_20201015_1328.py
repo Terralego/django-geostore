@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddConstraint(
             model_name='feature',
-            constraint=models.CheckConstraint(check=models.Q(geom__isempty=False), name='geom_is_empty'),
+            constraint=models.CheckConstraint(condition=models.Q(geom__isempty=False), name='geom_is_empty'),
         ),
     ]
