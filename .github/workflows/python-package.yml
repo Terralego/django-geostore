@@ -38,17 +38,17 @@ jobs:
       matrix:
         python-version: ['3.11', '3.12', '3.14']
         django-version: ['5.2.*', '6.1.*']
-        postgis-image: ['postgis/postgis:14-3.1', 'postgis/postgis:15-3.2']
+        postgis-image: ['postgis/postgis:14-3.1', 'postgis/postgis:15-3.3']
         exclude:
             - python-version: '3.11'
               django-version: '6.1.*'
               postgis-image: 'postgis/postgis:14-3.1'
             - python-version: '3.11'
               django-version: '6.1.*'
-              postgis-image: 'postgis/postgis:15-3.2'
+              postgis-image: 'postgis/postgis:15-3.3'
             - python-version: '3.12'
               django-version: '5.2.*'
-              postgis-image: 'postgis/postgis:15-3.2'
+              postgis-image: 'postgis/postgis:15-3.3'
 
     services:
       postgres:
