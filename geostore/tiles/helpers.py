@@ -25,7 +25,7 @@ def cached_tile(func):
                 *args, **kwargs):
         cache_key = self.get_tile_cache_key(x, y, z)
         version = get_cache_version(self.layer)
-        expiration_factor = (log(5, z) ** 0.9)
+        expiration_factor = (log(5, max(z, 1)) ** 0.9)
 
         # Cache expiry calculation is based on a logarithmic function where we add a random factor of +-10%
         expiration = int(expiration_factor * (3600 * 24 * 7) * uniform(0.9, 1.1))
