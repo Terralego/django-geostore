@@ -230,6 +230,14 @@ class FeatureDetailTestCase(APITestCase):
         self.assertListEqual(sorted(list(data['properties'].keys())),
                              sorted(['name', 'age']))
 
+    @patch('geostore.views.FeatureViewSet.get_object')
+    def test_feature_patch_prefetched_cache(self, mock_get_object):
+        self.city_uncover._prefetched_objects_cache = {'dummy': 1}
+        mock_get_object.return_value = self.city_uncover
+        response = self.client.patch(self.detail_url, data={"properties": {"name": "Divona"}})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.city_uncover._prefetched_objects_cache, {})
+
     def test_feature_put_replace_properties(self):
         response = self.client.put(self.detail_url, data={'geom': 'POLYGON((4 4, 4 7, 7 7, 7 4, 4 4))',
                                                           "properties": {"name": "Divona"}})

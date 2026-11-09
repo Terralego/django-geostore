@@ -1,9 +1,12 @@
 from collections import OrderedDict
+import os
+import tempfile
+import zipfile
 
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 
-from geostore.import_export.helpers import ChunkIterator, GeometryDefiner
+from geostore.import_export.helpers import ChunkIterator, GeometryDefiner, make_zipfile_bytesio
 
 
 class ChunkIteratorTest(TestCase):
@@ -92,3 +95,19 @@ class GeometryDefinerTest(TestCase):
             row=dict_data
         )
         self.assertEqual(geometry, Point(-1.560408, 47.218658))
+
+
+class MakeZipfileBytesIOTest(TestCase):
+    def test_make_zipfile_with_subdirs_and_trailing_slash(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            subdir = os.path.join(tmpdir, 'subfolder')
+            os.makedirs(subdir)
+            file_path = os.path.join(subdir, 'hello.txt')
+            with open(file_path, 'w') as f:
+                f.write('world')
+
+            base_dir_with_slash = tmpdir + os.sep
+            bio = make_zipfile_bytesio(base_dir_with_slash)
+            with zipfile.ZipFile(bio, 'r') as zf:
+                namelist = zf.namelist()
+                self.assertIn('subfolder/hello.txt', namelist)
