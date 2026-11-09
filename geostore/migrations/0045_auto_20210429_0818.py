@@ -12,10 +12,10 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddConstraint(
             model_name='featureextrageom',
-            constraint=models.CheckConstraint(check=models.Q(geom__isvalid=True), name='geom_extra_is_valid'),
+            constraint=models.CheckConstraint(condition=models.Q(geom__isvalid=True), name='geom_extra_is_valid'),
         ),
         migrations.AddConstraint(
             model_name='featureextrageom',
-            constraint=models.CheckConstraint(check=models.Q(geom__isempty=False), name='geom_extra_is_empty'),
+            constraint=models.CheckConstraint(condition=models.Q(geom__isempty=False), name='geom_extra_is_empty'),
         ),
     ]

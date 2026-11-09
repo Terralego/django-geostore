@@ -56,7 +56,8 @@ setup(
     tests_require=test_require,
     extras_require={
         'dev': test_require + [
-            'django-debug-toolbar'
+            'django-debug-toolbar',
+            'django==5.2.*'
         ]
     }
 )

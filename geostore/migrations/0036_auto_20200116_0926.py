@@ -64,6 +64,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='feature',
-            constraint=models.CheckConstraint(check=models.Q(geom__isvalid=True), name='geom_is_valid'),
+            constraint=models.CheckConstraint(condition=models.Q(geom__isvalid=True), name='geom_is_valid'),
         ),
     ]
