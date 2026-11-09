@@ -3,61 +3,132 @@
 import uuid
 
 import django.contrib.gis.db.models.fields
-from django.db.models import JSONField
-
 import django.db.models.deletion
 from django.db import migrations, models
+from django.db.models import JSONField
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Feature',
+            name="Feature",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('geom', django.contrib.gis.db.models.fields.GeometryField()),
-                ('identifier', models.CharField(default=uuid.uuid4, max_length=255)),
-                ('properties', JSONField()),
-                ('from_date', models.DateField(default='1970-01-01', help_text='Layer validity period start')),
-                ('to_date', models.DateField(default='1970-12-31', help_text='Layer validity period end')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("geom", django.contrib.gis.db.models.fields.GeometryField()),
+                ("identifier", models.CharField(default=uuid.uuid4, max_length=255)),
+                ("properties", JSONField()),
+                (
+                    "from_date",
+                    models.DateField(
+                        default="1970-01-01", help_text="Layer validity period start"
+                    ),
+                ),
+                (
+                    "to_date",
+                    models.DateField(
+                        default="1970-12-31", help_text="Layer validity period end"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='FeatureRelation',
+            name="FeatureRelation",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('properties', JSONField(blank=True, default=dict)),
-                ('destination', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_destination', to='geostore.Feature')),
-                ('origin', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_origin', to='geostore.Feature')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("properties", JSONField(blank=True, default=dict)),
+                (
+                    "destination",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="relations_as_destination",
+                        to="geostore.Feature",
+                    ),
+                ),
+                (
+                    "origin",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="relations_as_origin",
+                        to="geostore.Feature",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Layer',
+            name="Layer",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=256)),
-                ('group', models.CharField(default='__nogroup__', max_length=255)),
-                ('schema', JSONField(blank=True, default=dict)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=256)),
+                ("group", models.CharField(default="__nogroup__", max_length=255)),
+                ("schema", JSONField(blank=True, default=dict)),
             ],
         ),
         migrations.CreateModel(
-            name='LayerRelation',
+            name="LayerRelation",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('schema', JSONField(blank=True, default=dict)),
-                ('destination', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_destination', to='geostore.Layer')),
-                ('origin', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='relations_as_origin', to='geostore.Layer')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("schema", JSONField(blank=True, default=dict)),
+                (
+                    "destination",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="relations_as_destination",
+                        to="geostore.Layer",
+                    ),
+                ),
+                (
+                    "origin",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="relations_as_origin",
+                        to="geostore.Layer",
+                    ),
+                ),
             ],
         ),
         migrations.AddField(
-            model_name='feature',
-            name='layer',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='features', to='geostore.Layer'),
+            model_name="feature",
+            name="layer",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="features",
+                to="geostore.Layer",
+            ),
         ),
     ]

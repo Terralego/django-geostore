@@ -2,9 +2,8 @@ from copy import deepcopy
 from functools import reduce
 
 from deepmerge import always_merger
-from django.db.models import JSONField
-
 from django.db import models
+from django.db.models import JSONField
 from django.utils.functional import cached_property
 
 from geostore import GeometryTypes

@@ -1,8 +1,8 @@
 import operator
-from django.db.models import JSONField
+from functools import reduce
 
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Q
+from django.db.models import JSONField, Q
 from rest_framework.filters import BaseFilterBackend, OrderingFilter, SearchFilter
 
 

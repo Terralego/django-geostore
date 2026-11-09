@@ -10,16 +10,11 @@ from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.aggregates import Extent
 from django.contrib.gis.db.models.functions import Transform
 from django.contrib.gis.geos import GEOSGeometry, WKBWriter
+from django.contrib.postgres.indexes import GinIndex, GistIndex
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models.functions import Cast
-
-from .import_export.exports import LayerExportMixin
-from .import_export.imports import LayerImportMixin
-
-from django.db.models import JSONField
-from django.contrib.postgres.indexes import GistIndex, GinIndex
 from django.db import connection, transaction
-from django.db.models import Manager
+from django.db.models import JSONField, Manager
+from django.db.models.functions import Cast
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
@@ -27,6 +22,8 @@ from django.utils.translation import gettext_lazy as _
 from . import settings as app_settings
 from .db.managers import FeatureQuerySet
 from .db.mixins import BaseUpdatableModel, LayerBasedModelMixin
+from .import_export.exports import LayerExportMixin
+from .import_export.imports import LayerImportMixin
 from .routing.mixins import PgRoutingMixin, UpdateRoutingMixin
 from .tiles.funcs import HausdorffDistance
 from .validators import (
