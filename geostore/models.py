@@ -164,7 +164,7 @@ class LayerGroup(BaseUpdatableModel):
 
 
 class Feature(BaseUpdatableModel, PgRoutingMixin):
-    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID)
+    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID, spatial_index=False)
     identifier = models.CharField(max_length=255,
                                   blank=False,
                                   null=False,
@@ -272,16 +272,46 @@ class Feature(BaseUpdatableModel, PgRoutingMixin):
     class Meta:
         ordering = ['id']
         indexes = [
-            models.Index(fields=['layer', ]),
-            models.Index(fields=['updated_at', ]),
-            models.Index(fields=['updated_at', 'layer', ]),
-            models.Index(fields=['layer', 'identifier']),
-            models.Index(fields=['id', 'layer', ]),
-            models.Index(fields=['source', 'layer', ]),
-            models.Index(fields=['target', 'layer', ]),
-            models.Index(fields=['source', 'target', 'layer']),
-            GistIndex(fields=['geom']),
-            GinIndex(name='properties_gin_index', fields=['properties']),
+            models.Index(
+                fields=[
+                    "layer_id",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "updated_at",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "layer_id",
+                    "updated_at",
+                ]
+            ),
+            models.Index(fields=["layer_id", "identifier"]),
+            models.Index(fields=["layer_id", "id"]),
+            models.Index(
+                fields=[
+                    "layer_id",
+                    "source",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "layer_id",
+                    "target",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "layer_id",
+                    "source",
+                    "target",
+                ]
+            ),
+            GistIndex(fields=["geom"]),
+            GistIndex(fields=["layer_id", "geom"]),
+            GinIndex(name="properties_gin_index", fields=["properties"]),
         ]
         constraints = [
             # geometry should be valid
