@@ -262,16 +262,12 @@ class VectorTilesTestCase(TestCase):
         # verify data is cached
         response = self.client.get(
             reverse(
-                'group-tiles',
-                kwargs={'slug': self.mygroup.slug, 'z': 10, 'x': 515, 'y': 373}))
-        self.assertLess(
-            len(connection.queries),
-            query_count
+                "group-tiles",
+                kwargs={"slug": self.mygroup.slug, "z": 10, "x": 515, "y": 373},
+            )
         )
-        self.assertEqual(
-            original_content,
-            response.content
-        )
+        self.assertLess(len(connection.queries), query_count)
+        self.assertEqual(original_content, response.content)
         self.assertEqual(len(connection.queries), query_count - 3)
         self.assertEqual(original_content, response.content)
 
@@ -312,16 +308,11 @@ class VectorTilesTestCase(TestCase):
         # verify data is cached
         response = self.client.get(
             reverse(
-                'layer-tiles',
-                kwargs={'pk': self.layer.pk, 'z': 10, 'x': 515, 'y': 373}))
-        self.assertLess(
-            len(connection.queries),
-            query_count
+                "layer-tiles", kwargs={"pk": self.layer.pk, "z": 10, "x": 515, "y": 373}
+            )
         )
-        self.assertEqual(
-            original_content,
-            response.content
-        )
+        self.assertLess(len(connection.queries), query_count)
+        self.assertEqual(original_content, response.content)
         self.assertEqual(len(connection.queries), query_count - 5)
         self.assertEqual(original_content, response.content)
 

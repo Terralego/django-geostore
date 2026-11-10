@@ -2,8 +2,8 @@ import csv
 import json
 import tempfile
 
-from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -441,17 +441,19 @@ class LayerPropertiesAndRoutingTestCase(TestCase):
 
     def test_initial_import_empty_geom_warning(self):
         layer = LayerFactory()
-        chunks = [[{'SIREN': '123'}]]
-        with self.assertLogs(level='WARNING') as cm:
+        chunks = [[{"SIREN": "123"}]]
+        with self.assertLogs(level="WARNING") as cm:
             layer._initial_import_from_csv(chunks, {}, [])
-        self.assertTrue(any('empty geometry' in r.msg for r in cm.records))
+        self.assertTrue(any("empty geometry" in r.msg for r in cm.records))
 
     def test_complementary_import_fast(self):
         layer = LayerFactory()
-        chunks = [[{'SIREN': '123'}]]
+        chunks = [[{"SIREN": "123"}]]
 
         def op(args, opts):
-            args['geom'] = Point(1, 1)
+            args["geom"] = Point(1, 1)
 
-        layer._complementary_import_from_csv(chunks, {'pk_properties': ['SIREN']}, [op], ['SIREN'], fast=True)
+        layer._complementary_import_from_csv(
+            chunks, {"pk_properties": ["SIREN"]}, [op], ["SIREN"], fast=True
+        )
         self.assertEqual(layer.features.count(), 1)

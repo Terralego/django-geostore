@@ -98,25 +98,35 @@ class MVTViewMixin(AuthenticatedGroupsMixin):
                 vector_layers.append(GeoStoreVectorLayer(layer))
 
                 for extra_geom in layer.extra_geometries.all():
-                    vector_layers.append(GeoStoreVectorLayer(
-                        extra_geom,
-                        name=f'{extra_geom.name}',
-                        description=f'{extra_geom.title}'.title(),
-                        include_fields=False,
-                        min_zoom=layer.layer_settings_with_default('tiles', 'minzoom'),
-                        max_zoom=layer.layer_settings_with_default('tiles', 'maxzoom'),
-                    ))
+                    vector_layers.append(
+                        GeoStoreVectorLayer(
+                            extra_geom,
+                            name=f"{extra_geom.name}",
+                            description=f"{extra_geom.title}".title(),
+                            include_fields=False,
+                            min_zoom=layer.layer_settings_with_default(
+                                "tiles", "minzoom"
+                            ),
+                            max_zoom=layer.layer_settings_with_default(
+                                "tiles", "maxzoom"
+                            ),
+                        )
+                    )
 
                 for relation in layer.relations_as_origin.all():
                     relation_layer = relation.destination
-                    relation_features = relation.related_features.values_list('destination', flat=True)
-                    vector_layers.append(GeoStoreVectorLayer(
-                        relation_layer,
-                        name=f'relation-{slugify(layer.name)}-{slugify(relation.name)}',
-                        description=relation.name.title(),
-                        features_pk=relation_features,
-                        include_fields=False,
-                    ))
+                    relation_features = relation.related_features.values_list(
+                        "destination", flat=True
+                    )
+                    vector_layers.append(
+                        GeoStoreVectorLayer(
+                            relation_layer,
+                            name=f"relation-{slugify(layer.name)}-{slugify(relation.name)}",
+                            description=relation.name.title(),
+                            features_pk=relation_features,
+                            include_fields=False,
+                        )
+                    )
         return vector_layers
 
     def get_tile(self, z, x, y):

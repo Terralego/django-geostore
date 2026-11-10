@@ -224,11 +224,13 @@ class FeatureDetailTestCase(APITestCase):
             sorted(list(data["properties"].keys())), sorted(["name", "age"])
         )
 
-    @patch('geostore.views.FeatureViewSet.get_object')
+    @patch("geostore.views.FeatureViewSet.get_object")
     def test_feature_patch_prefetched_cache(self, mock_get_object):
-        self.city_uncover._prefetched_objects_cache = {'dummy': 1}
+        self.city_uncover._prefetched_objects_cache = {"dummy": 1}
         mock_get_object.return_value = self.city_uncover
-        response = self.client.patch(self.detail_url, data={"properties": {"name": "Divona"}})
+        response = self.client.patch(
+            self.detail_url, data={"properties": {"name": "Divona"}}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.city_uncover._prefetched_objects_cache, {})
 

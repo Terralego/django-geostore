@@ -173,7 +173,9 @@ class LayerGroup(BaseUpdatableModel):
 
 
 class Feature(BaseUpdatableModel, PgRoutingMixin):
-    geom = models.GeometryField(srid=app_settings.INTERNAL_GEOMETRY_SRID, spatial_index=False)
+    geom = models.GeometryField(
+        srid=app_settings.INTERNAL_GEOMETRY_SRID, spatial_index=False
+    )
     identifier = models.CharField(
         max_length=255,
         blank=False,

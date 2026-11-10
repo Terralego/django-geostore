@@ -6,75 +6,93 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0101_auto_20261109_1400'),
+        ("geostore", "0101_auto_20261109_1400"),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_layer_i_71cad6_idx',
+            model_name="feature",
+            name="geostore_fe_layer_i_71cad6_idx",
         ),
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_updated_bdb823_idx',
+            model_name="feature",
+            name="geostore_fe_updated_bdb823_idx",
         ),
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_layer_i_141c81_idx',
+            model_name="feature",
+            name="geostore_fe_layer_i_141c81_idx",
         ),
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_id_bb7476_idx',
+            model_name="feature",
+            name="geostore_fe_id_bb7476_idx",
         ),
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_source_cdd710_idx',
+            model_name="feature",
+            name="geostore_fe_source_cdd710_idx",
         ),
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_target_b00bb7_idx',
+            model_name="feature",
+            name="geostore_fe_target_b00bb7_idx",
         ),
         migrations.RemoveIndex(
-            model_name='feature',
-            name='geostore_fe_source_155396_idx',
+            model_name="feature",
+            name="geostore_fe_source_155396_idx",
         ),
         migrations.AlterField(
-            model_name='feature',
-            name='geom',
-            field=django.contrib.gis.db.models.fields.GeometryField(spatial_index=False, srid=4326),
+            model_name="feature",
+            name="geom",
+            field=django.contrib.gis.db.models.fields.GeometryField(
+                spatial_index=False, srid=4326
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer_id'], name='geostore_fe_layer_i_71cad6_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer_id"], name="geostore_fe_layer_i_71cad6_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer_id', 'updated_at'], name='geostore_fe_layer_i_fd62e1_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer_id", "updated_at"], name="geostore_fe_layer_i_fd62e1_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer_id', 'identifier'], name='geostore_fe_layer_i_141c81_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer_id", "identifier"], name="geostore_fe_layer_i_141c81_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer_id', 'id'], name='geostore_fe_layer_i_334ef3_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer_id", "id"], name="geostore_fe_layer_i_334ef3_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer_id', 'source'], name='geostore_fe_layer_i_8b67f8_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer_id", "source"], name="geostore_fe_layer_i_8b67f8_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer_id', 'target'], name='geostore_fe_layer_i_d0a687_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer_id", "target"], name="geostore_fe_layer_i_d0a687_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer_id', 'source', 'target'], name='geostore_fe_layer_i_e7bdb2_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["layer_id", "source", "target"],
+                name="geostore_fe_layer_i_e7bdb2_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=django.contrib.postgres.indexes.GistIndex(fields=['layer_id', 'geom'], name='geostore_fe_layer_i_c3168f_gist'),
+            model_name="feature",
+            index=django.contrib.postgres.indexes.GistIndex(
+                fields=["layer_id", "geom"], name="geostore_fe_layer_i_c3168f_gist"
+            ),
         ),
     ]

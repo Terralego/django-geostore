@@ -53,30 +53,34 @@ class LayerProcessingTestCase(TestCase):
         output = StringIO()
 
         call_command(
-            'layer_processing',
-            f'--layer-pk-ins={layer.id}',
-            '--make-valid',
-            verbosity=1, stdout=output)
-        self.assertIn('The created layer pk is', output.getvalue())
+            "layer_processing",
+            f"--layer-pk-ins={layer.id}",
+            "--make-valid",
+            verbosity=1,
+            stdout=output,
+        )
+        self.assertIn("The created layer pk is", output.getvalue())
         self.assertEqual(len(Layer.objects.all()), 2)
 
     def test_layer_processing_make_valid_point_raises(self):
         layer = LayerFactory(geom_type=GeometryTypes.Point)
         with self.assertRaises(NotImplementedError):
             call_command(
-                'layer_processing',
-                f'--layer-pk-ins={layer.id}',
-                '--make-valid',
-                verbosity=0)
+                "layer_processing",
+                f"--layer-pk-ins={layer.id}",
+                "--make-valid",
+                verbosity=0,
+            )
 
     def test_layer_processing_make_valid_linestring_raises(self):
         layer = LayerFactory(geom_type=GeometryTypes.LineString)
         with self.assertRaises(NotImplementedError):
             call_command(
-                'layer_processing',
-                f'--layer-pk-ins={layer.id}',
-                '--make-valid',
-                verbosity=0)
+                "layer_processing",
+                f"--layer-pk-ins={layer.id}",
+                "--make-valid",
+                verbosity=0,
+            )
 
     def test_layer_processing_make_valid_fail_multiple_pk_ins(self):
         layer_1 = LayerFactory()

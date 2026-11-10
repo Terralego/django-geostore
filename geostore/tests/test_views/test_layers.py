@@ -10,9 +10,14 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
-from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
-                                   HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST,
-                                   HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND)
+from rest_framework.status import (
+    HTTP_200_OK,
+    HTTP_201_CREATED,
+    HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+)
 from rest_framework.test import APITestCase
 
 from geostore import GeometryTypes
@@ -637,28 +642,29 @@ class LayerPropertyValuesTest(APITestCase):
 
 class LayerPartialUpdateAndLookupTestCase(APITestCase):
     def setUp(self):
-        self.user = UserFactory(permissions=['geostore.can_manage_layers'])
+        self.user = UserFactory(permissions=["geostore.can_manage_layers"])
         self.client.force_authenticate(user=self.user)
         self.layer = LayerFactory()
 
     def test_partial_update_missing_features(self):
         response = self.client.patch(
-            reverse('layer-detail', args=[self.layer.pk]),
-            data={},
-            format='json'
+            reverse("layer-detail", args=[self.layer.pk]), data={}, format="json"
         )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
-        self.assertIn('Features are missing in GeoJSON', response.content.decode())
+        self.assertIn("Features are missing in GeoJSON", response.content.decode())
 
     def test_partial_update_bad_features(self):
         response = self.client.patch(
-            reverse('layer-detail', args=[self.layer.pk]),
-            data={'features': [{'bad': 1}]},
-            format='json'
+            reverse("layer-detail", args=[self.layer.pk]),
+            data={"features": [{"bad": 1}]},
+            format="json",
         )
         self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
-        self.assertIn('An error occured parsing GeoJSON, verify your data', response.content.decode())
+        self.assertIn(
+            "An error occured parsing GeoJSON, verify your data",
+            response.content.decode(),
+        )
 
     def test_get_non_existent_layer_returns_404(self):
-        response = self.client.get(reverse('layer-detail', args=[999999]))
+        response = self.client.get(reverse("layer-detail", args=[999999]))
         self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)

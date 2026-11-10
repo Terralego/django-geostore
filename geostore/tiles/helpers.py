@@ -5,7 +5,6 @@ from random import uniform
 from django.contrib.gis.db.models.functions import Transform
 from django.core.cache import cache
 from django.db import connection
-
 from vectortiles.backends.postgis import VectorLayer
 
 from . import EARTH_RADIUS, EPSG_3857
@@ -42,8 +41,17 @@ def cached_tile(func):
 class GeoStoreVectorLayer(VectorLayer):
     """Adapter between geostore Layer model and django-vectortiles VectorLayer"""
 
-    def __init__(self, layer, name=None, description=None, features_pk=None,
-                 cache_key=None, include_fields=True, min_zoom=None, max_zoom=None):
+    def __init__(
+        self,
+        layer,
+        name=None,
+        description=None,
+        features_pk=None,
+        cache_key=None,
+        include_fields=True,
+        min_zoom=None,
+        max_zoom=None,
+    ):
         self.layer = layer
         self._name = name or layer.name
         self._description = description
@@ -52,11 +60,17 @@ class GeoStoreVectorLayer(VectorLayer):
         self._include_fields = include_fields
         self._min_zoom = min_zoom
         self._max_zoom = max_zoom
-        self.pixel_buffer = layer.layer_settings_with_default('tiles', 'pixel_buffer')
+        self.pixel_buffer = layer.layer_settings_with_default("tiles", "pixel_buffer")
         self.tile_buffer = self.pixel_buffer * 8  # EXTENT_RATIO
-        self.features_filter = layer.layer_settings_with_default('tiles', 'features_filter')
-        self.properties_filter = layer.layer_settings_with_default('tiles', 'properties_filter')
-        self.features_limit = layer.layer_settings_with_default('tiles', 'features_limit')
+        self.features_filter = layer.layer_settings_with_default(
+            "tiles", "features_filter"
+        )
+        self.properties_filter = layer.layer_settings_with_default(
+            "tiles", "properties_filter"
+        )
+        self.features_limit = layer.layer_settings_with_default(
+            "tiles", "features_limit"
+        )
 
     def get_id(self):
         return self._name
@@ -67,12 +81,12 @@ class GeoStoreVectorLayer(VectorLayer):
     def get_min_zoom(self):
         if self._min_zoom is not None:
             return self._min_zoom
-        return self.layer.layer_settings_with_default('tiles', 'minzoom')
+        return self.layer.layer_settings_with_default("tiles", "minzoom")
 
     def get_max_zoom(self):
         if self._max_zoom is not None:
             return self._max_zoom
-        return self.layer.layer_settings_with_default('tiles', 'maxzoom')
+        return self.layer.layer_settings_with_default("tiles", "maxzoom")
 
     def get_queryset(self):
         return self.layer.features.all()
@@ -87,8 +101,10 @@ class GeoStoreVectorLayer(VectorLayer):
 
     def get_tile_fields(self):
         if self.properties_filter is not None:
-            return tuple(f'properties__{f}' for f in self.properties_filter) + ('identifier',)
-        return ('properties', 'identifier')
+            return tuple(f"properties__{f}" for f in self.properties_filter) + (
+                "identifier",
+            )
+        return ("properties", "identifier")
 
     def get_queryset_limit(self):
         return self.features_limit
@@ -97,14 +113,15 @@ class GeoStoreVectorLayer(VectorLayer):
         if not self._include_fields:
             return {}
         properties_filter = self.layer.layer_settings_with_default(
-            'tiles', 'properties_filter')
+            "tiles", "properties_filter"
+        )
         if properties_filter is not None:
             fields = properties_filter
-        elif hasattr(self.layer, 'layer_properties'):
+        elif hasattr(self.layer, "layer_properties"):
             fields = self.layer.layer_properties.keys()
         else:
             fields = []
-        return {f: '' for f in fields}
+        return {f: "" for f in fields}
 
     def get_tile_cache_key(self, x, y, z):
         if self._cache_key:
@@ -112,18 +129,18 @@ class GeoStoreVectorLayer(VectorLayer):
         else:
             cache_key = self.layer.pk
 
-        features_filter_hash = ''
+        features_filter_hash = ""
         if self.features_filter is not None:
             features_filter_hash = str(self.features_filter)
 
-        properties_filter_hash = ''
+        properties_filter_hash = ""
         if self.properties_filter is not None:
-            properties_filter_hash = ','.join(self.properties_filter)
+            properties_filter_hash = ",".join(self.properties_filter)
 
         return sha224(
-            f'tile_cache_{cache_key}_{x}_{y}_{z}'
-            f'_{self.pixel_buffer}_{features_filter_hash}_{properties_filter_hash}'
-            f'_{self.features_limit}'.encode()
+            f"tile_cache_{cache_key}_{x}_{y}_{z}"
+            f"_{self.pixel_buffer}_{features_filter_hash}_{properties_filter_hash}"
+            f"_{self.features_limit}".encode()
         ).hexdigest()
 
     @cached_tile
@@ -133,6 +150,7 @@ class GeoStoreVectorLayer(VectorLayer):
 
 class VectorTile:
     """Legacy wrapper kept for backward compatibility"""
+
     def __init__(self, layer, cache_key=None):
         self.layer, self.cache_key = layer, cache_key
         self.pixel_buffer = self.layer.layer_settings_with_default(
