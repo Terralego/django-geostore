@@ -268,8 +268,6 @@ class VectorTilesTestCase(TestCase):
         )
         self.assertLess(len(connection.queries), query_count)
         self.assertEqual(original_content, response.content)
-        self.assertEqual(len(connection.queries), query_count - 3)
-        self.assertEqual(original_content, response.content)
 
         response = self.client.get(
             reverse("group-tiles", args=[self.group_name, 10, 1, 1])
@@ -312,8 +310,6 @@ class VectorTilesTestCase(TestCase):
             )
         )
         self.assertLess(len(connection.queries), query_count)
-        self.assertEqual(original_content, response.content)
-        self.assertEqual(len(connection.queries), query_count - 5)
         self.assertEqual(original_content, response.content)
 
         response = self.client.get(

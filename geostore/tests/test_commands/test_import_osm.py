@@ -84,10 +84,7 @@ class ImportOSMTest(TestCase):
     @mock.patch("requests.get")
     @mock.patch("subprocess.run")
     def test_ogr2ogr_fail_calledprocess(self, mock_ogr2ogr_raise, mocked_get):
-        def command_ogr2ogr_fail(args, stdout, stderr, encoding):
-            raise subprocess.CalledProcessError(1, 2)
-
-        mock_ogr2ogr_raise.side_effect = command_ogr2ogr_fail
+        mock_ogr2ogr_raise.side_effect = subprocess.CalledProcessError(1, 2)
         type_feature = "points"
         mocked_get.return_value.status_code = 200
         mocked_get.return_value.content = self.get_good_data()
