@@ -17,41 +17,53 @@ from geostore.tests.factories import FeatureFactory, LayerFactory, SuperUserFact
 
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
-@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
+@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, "Test with export async only")
 class LayerKMLExportAsyncTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = SuperUserFactory(email="foo@foo.foo")
         self.client.force_authenticate(self.user)
 
-    @mock.patch('geostore.views.execute_async_func')
+    @mock.patch("geostore.views.execute_async_func")
     def test_async_kml_export_no_mail(self, mock_async_func):
         # Create at least one feature in the layer, so it's not empty
         def side_effect(async_func, args):
             async_func(*args)
+
         mock_async_func.side_effect = side_effect
         FeatureFactory(layer=self.layer)
-        user = SuperUserFactory(email='')
+        user = SuperUserFactory(email="")
         self.client.force_authenticate(user)
-        kml_url = reverse('layer-kml', args=[self.layer.pk, ])
+        kml_url = reverse(
+            "layer-kml",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(kml_url)
         self.assertEqual(status.HTTP_406_NOT_ACCEPTABLE, response.status_code)
         self.assertEqual(len(mail.outbox), 0)
 
-    @mock.patch('geostore.views.execute_async_func')
+    @mock.patch("geostore.views.execute_async_func")
     def test_async_kml_export_with_mail_empty_data(self, mock_async):
         def side_effect(async_func, args):
             async_func(*args)
+
         mock_async.side_effect = side_effect
-        shape_url = reverse('layer-kml', args=[self.layer.pk, ])
+        shape_url = reverse(
+            "layer-kml",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(shape_url)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'Your file is ready'
+        path_export = r"Your file is ready"
         self.assertNotRegex(mail.outbox[0].body, path_export)
 
-    @mock.patch('geostore.views.execute_async_func')
-    @mock.patch('geostore.import_export.helpers.now')
+    @mock.patch("geostore.views.execute_async_func")
+    @mock.patch("geostore.import_export.helpers.now")
     def test_async_kml_export_with_mail(self, mock_time, mock_async_func):
         # Create at least one feature in the layer, so it's not empty
         def side_effect_async(async_func, args):
@@ -64,54 +76,73 @@ class LayerKMLExportAsyncTestCase(APITestCase):
         mock_time.side_effect = side_effect_now
         FeatureFactory(layer=self.layer)
 
-        kml_url = reverse('layer-kml', args=[self.layer.pk, ])
+        kml_url = reverse(
+            "layer-kml",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(kml_url)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = 'exports/users/{}/{}_1584320461.kml'.format(self.user.id, self.layer.name)
+        path_export = f"exports/users/{self.user.id}/{self.layer.name}_1584320461.kml"
         self.assertIn(path_export, mail.outbox[0].body)
         with default_storage.open(path_export) as fp:
-            kml = fp.read().decode('utf-8')
+            kml = fp.read().decode("utf-8")
             xml = ET.fromstring(kml)
-            self.assertEqual(list(xml[0][0])[-1][0].text, '2.4609375,45.583289756006316,0.0')
+            self.assertEqual(
+                list(xml[0][0])[-1][0].text, "2.4609375,45.583289756006316,0.0"
+            )
 
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
-@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
+@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, "Test with export async only")
 class LayerGeojsonExportAsyncTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = SuperUserFactory(email="foo@foo.foo")
         self.client.force_authenticate(self.user)
 
-    @mock.patch('geostore.views.execute_async_func')
+    @mock.patch("geostore.views.execute_async_func")
     def test_async_geojson_export_no_mail(self, mock_async_func):
         # Create at least one feature in the layer, so it's not empty
         def side_effect(async_func, args):
             async_func(*args)
+
         mock_async_func.side_effect = side_effect
         FeatureFactory(layer=self.layer)
-        user = SuperUserFactory(email='')
+        user = SuperUserFactory(email="")
         self.client.force_authenticate(user)
-        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
+        geojson_url = reverse(
+            "layer-geojson",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(geojson_url)
         self.assertEqual(status.HTTP_406_NOT_ACCEPTABLE, response.status_code)
         self.assertEqual(len(mail.outbox), 0)
 
-    @mock.patch('geostore.views.execute_async_func')
+    @mock.patch("geostore.views.execute_async_func")
     def test_async_geojson_export_with_mail_empty_data(self, mock_async):
         def side_effect(async_func, args):
             async_func(*args)
+
         mock_async.side_effect = side_effect
-        shape_url = reverse('layer-geojson', args=[self.layer.pk, ])
+        shape_url = reverse(
+            "layer-geojson",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(shape_url)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'Your file is ready'
+        path_export = r"Your file is ready"
         self.assertNotRegex(mail.outbox[0].body, path_export)
 
-    @mock.patch('geostore.views.execute_async_func')
-    @mock.patch('geostore.import_export.helpers.now')
+    @mock.patch("geostore.views.execute_async_func")
+    @mock.patch("geostore.import_export.helpers.now")
     def test_async_geojson_export_with_mail(self, mock_time, mock_async_func):
         # Create at least one feature in the layer, so it's not empty
         def side_effect_async(async_func, args):
@@ -124,15 +155,22 @@ class LayerGeojsonExportAsyncTestCase(APITestCase):
         mock_time.side_effect = side_effect_now
         FeatureFactory(layer=self.layer)
 
-        geojson_url = reverse('layer-geojson', args=[self.layer.pk, ])
+        geojson_url = reverse(
+            "layer-geojson",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(geojson_url)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'exports/users/{}/{}_1584320461.geojson'.format(self.user.id, self.layer.name)
+        path_export = (
+            rf"exports/users/{self.user.id}/{self.layer.name}_1584320461.geojson"
+        )
         self.assertRegex(mail.outbox[0].body, path_export)
         with default_storage.open(path_export) as fp:
             geojson = json.loads(fp.read())
-        feature = geojson['features'][0]['geometry']
+        feature = geojson["features"][0]["geometry"]
         feature_geom = GEOSGeometry(json.dumps(feature))
         self.assertAlmostEqual(feature_geom.x, 2.4609375)
         self.assertAlmostEqual(feature_geom.y, 45.58328975600632)
@@ -140,40 +178,52 @@ class LayerGeojsonExportAsyncTestCase(APITestCase):
 
 
 @override_settings(MEDIA_ROOT=TemporaryDirectory().name)
-@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, 'Test with export async only')
+@skipIf(not app_settings.GEOSTORE_EXPORT_CELERY_ASYNC, "Test with export async only")
 class LayerShapefileExportAsyncTestCase(APITestCase):
     def setUp(self):
         self.layer = LayerFactory()
         self.user = SuperUserFactory(email="foo@foo.foo")
         self.client.force_authenticate(self.user)
 
-    @mock.patch('geostore.views.execute_async_func')
+    @mock.patch("geostore.views.execute_async_func")
     def test_async_shapefile_export_no_mail(self, mock_async):
         def side_effect(async_func, args):
             async_func(*args)
+
         mock_async.side_effect = side_effect
         FeatureFactory(layer=self.layer)
-        user = SuperUserFactory(email='')
+        user = SuperUserFactory(email="")
         self.client.force_authenticate(user)
-        shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
+        shape_url = reverse(
+            "layer-shapefile_async",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(shape_url)
         self.assertEqual(status.HTTP_406_NOT_ACCEPTABLE, response.status_code)
         self.assertEqual(len(mail.outbox), 0)
 
-    @mock.patch('geostore.views.execute_async_func')
+    @mock.patch("geostore.views.execute_async_func")
     def test_async_shapefile_export_with_mail_empty_data(self, mock_async):
         def side_effect(async_func, args):
             async_func(*args)
+
         mock_async.side_effect = side_effect
-        shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
+        shape_url = reverse(
+            "layer-shapefile_async",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(shape_url)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'Your file is ready'
+        path_export = r"Your file is ready"
         self.assertNotRegex(mail.outbox[0].body, path_export)
 
-    @mock.patch('geostore.views.execute_async_func')
-    @mock.patch('geostore.import_export.helpers.now')
+    @mock.patch("geostore.views.execute_async_func")
+    @mock.patch("geostore.import_export.helpers.now")
     def test_async_shapefile_export_with_mail(self, mock_time, mock_async_func):
         def side_effect_async(async_func, args):
             async_func(*args)
@@ -184,9 +234,14 @@ class LayerShapefileExportAsyncTestCase(APITestCase):
         mock_async_func.side_effect = side_effect_async
         mock_time.side_effect = side_effect_now
         FeatureFactory(layer=self.layer)
-        shape_url = reverse('layer-shapefile_async', args=[self.layer.pk, ])
+        shape_url = reverse(
+            "layer-shapefile_async",
+            args=[
+                self.layer.pk,
+            ],
+        )
         response = self.client.get(shape_url)
         self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
         self.assertEqual(len(mail.outbox), 1)
-        path_export = r'exports/users/{}/{}_1584320461.zip'.format(self.user.id, self.layer.name)
+        path_export = rf"exports/users/{self.user.id}/{self.layer.name}_1584320461.zip"
         self.assertRegex(mail.outbox[0].body, path_export)

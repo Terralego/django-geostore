@@ -4,19 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0033_featureextrageom_layerextrageom'),
+        ("geostore", "0033_featureextrageom_layerextrageom"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='layerextrageom',
-            options={'ordering': ('layer', 'order')},
+            name="layerextrageom",
+            options={"ordering": ("layer", "order")},
         ),
         migrations.AddField(
-            model_name='layerextrageom',
-            name='order',
+            model_name="layerextrageom",
+            name="order",
             field=models.PositiveSmallIntegerField(default=0),
         ),
     ]

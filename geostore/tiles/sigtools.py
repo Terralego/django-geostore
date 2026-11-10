@@ -1,4 +1,4 @@
-class SIGTools(object):
+class SIGTools:
     """
     This class collects all the sig functions  to use in TileVect, GeomConfig
     """
@@ -14,13 +14,13 @@ class SIGTools(object):
 
         # output might be a Point if single Point feature
         query = layer.get_extent()
-        extent = query['extent']
+        extent = query["extent"]
 
         if extent:
-            x1 = query['extent'][0]
-            x2 = query['extent'][2]
-            y1 = query['extent'][1]
-            y2 = query['extent'][3]
+            x1 = query["extent"][0]
+            x2 = query["extent"][2]
+            y1 = query["extent"][1]
+            y2 = query["extent"][3]
 
             if x1 != x2 and y1 != y2:
                 # not a point

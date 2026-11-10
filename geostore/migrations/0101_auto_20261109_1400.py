@@ -4,9 +4,8 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0100_squashed_0047_alter_feature_properties'),
+        ("geostore", "0100_squashed_0047_alter_feature_properties"),
     ]
 
     operations = [

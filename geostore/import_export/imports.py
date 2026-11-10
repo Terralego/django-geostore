@@ -3,35 +3,35 @@ import logging
 import uuid
 
 import fiona
-from django.contrib.gis.geos import GEOSGeometry, GEOSException
+from django.contrib.gis.geos import GEOSException, GEOSGeometry
 from django.db import transaction
 from fiona.model import to_dict
 from fiona.transform import transform_geom
 
-from geostore.import_export.helpers import ChunkIterator
-
 from geostore import settings as app_settings
+from geostore.import_export.helpers import ChunkIterator
 from geostore.tiles.decorators import zoom_update
 
 ACCEPTED_PROJECTIONS = [
-    'urn:ogc:def:crs:OGC:1.3:CRS84',
-    'EPSG:4326',
+    "urn:ogc:def:crs:OGC:1.3:CRS84",
+    "EPSG:4326",
 ]
 logger = logging.getLogger(__name__)
 
 
 class LayerImportMixin:
     def _fiona_shape_projection(self, shapefile):
-        """ Return projection in EPSG format or raw Proj format extracted from
-            shape
+        """Return projection in EPSG format or raw Proj format extracted from
+        shape
         """
         proj = shapefile.crs
 
         if not proj:
-            raise GEOSException('Your shapefile does not have projection')
+            msg = "Your shapefile does not have projection"
+            raise GEOSException(msg)
 
-        if len(proj) == 1 or (len(proj) == 2 and proj.get('no_defs') is True):
-            return proj.get('init')
+        if len(proj) == 1 or (len(proj) == 2 and proj.get("no_defs") is True):
+            return proj.get("init")
         else:
             return fiona.crs.to_string(proj)
 
@@ -40,7 +40,7 @@ class LayerImportMixin:
 
     @zoom_update
     def from_shapefile(self, zipped_shapefile_file, id_field=None):
-        """ Load ShapeFile content provided into a zipped archive.
+        """Load ShapeFile content provided into a zipped archive.
 
         zipped_shapefile_file -- a file-like object on the zipped content
         id_field -- the field name used a identifier
@@ -48,23 +48,26 @@ class LayerImportMixin:
         with fiona.BytesCollection(zipped_shapefile_file.read()) as shape:
             # Extract source projection and compute if reprojection is required
             projection = self._fiona_shape_projection(shape)
-            reproject = projection and not self.is_projection_allowed(projection.upper())
+            reproject = projection and not self.is_projection_allowed(
+                projection.upper()
+            )
 
             for feature in shape:
                 properties = {}
-                for prop, value in feature.get('properties', {}).items():
+                for prop, value in feature.get("properties", {}).items():
                     try:
                         properties[prop] = json.loads(value)
                     except (json.JSONDecodeError, TypeError):
                         properties[prop] = value
 
-                geometry = feature.get('geometry')
+                geometry = feature.get("geometry")
 
                 if reproject:
                     geometry = transform_geom(
                         shape.crs,
-                        f'EPSG:{app_settings.INTERNAL_GEOMETRY_SRID}',
-                        geometry)
+                        f"EPSG:{app_settings.INTERNAL_GEOMETRY_SRID}",
+                        geometry,
+                    )
                 identifier = properties.get(id_field, uuid.uuid4())
 
                 self.features.create(
@@ -83,25 +86,23 @@ class LayerImportMixin:
         """
 
         geojson = json.loads(geojson_data)
-        projection = geojson.get('crs', {}).get(
-            'properties', {}).get('name', None)
+        projection = geojson.get("crs", {}).get("properties", {}).get("name", None)
         if projection and not self.is_projection_allowed(projection):
-            raise GEOSException(
-                f'GeoJSON projection {projection} must be in '
-                f'{ACCEPTED_PROJECTIONS}')
+            msg = f"GeoJSON projection {projection} must be in {ACCEPTED_PROJECTIONS}"
+            raise GEOSException(msg)
 
         if update:
             self.features.all().delete()
-        for feature in geojson.get('features', []):
-            properties = feature.get('properties', {})
+        for feature in geojson.get("features", []):
+            properties = feature.get("properties", {})
             identifier = properties.get(id_field, uuid.uuid4())
             self.features.update_or_create(
                 layer=self,
                 identifier=identifier,
                 defaults={
-                    'properties': properties,
-                    'geom': GEOSGeometry(json.dumps(feature.get('geometry'))),
-                }
+                    "properties": properties,
+                    "geom": GEOSGeometry(json.dumps(feature.get("geometry"))),
+                },
             )
 
     def _initial_import_from_csv(self, chunks, options, operations):
@@ -118,50 +119,50 @@ class LayerImportMixin:
                     operation(feature_args, options)
 
                 if not feature_args.get("geom"):
-                    logger.warning('empty geometry,'
-                                   f' row skipped : {row}')
+                    logger.warning("empty geometry, row skipped: %s", row)
                     continue
-                entries.append(
-                    self.features.model(**feature_args)
-                )
+                entries.append(self.features.model(**feature_args))
             self.features.bulk_create(entries)
 
-    def _complementary_import_from_csv(self, chunks, options, operations,
-                                       pk_properties, fast=False):
+    def _complementary_import_from_csv(
+        self, chunks, options, operations, pk_properties, fast=False
+    ):
         for chunk in chunks:
             sp = None
             if fast:
                 sp = transaction.savepoint()
             for row in chunk:
-                self._import_row_from_csv(row, pk_properties, operations,
-                                          options)
+                self._import_row_from_csv(row, pk_properties, operations, options)
             if sp:
                 transaction.savepoint_commit(sp)
 
     def _import_row_from_csv(self, row, pk_properties, operations, options):
-        feature_args = {
-            "geom": None,
-            "properties": row,
-            "layer": self
-        }
+        feature_args = {"geom": None, "properties": row, "layer": self}
         for operation in operations:
             operation(feature_args, options)
         filter_kwargs = {
-            f'properties__{p}': feature_args["properties"].get(p, '')
-            for p in pk_properties}
-        filter_kwargs['layer'] = feature_args.get("layer", self)
+            f"properties__{p}": feature_args["properties"].get(p, "")
+            for p in pk_properties
+        }
+        filter_kwargs["layer"] = feature_args.get("layer", self)
         if feature_args.get("geom"):
-            self.features.update_or_create(
-                defaults=feature_args,
-                **filter_kwargs
-            )
+            self.features.update_or_create(defaults=feature_args, **filter_kwargs)
         else:
-            self.features.filter(**filter_kwargs) \
-                .update(properties=feature_args["properties"])
+            self.features.filter(**filter_kwargs).update(
+                properties=feature_args["properties"]
+            )
 
     @zoom_update
-    def from_csv_dictreader(self, reader, pk_properties, options, operations,
-                            init=False, chunk_size=1000, fast=False):
+    def from_csv_dictreader(
+        self,
+        reader,
+        pk_properties,
+        options,
+        operations,
+        init=False,
+        chunk_size=1000,
+        fast=False,
+    ):
         """Import (create or update) features from csv.DictReader object
         :param reader: csv.DictReader object
         :param pk_properties: keys of row that is used to identify unicity
@@ -173,9 +174,7 @@ class LayerImportMixin:
         chunks = ChunkIterator(reader, chunk_size)
         if init:
             self._initial_import_from_csv(
-                chunks=chunks,
-                options=options,
-                operations=operations
+                chunks=chunks, options=options, operations=operations
             )
         else:
             self._complementary_import_from_csv(
@@ -183,5 +182,5 @@ class LayerImportMixin:
                 options=options,
                 operations=operations,
                 pk_properties=pk_properties,
-                fast=fast
+                fast=fast,
             )

@@ -1,10 +1,9 @@
 import factory
-from faker import Faker
-from faker.providers import geo
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.gis.geos import Point
+from faker import Faker
+from faker.providers import geo
 
 from geostore import GeometryTypes
 from geostore.models import Feature, Layer
@@ -18,9 +17,8 @@ def _get_perm(perm_name):
     Returns permission instance with given name.
     Permission name is a string like 'auth.add_user'.
     """
-    app_label, codename = perm_name.split('.')
-    return Permission.objects.get(
-        content_type__app_label=app_label, codename=codename)
+    app_label, codename = perm_name.split(".")
+    return Permission.objects.get(content_type__app_label=app_label, codename=codename)
 
 
 class LayerFactory(factory.django.DjangoModelFactory):
@@ -48,20 +46,19 @@ class LayerSchemaFactory(factory.django.DjangoModelFactory):
     geom_type = GeometryTypes.Point
     schema = {
         "type": "object",
-        "required": ["name", ],
+        "required": [
+            "name",
+        ],
         "properties": {
             "name": {
-                'type': "string",
+                "type": "string",
             },
             "age": {
-                'type': "integer",
+                "type": "integer",
                 "title": "Age",
             },
-            "country": {
-                'type': "string",
-                "title": "Country"
-            },
-        }
+            "country": {"type": "string", "title": "Country"},
+        },
     }
 
     class Meta:
@@ -87,15 +84,15 @@ class RandomFeatureFactory(factory.django.DjangoModelFactory):
 
     properties = factory.Dict(
         {
-            'age': factory.Faker('random_int', min=5, max=99),
-            'name': factory.Faker('name'),
-            'country': factory.Faker(
-                'random_element',
-                elements=['Alaska', 'Cameroun', 'France', 'Canada', 'Groland'],
+            "age": factory.Faker("random_int", min=5, max=99),
+            "name": factory.Faker("name"),
+            "country": factory.Faker(
+                "random_element",
+                elements=["Alaska", "Cameroun", "France", "Canada", "Groland"],
             ),
-            'status': factory.Faker(
-                'random_element',
-                elements=['Employed', 'Unemployed', '', None],
+            "status": factory.Faker(
+                "random_element",
+                elements=["Employed", "Unemployed", "", None],
             ),
         }
     )
@@ -108,7 +105,7 @@ UserModel = get_user_model()
 
 
 class SuperUserFactory(factory.django.DjangoModelFactory):
-    username = factory.Faker('email')
+    username = factory.Faker("email")
     is_active = True
     is_superuser = True
 
@@ -117,16 +114,15 @@ class SuperUserFactory(factory.django.DjangoModelFactory):
 
 
 class UserFactory(factory.django.DjangoModelFactory):
-
     class Meta:
         model = UserModel
 
-    username = factory.Faker('email')
+    username = factory.Faker("email")
     is_active = True
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
-        kwargs.update({'password': kwargs.get('password', '123456')})
+        kwargs.update({"password": kwargs.get("password", "123456")})
         manager = cls._get_manager(model_class)
         return manager.create_user(*args, **kwargs)
 

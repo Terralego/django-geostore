@@ -10,18 +10,17 @@ from geostore.tests.factories import LayerFactory
 from geostore.tiles.helpers import VectorTile, get_cache_version
 
 
-@override_settings(DEBUG=True, CACHES={
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
-    }})
+@override_settings(
+    DEBUG=True,
+    CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}},
+)
 class FillTilesCacheTestCase(TestCase):
-
     def setUp(self):
         self.layer = LayerFactory(name="layerLine")
-        self.group = LayerGroup.objects.create(name='mygroup', slug='mygroup')
+        self.group = LayerGroup.objects.create(name="mygroup", slug="mygroup")
         self.group.layers.add(self.layer)
         self.layer.from_geojson(
-            geojson_data='''
+            geojson_data="""
             {
             "type": "FeatureCollection",
             "features": [
@@ -47,7 +46,8 @@ class FillTilesCacheTestCase(TestCase):
                 }
             ]
             }
-        ''')
+        """
+        )
 
     def test_cache_filled(self):
         tile = VectorTile(self.layer)
@@ -56,7 +56,7 @@ class FillTilesCacheTestCase(TestCase):
         x, y, z = 515, 373, 10
         query_count_before = len(connection.queries)
 
-        call_command('fill_tiles_cache', stdout=StringIO())
+        call_command("fill_tiles_cache", stdout=StringIO())
 
         query_count_after = len(connection.queries)
         self.assertLess(query_count_before, query_count_after)

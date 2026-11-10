@@ -1,7 +1,13 @@
 import gpxpy.gpx
 import simplekml
-from django.contrib.gis.geos import GeometryCollection, Point, LineString, Polygon, GEOSGeometry
-from rest_framework.renderers import JSONRenderer, BaseRenderer
+from django.contrib.gis.geos import (
+    GeometryCollection,
+    GEOSGeometry,
+    LineString,
+    Point,
+    Polygon,
+)
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from rest_framework.utils.serializer_helpers import ReturnDict
 
 from geostore import settings as app_settings
@@ -12,12 +18,13 @@ class GeoJSONRenderer(JSONRenderer):
     GeoJSON renderer is just used to match with geojson format.
     Serializer is adapted along this format with djangorestframework-gis
     """
-    format = 'geojson'
+
+    format = "geojson"
 
 
 class KMLRenderer(BaseRenderer):
-    format = 'kml'
-    media_type = 'application/vnd.google-earth.kml+xml'
+    format = "kml"
+    media_type = "application/vnd.google-earth.kml+xml"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -25,59 +32,67 @@ class KMLRenderer(BaseRenderer):
 
     def get_element_infos(self, element):
         description = ""
-        for key, value in element.get('properties').items():
+        for key, value in element.get("properties").items():
             description += f"{key}: {value}\n"
         return (
-            element.get('geom').get('type').lower(),
-            element.get('identifier'),
-            element.get('geom').get('coordinates'),
-            description
+            element.get("geom").get("type").lower(),
+            element.get("identifier"),
+            element.get("geom").get("coordinates"),
+            description,
         )
 
     def parse_element(self, element):
         mapping = {
-            'point': 'newpoint',
-            'linestring': 'newlinestring',
-            'polygon': 'newpolygon'
+            "point": "newpoint",
+            "linestring": "newlinestring",
+            "polygon": "newpolygon",
         }
-        geom_type, identifier, coordinates, description = self.get_element_infos(element)
+        geom_type, identifier, coordinates, description = self.get_element_infos(
+            element
+        )
 
         if geom_type in mapping.keys():
             if geom_type == "polygon":
                 polygon = self.kml.newpolygon(name=identifier, description=description)
-                polygon.outerboundaryis = (coordinates[0], )
+                polygon.outerboundaryis = (coordinates[0],)
                 if len(coordinates) > 1:
                     # manage holes
-                    polygon.innerboundaryis = (coordinates[1], )
+                    polygon.innerboundaryis = (coordinates[1],)
             else:
                 getattr(self.kml, mapping[geom_type])(
                     name=identifier,
                     description=description,
-                    coords=(coordinates, ) if geom_type == "point" else coordinates
+                    coords=(coordinates,) if geom_type == "point" else coordinates,
                 )
         else:
             # geom is multi
             multi = self.kml.newmultigeometry(name=identifier, description=description)
-            final_geom_type = geom_type.replace('multi', '')  # get geom_type without multi
+            final_geom_type = geom_type.replace(
+                "multi", ""
+            )  # get geom_type without multi
             if final_geom_type == "geometrycollection":
-                geometries = element.get('geom').get('geometries')
+                geometries = element.get("geom").get("geometries")
                 for geometry in geometries:
-                    geom_type = geometry.get('type').lower()
-                    coordinates = geometry.get('coordinates')
+                    geom_type = geometry.get("type").lower()
+                    coordinates = geometry.get("coordinates")
                     getattr(multi, mapping[geom_type])(
-                        coords=(coordinates, ) if geom_type == "point" else coordinates
+                        coords=(coordinates,) if geom_type == "point" else coordinates
                     )
             else:
                 for simple_object_coords in coordinates:
                     if final_geom_type == "polygon":
-                        polygon = multi.newpolygon(name=identifier, description=description)
-                        polygon.outerboundaryis = (simple_object_coords[0], )
+                        polygon = multi.newpolygon(
+                            name=identifier, description=description
+                        )
+                        polygon.outerboundaryis = (simple_object_coords[0],)
                         if len(simple_object_coords) > 1:
                             # manage holes
-                            polygon.innerboundaryis = (simple_object_coords[1], )
+                            polygon.innerboundaryis = (simple_object_coords[1],)
                     else:
                         getattr(multi, mapping[final_geom_type])(
-                            coords=(simple_object_coords, ) if final_geom_type == "point" else simple_object_coords
+                            coords=(simple_object_coords,)
+                            if final_geom_type == "point"
+                            else simple_object_coords
                         )
 
         return self.kml.kml()
@@ -96,15 +111,17 @@ class KMLRenderer(BaseRenderer):
 
 
 class GPXRenderer(BaseRenderer):
-    format = 'gpx'
-    media_type = 'application/gpx+xml'
+    format = "gpx"
+    media_type = "application/gpx+xml"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.gpx = gpxpy.gpx.GPX()
 
     def render(self, data, accepted_media_type=None, renderer_context=None):
-        return self.geom_to_gpx(GEOSGeometry(str(data.get('geom'))), data.get('identifier'), "")
+        return self.geom_to_gpx(
+            GEOSGeometry(str(data.get("geom"))), data.get("identifier"), ""
+        )
 
     def _point_to_gpx(self, point, klass=gpxpy.gpx.GPXWaypoint):
         if isinstance(point, (tuple, list)):
@@ -122,7 +139,7 @@ class GPXRenderer(BaseRenderer):
         """
         if isinstance(geom, GeometryCollection):
             for i, g in enumerate(geom):
-                self.geom_to_gpx(g, "%s (%s)" % (name, i), description)
+                self.geom_to_gpx(g, f"{name} ({i})", description)
         elif isinstance(geom, Point):
             wp = self._point_to_gpx(geom)
             wp.name = name
@@ -131,7 +148,10 @@ class GPXRenderer(BaseRenderer):
         elif isinstance(geom, LineString):
             gpx_track = gpxpy.gpx.GPXTrack(name=name, description=description)
             gpx_segment = gpxpy.gpx.GPXTrackSegment()
-            gpx_segment.points = [self._point_to_gpx(point, klass=gpxpy.gpx.GPXTrackPoint) for point in geom]
+            gpx_segment.points = [
+                self._point_to_gpx(point, klass=gpxpy.gpx.GPXTrackPoint)
+                for point in geom
+            ]
             gpx_track.segments.append(gpx_segment)
             self.gpx.tracks.append(gpx_track)
         elif isinstance(geom, Polygon):

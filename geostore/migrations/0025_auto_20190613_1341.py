@@ -4,18 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0024_layer_geom_type'),
+        ("geostore", "0024_layer_geom_type"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['layer'], name='geo_feat_layer_i_921f95_idx'),
+            model_name="feature",
+            index=models.Index(fields=["layer"], name="geo_feat_layer_i_921f95_idx"),
         ),
         migrations.AddIndex(
-            model_name='feature',
-            index=models.Index(fields=['updated_at'], name='geo_featu_updated_62a19a_idx'),
+            model_name="feature",
+            index=models.Index(
+                fields=["updated_at"], name="geo_featu_updated_62a19a_idx"
+            ),
         ),
     ]

@@ -10,7 +10,7 @@ CHANGES = open(os.path.join(HERE, 'CHANGES.md')).read()
 
 test_require = [
     'factory-boy',
-    'flake8',
+    'ruff',
     'coverage',
 ]
 

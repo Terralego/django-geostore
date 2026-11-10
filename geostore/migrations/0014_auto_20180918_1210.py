@@ -4,18 +4,17 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0013_auto_20180919_1146'),
+        ("geostore", "0013_auto_20180919_1146"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='feature',
-            name='from_date',
+            model_name="feature",
+            name="from_date",
         ),
         migrations.RemoveField(
-            model_name='feature',
-            name='to_date',
+            model_name="feature",
+            name="to_date",
         ),
     ]

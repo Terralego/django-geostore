@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0027_layergroup'),
+        ("geostore", "0027_layergroup"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='layer',
-            name='group',
+            model_name="layer",
+            name="group",
         ),
     ]

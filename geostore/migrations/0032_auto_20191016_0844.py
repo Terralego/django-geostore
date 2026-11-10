@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('geostore', '0031_layer_authorized_groups'),
+        ("geostore", "0031_layer_authorized_groups"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='layer',
-            name='authorized_groups',
-            field=models.ManyToManyField(blank=True, related_name='authorized_layers', to='auth.Group'),
+            model_name="layer",
+            name="authorized_groups",
+            field=models.ManyToManyField(
+                blank=True, related_name="authorized_layers", to="auth.Group"
+            ),
         ),
     ]
