@@ -4,6 +4,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
+from geostore import GeometryTypes
 from geostore.models import Layer
 from geostore.tests.factories import FeatureFactory, LayerFactory
 from geostore.tests.utils import get_files_tests
@@ -32,7 +33,7 @@ class LayerProcessingTestCase(TestCase):
         self.assertEqual(len(Layer.objects.all()), 2)
 
     def test_layer_processing_make_valid_polygon(self):
-        layer = LayerFactory()
+        layer = LayerFactory(geom_type=GeometryTypes.Polygon)
         output = StringIO()
 
         call_command(
@@ -42,6 +43,36 @@ class LayerProcessingTestCase(TestCase):
             verbosity=1, stdout=output)
         self.assertIn('The created layer pk is', output.getvalue())
         self.assertEqual(len(Layer.objects.all()), 2)
+
+    def test_layer_processing_make_valid_multipolygon(self):
+        layer = LayerFactory(geom_type=GeometryTypes.MultiPolygon)
+        output = StringIO()
+
+        call_command(
+            'layer_processing',
+            f'--layer-pk-ins={layer.id}',
+            '--make-valid',
+            verbosity=1, stdout=output)
+        self.assertIn('The created layer pk is', output.getvalue())
+        self.assertEqual(len(Layer.objects.all()), 2)
+
+    def test_layer_processing_make_valid_point_raises(self):
+        layer = LayerFactory(geom_type=GeometryTypes.Point)
+        with self.assertRaises(NotImplementedError):
+            call_command(
+                'layer_processing',
+                f'--layer-pk-ins={layer.id}',
+                '--make-valid',
+                verbosity=0)
+
+    def test_layer_processing_make_valid_linestring_raises(self):
+        layer = LayerFactory(geom_type=GeometryTypes.LineString)
+        with self.assertRaises(NotImplementedError):
+            call_command(
+                'layer_processing',
+                f'--layer-pk-ins={layer.id}',
+                '--make-valid',
+                verbosity=0)
 
     def test_layer_processing_make_valid_fail_multiple_pk_ins(self):
         layer_1 = LayerFactory()

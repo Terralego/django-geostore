@@ -1,11 +1,5 @@
-from django.contrib.gis.db.models import FloatField, GeometryField
+from django.contrib.gis.db.models import FloatField
 from django.contrib.gis.db.models.functions import GeoFunc, GeomOutputGeoFunc
-from django.db.models import Func
-
-
-class MakeEnvelope(Func):
-    function = "ST_MAKEENVELOPE"
-    output_field = GeometryField()
 
 
 class HausdorffDistance(GeoFunc):

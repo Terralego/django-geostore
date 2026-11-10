@@ -2,10 +2,12 @@ import csv
 import json
 import tempfile
 
+from django.core.exceptions import ValidationError
 from django.contrib.gis.geos import GEOSException, GEOSGeometry, Point
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from geostore import GeometryTypes
 from geostore.models import Layer
 from geostore.tests.factories import (FeatureFactory, LayerFactory,
                                       LayerSchemaFactory, UserFactory)
@@ -314,3 +316,43 @@ class LayerSettingsTestCase(TestCase):
             self.layer.layer_settings_with_default('foo', 'bar'),
             123
         )
+
+
+class LayerPropertiesAndRoutingTestCase(TestCase):
+    def test_is_multi_and_layer_geometry(self):
+        layer_multi = LayerFactory(geom_type=GeometryTypes.MultiPoint)
+        self.assertTrue(layer_multi.is_multi)
+        self.assertTrue(layer_multi.is_point)
+
+        layer_none = LayerFactory(geom_type=None)
+        self.assertIsNone(layer_none.layer_geometry)
+        FeatureFactory(layer=layer_none, geom=Point(1, 1))
+        # After adding a feature, layer_geometry should resolve to Point typeid
+        del layer_none.layer_geometry
+        self.assertEqual(layer_none.layer_geometry, GeometryTypes.Point)
+        self.assertFalse(layer_none.is_multi)
+
+    def test_routing_mixin_clean(self):
+        layer_point = LayerFactory(geom_type=GeometryTypes.Point, routable=True)
+        with self.assertRaises(ValidationError):
+            layer_point.clean()
+
+        layer_line = LayerFactory(geom_type=GeometryTypes.LineString, routable=True)
+        layer_line.clean()  # should not raise
+
+    def test_initial_import_empty_geom_warning(self):
+        layer = LayerFactory()
+        chunks = [[{'SIREN': '123'}]]
+        with self.assertLogs(level='WARNING') as cm:
+            layer._initial_import_from_csv(chunks, {}, [])
+        self.assertTrue(any('empty geometry' in r.msg for r in cm.records))
+
+    def test_complementary_import_fast(self):
+        layer = LayerFactory()
+        chunks = [[{'SIREN': '123'}]]
+
+        def op(args, opts):
+            args['geom'] = Point(1, 1)
+
+        layer._complementary_import_from_csv(chunks, {'pk_properties': ['SIREN']}, [op], ['SIREN'], fast=True)
+        self.assertEqual(layer.features.count(), 1)

@@ -1,10 +1,21 @@
+[run]
+source = geostore
+omit =
+    */tests/*
+    */migrations/*
+    */lib/*
+    test_geostore/*
+    doc/*
+    manage.py
+
 [report]
 omit =
-    */tests*
-    */migrations*
-    */lib*
+    */tests/*
+    */migrations/*
+    */lib/*
     test_geostore/*
     doc/*
     manage.py
 
 ignore_errors = true
+
