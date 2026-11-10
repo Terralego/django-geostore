@@ -11,7 +11,7 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         python-version: ['3.11']
@@ -36,7 +36,7 @@ jobs:
         ruff format --check geostore test_geostore
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: [lint]
     strategy:
       matrix:
