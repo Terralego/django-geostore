@@ -12,6 +12,7 @@ test_require = [
     'factory-boy',
     'ruff',
     'coverage',
+    'psycopg2'
 ]
 
 setup(
@@ -49,7 +50,6 @@ setup(
         "deepmerge",
         "requests>=2.19",
         "mercantile>=1.0",
-        "psycopg2",
         "Fiona>=1.9",
         "jsonschema",
         "celery",
@@ -58,7 +58,7 @@ setup(
     extras_require={
         'dev': test_require + [
             'django-debug-toolbar',
-            'django==5.2.*'
+            'django==5.2.*',
         ]
     }
 )
